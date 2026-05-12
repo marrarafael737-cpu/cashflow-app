@@ -428,9 +428,9 @@ function setupSecurity(userId) {
                     } else {
                         e.target.checked = false;
                     }
-                } catch (e) {
+                } catch (err) {
                     e.target.checked = false;
-                    showToast(e.message, 'error');
+                    showToast(err.message, 'error');
                 }
             } else {
                 localStorage.removeItem(`biometrics_enabled_${userId}`);
