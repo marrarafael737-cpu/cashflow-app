@@ -65,6 +65,24 @@
     --border: var(--color-border);
 }
 
+[data-theme="light"] {
+    --color-background: #F3F4F6;
+    --color-surface: #FFFFFF;
+    --color-surface-secondary: #E5E7EB;
+    --color-surface-tertiary: #D1D5DB;
+    
+    --color-text-main: #111827;
+    --color-text-muted: #4B5563;
+    --color-border: rgba(0, 0, 0, 0.1);
+    
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    
+    --glass-bg: rgba(255, 255, 255, 0.85);
+    --glass-border: rgba(0, 0, 0, 0.05);
+}
+
 * {
     margin: 0;
     padding: 0;

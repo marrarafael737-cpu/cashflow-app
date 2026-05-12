@@ -766,7 +766,7 @@ function initPrivacyMode() {
     const isPrivacyActive = localStorage.getItem('privacy_mode') === 'active';
     
     if (isPrivacyActive) {
-        document.body.classList.add('privacy-mode-active');
+        document.body.classList.add('privacy-active');
     }
 
     const privacyBtns = document.querySelectorAll('#btn-toggle-privacy, #btn-toggle-privacy-mobile');
@@ -778,7 +778,7 @@ function initPrivacyMode() {
 
         btn.addEventListener('click', (e) => {
             e.preventDefault();
-            const isActive = document.body.classList.toggle('privacy-mode-active');
+            const isActive = document.body.classList.toggle('privacy-active');
             localStorage.setItem('privacy_mode', isActive ? 'active' : 'inactive');
 
             if (icon) {
