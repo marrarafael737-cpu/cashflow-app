@@ -85,6 +85,12 @@ async function handleSignUp(email, password) {
         
         if (error) throw error;
         
+        // Se a conta já existe, o Supabase (para evitar enumeração de emails)
+        // retorna sucesso, mas com o array de 'identities' vazio.
+        if (data && data.user && data.user.identities && data.user.identities.length === 0) {
+            throw new Error('Este e-mail já está cadastrado. Por favor, faça login.');
+        }
+        
         showMessage('success', 'Cadastro realizado! Verifique seu e-mail para confirmar (se necessário) ou faça login.');
         
         // Auto redirect after short delay if session is active
