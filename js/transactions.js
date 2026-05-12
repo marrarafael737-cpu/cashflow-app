@@ -244,8 +244,6 @@ async function handleAddTransaction(userId) {
     const btn = document.querySelector('#transaction-form button[type="submit"]');
     if (btn) { btn.classList.add('loading'); btn.disabled = true; }
 
-
-    const valor = parseFloat(valorRaw);
     const transactionsToInsert = [];
 
     // --- Lógica de Transferência ---
