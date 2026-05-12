@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login | CashFlow - Inteligência Financeira</title>
+    <meta name="description" content="Acesse sua conta no CashFlow e gerencie suas finanças com clareza e segurança.">
+    
+    <!-- Performance Hints -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="Login | CashFlow">
+    <meta property="og:description" content="Acesse sua conta no CashFlow.">
+    <meta property="og:type" content="website">
+    <meta property="og:image" content="assets/mascot.svg">
+
+    <!-- PostHog Analytics (Fase 14) -->
+    <script>
+        !function(t,e){var o,n,p,r;e.__SV||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement("script")).type="text/javascript",p.async=!0,p.src=s.api_host+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+".people (stub)"},o="capture identify alias person_profiles set_config register register_once unregister opt_out_capturing has_opted_out_capturing opt_in_capturing set_config reset isFeatureEnabled onFeatureFlags getFeatureFlag getFeatureFlagPayload reloadFeatureFlags group updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures onSessionId getSurveys getActiveMatchingSurveys renderSurvey canRenderSurvey getNextSurveyStep identifyReplacePerson".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1.0)}(document,window.posthog||[]);
+        const PH_KEY = 'phc_dummy_key_for_launch';
+        if (PH_KEY !== 'phc_dummy_key_for_launch') {
+            posthog.init(PH_KEY, {api_host:'https://us.i.posthog.com', person_profiles: 'always'});
+        } else {
+            console.log('C.A.S.H. Unit: Analytics em modo de espera (aguardando chave real).');
+        }
+    </script>
+
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/animations.css">
+    <link rel="stylesheet" href="css/components.css">
+    <!-- Supabase JS -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="icon" type="image/svg+xml" href="assets/mascot.svg">
+    <!-- PWA Setup -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#FF7A00">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+</head>
+
+<body>
+    <main class="auth-wrapper">
+        <header class="auth-header">
+            <div class="auth-mascot-container">
+                <div class="cashy-v4-speech auth-speech">
+                    <p id="auth-mascot-msg">Identifique-se para acessar o núcleo.</p>
+                </div>
+                <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" class="auth-mascot-svg">
+                    <defs>
+                        <linearGradient id="bodyGradAuth" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" style="stop-color:#2A2A2A" />
+                            <stop offset="100%" style="stop-color:#1A1A1A" />
+                        </linearGradient>
+                    </defs>
+                    <!-- Body -->
+                    <rect x="60" y="110" width="80" height="60" rx="15" fill="url(#bodyGradAuth)" />
+                    <rect x="75" y="122" width="50" height="36" rx="6" fill="#0A0A0A" />
+                    <!-- Head Group -->
+                    <g class="cashy-head-group">
+                        <circle cx="55" cy="75" r="10" fill="#FF6A00" />
+                        <circle cx="145" cy="75" r="10" fill="#FF6A00" />
+                        <rect x="55" y="35" width="90" height="75" rx="20" fill="url(#bodyGradAuth)" />
+                        <!-- Visor -->
+                        <g class="cashy-visor-group">
+                            <rect x="62" y="45" width="76" height="55" rx="15" fill="#121212" />
+                            <rect x="65" y="48" width="70" height="49" rx="14" fill="#050505" />
+                            <!-- Eyes -->
+                            <g class="cashy-eyes">
+                                <rect x="80" y="68" width="12" height="4" rx="2" fill="#FF6A00" class="auth-eye" />
+                                <rect x="108" y="68" width="12" height="4" rx="2" fill="#FF6A00" class="auth-eye" />
+                            </g>
+                        </g>
+                    </g>
+                </svg>
+            </div>
+            <h1>Cash<span>Flow</span></h1>
+            <p>Seu controle financeiro minimalista</p>
+        </header>
+
+        <!-- Toast Container for Premium Notifications -->
+        <div id="toast-container"></div>
+
+        <form id="login-form">
+            <div class="form-group">
+                <label for="email">E-mail</label>
+                <div class="input-with-icon">
+                    <i class="fas fa-envelope"></i>
+                    <input type="email" id="email" required placeholder="seu@email.com">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="password">Senha</label>
+                <div class="input-with-icon">
+                    <i class="fas fa-lock"></i>
+                    <input type="password" id="password" required placeholder="••••••••">
+                </div>
+            </div>
+
+            <div class="security-signal">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                </svg> Conexão Segura SSL Encriptada
+            </div>
+
+            <button type="submit" id="btn-submit" class="btn-primary">Entrar na Conta</button>
+        </form>
+
+        <footer class="auth-footer">
+            <p>Ainda não tem conta? <a href="cadastro.html">Criar conta grátis</a></p>
+            
+            <div class="trust-signals-grid" style="margin-top: 3rem;">
+                <div class="trust-item">
+                    <i class="fas fa-shield-alt"></i>
+                    <span>SSL SEGURO</span>
+                </div>
+                <div class="trust-item">
+                    <i class="fas fa-fingerprint"></i>
+                    <span>BIOMETRIA</span>
+                </div>
+            </div>
+        </footer>
+    </main>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            if (typeof gsap !== 'undefined') {
+                gsap.from(".auth-mascot-container", { y: -20, opacity: 0, duration: 1, ease: "back.out(1.7)" });
+                gsap.to(".cashy-head-group", { y: -3, duration: 2, repeat: -1, yoyo: true, ease: "power1.inOut" });
+
+                // Eye tracking on login
+                window.addEventListener('mousemove', (e) => {
+                    const eyes = document.querySelector('.cashy-eyes');
+                    if (!eyes) return;
+                    const rect = eyes.getBoundingClientRect();
+                    const centerX = rect.left + rect.width / 2;
+                    const centerY = rect.top + rect.height / 2;
+                    const angle = Math.atan2(e.clientY - centerY, e.clientX - centerX);
+                    const dist = Math.min(3, Math.hypot(e.clientX - centerX, e.clientY - centerY) / 50);
+                    gsap.to(eyes, { x: Math.cos(angle) * dist, y: Math.sin(angle) * dist, duration: 0.3 });
+                });
+            }
+        });
+    </script>
+    <script src="js/config.js?v=9" defer></script>
+    <script src="auth.js?v=9" defer></script>
+    <script src="js/pwa-analytics.js" defer></script>
+    <script src="main.js" defer></script>
+</body>
+
+</html>

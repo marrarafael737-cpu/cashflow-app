@@ -1,0 +1,147 @@
+/* css/base.css - Variables, Resets & Global Utilities */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+:root {
+    /* Color Palette - Premium Fintech Graphite & Orange */
+    --color-primary: #FF7A00; /* Modern Refined Orange */
+    --color-primary-hover: #FF9533;
+    --color-accent: #2563EB; /* Fintech Blue */
+    
+    --color-success: #10B981;
+    --color-danger: #EF4444;
+    --color-warning: #F59E0B;
+    --color-info: #3B82F6;
+    
+    /* Dark Mode Surfaces (Primary Experience) */
+    --color-background: #09090B; 
+    --color-surface: #18181B;
+    --color-surface-secondary: #27272A;
+    --color-surface-tertiary: #3F3F46;
+    
+    --color-text-main: #FAFAFA;
+    --color-text-muted: #A1A1AA;
+    --color-border: rgba(255, 255, 255, 0.08);
+    
+    /* Shadows - Subtle & Deep */
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.4);
+    --shadow-md: 0 4px 20px -1px rgba(0, 0, 0, 0.6);
+    --shadow-lg: 0 20px 40px -10px rgba(0, 0, 0, 0.8);
+    
+    /* Glassmorphism Premium */
+    --glass-bg: rgba(24, 24, 27, 0.8);
+    --glass-border: rgba(255, 255, 255, 0.1);
+    --glass-blur: blur(16px);
+    
+    /* Typography - Professional Fintech Style */
+    --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    
+    /* Z-Index Hierarchy */
+    --z-toast: 3000;
+    --z-modal: 2000;
+    --z-mascot: 1500;
+    --z-sidebar: 1000;
+    
+    /* Fluid Typography - Premium System */
+    --font-xs: clamp(0.7rem, 0.65rem + 0.15vw, 0.75rem);
+    --font-sm: clamp(0.8rem, 0.75rem + 0.2vw, 0.875rem);
+    --font-base: clamp(0.9375rem, 0.9rem + 0.25vw, 1rem);
+    --font-lg: clamp(1.1rem, 1rem + 0.4vw, 1.25rem);
+    --font-xl: clamp(1.5rem, 1.25rem + 1vw, 1.85rem);
+    --font-2xl: clamp(2rem, 1.5rem + 2vw, 2.75rem);
+
+    --lh-base: 1.6;
+    --lh-tight: 1.2;
+
+    /* Legacy variables mapping */
+    --bg-dark: var(--color-background);
+    --bg-card: var(--color-surface);
+    --bg-input: var(--color-surface-secondary);
+    --primary: var(--color-primary);
+    --primary-hover: var(--color-primary-hover);
+    --text-main: var(--color-text-main);
+    --text-muted: var(--color-text-muted);
+    --error: var(--color-danger);
+    --success: var(--color-success);
+    --border: var(--color-border);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+}
+
+body {
+    background-color: var(--color-background);
+    background-image: 
+        radial-gradient(circle at 0% 0%, rgba(255, 122, 0, 0.05) 0%, transparent 40%),
+        radial-gradient(circle at 100% 100%, rgba(0, 255, 136, 0.02) 0%, transparent 40%);
+    color: var(--color-text-main);
+    min-height: 100vh;
+    line-height: var(--lh-base);
+    font-size: var(--font-base);
+}
+
+.hidden {
+    display: none !important;
+}
+
+.mobile-only {
+    display: none !important;
+}
+
+.desktop-only {
+    display: block !important;
+}
+
+@media (max-width: 1024px) {
+    .mobile-only {
+        display: block !important;
+    }
+    .desktop-only {
+        display: none !important;
+    }
+}
+
+/* Privacy Mode - Fort Knox */
+body.privacy-active .privacy-blur {
+    filter: blur(8px);
+    opacity: 0.6;
+    user-select: none;
+    pointer-events: none;
+    transition: all 0.3s ease;
+}
+
+body.privacy-active .privacy-blur:hover {
+    filter: blur(0);
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* Onboarding Highlight */
+.onboarding-highlight {
+    position: relative;
+    z-index: 6000 !important;
+    box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.85), 0 0 20px var(--color-primary) !important;
+    pointer-events: none;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.onboarding-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(4px);
+    z-index: 5500;
+    display: none;
+}
+
+.onboarding-overlay.active {
+    display: block;
+}

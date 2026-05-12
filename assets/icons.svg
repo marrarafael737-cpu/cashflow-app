@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+    <symbol id="icon-dashboard" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect width="7" height="9" x="3" y="3" rx="1" />
+        <rect width="7" height="5" x="14" y="3" rx="1" />
+        <rect width="7" height="9" x="14" y="12" rx="1" />
+        <rect width="7" height="5" x="3" y="16" rx="1" />
+    </symbol>
+    <symbol id="icon-categories" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="m16 6 4 14" />
+        <path d="M12 6v14" />
+        <path d="M8 8v12" />
+        <path d="M4 4v16" />
+    </symbol>
+    <symbol id="icon-reports" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 20v-6M6 20V10M18 20V4" />
+    </symbol>
+    <symbol id="icon-logout" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+        <polyline points="16 17 21 12 16 7" />
+        <line x1="21" x2="9" y1="12" y2="12" />
+    </symbol>
+    <symbol id="icon-privacy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+        <circle cx="12" cy="12" r="3"></circle>
+    </symbol>
+    <symbol id="icon-theme" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m0-12.728l.707.707m11.314 11.314l.707.707M12 8a4 4 0 100 8 4 4 0 000-8z" />
+    </symbol>
+    <symbol id="icon-tour" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"></circle>
+        <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+        <line x1="12" y1="17" x2="12.01" y2="17"></line>
+    </symbol>
+    <symbol id="cashy-v4-symbol" viewBox="0 0 200 200">
+        <!-- Static Version of Mascot -->
+        <ellipse cx="100" cy="185" rx="35" ry="8" fill="#FF6A00" opacity="0.4" />
+        <path d="M55 125 Q40 130 45 150" fill="none" stroke="#1F1F1F" stroke-width="8" stroke-linecap="round" />
+        <path d="M145 125 Q160 130 155 150" fill="none" stroke="#1F1F1F" stroke-width="8" stroke-linecap="round" />
+        <rect x="90" y="105" width="20" height="10" fill="#121212" />
+        <rect x="60" y="110" width="80" height="60" rx="15" fill="#FF6A00" />
+        <rect x="75" y="122" width="50" height="36" rx="6" fill="#0A0A0A" />
+        <path d="M70 170 L130 170 Q120 185 100 185 Q80 185 70 170" fill="#1F1F1F" />
+        <circle cx="55" cy="75" r="12" fill="#FF6A00" />
+        <circle cx="145" cy="75" r="12" fill="#FF6A00" />
+        <rect x="55" y="35" width="90" height="75" rx="25" fill="#FF6A00" />
+        <rect x="62" y="45" width="76" height="55" rx="18" fill="#121212" />
+        <path d="M82 72 L94 72" stroke="#FF6A00" stroke-width="4" stroke-linecap="round" />
+        <path d="M106 72 L118 72" stroke="#FF6A00" stroke-width="4" stroke-linecap="round" />
+    <symbol id="icon-profile" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+        <circle cx="12" cy="7" r="4" />
+    </symbol>
+</svg>

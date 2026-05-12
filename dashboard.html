@@ -1,0 +1,1358 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard | CashFlow - Inteligência Financeira</title>
+    <meta name="description" content="Controle seus gastos, defina metas e alcance sua liberdade financeira com o CashFlow. O gestor financeiro inteligente com gamificação.">
+    <meta name="keywords" content="finanças, controle financeiro, economia, investimentos, dinheiro, dashboard financeiro">
+    
+    <!-- Performance Hints -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com">
+    <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://cashflow.app/">
+    <meta property="og:title" content="CashFlow - Inteligência Financeira">
+    <meta property="og:description" content="Controle seus gastos e alcance sua liberdade financeira com o CashFlow.">
+    <meta property="og:image" content="assets/banner-og.png">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:title" content="CashFlow - Inteligência Financeira">
+    <meta property="twitter:description" content="Controle seus gastos e alcance sua liberdade financeira com o CashFlow.">
+
+    <link rel="icon" type="image/svg+xml" href="assets/mascot.svg">
+    <link rel="apple-touch-icon" href="assets/mascot.svg">
+
+
+    <!-- PostHog Analytics (Fase 14) -->
+    <script>
+        !function (t, e) { var o, n, p, r; e.__SV || (window.posthog = e, e._i = [], e.init = function (i, s, a) { function g(t, e) { var o = e.split("."); 2 == o.length && (t = t[o[0]], e = o[1]), t[e] = function () { t.push([e].concat(Array.prototype.slice.call(arguments, 0))) } } (p = t.createElement("script")).type = "text/javascript", p.async = !0, p.src = s.api_host + "/static/array.js", (r = t.getElementsByTagName("script")[0]).parentNode.insertBefore(p, r); var u = e; for (void 0 !== a ? u = e[a] = [] : a = "posthog", u.people = u.people || [], u.toString = function (t) { var e = "posthog"; return "posthog" !== a && (e += "." + a), t || (e += " (stub)"), e }, u.people.toString = function () { return u.toString(1) + ".people (stub)" }, o = "capture identify alias person_profiles set_config register register_once unregister opt_out_capturing has_opted_out_capturing opt_in_capturing set_config reset isFeatureEnabled onFeatureFlags getFeatureFlag getFeatureFlagPayload reloadFeatureFlags group updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures onSessionId getSurveys getActiveMatchingSurveys renderSurvey canRenderSurvey getNextSurveyStep identifyReplacePerson".split(" "), n = 0; n < o.length; n++)g(u, o[n]); e._i.push([i, s, a]) }, e.__SV = 1.0) }(document, window.posthog || []);
+        const PH_KEY = 'phc_dummy_key_for_launch';
+        if (PH_KEY !== 'phc_dummy_key_for_launch') {
+            posthog.init(PH_KEY, { api_host: 'https://us.i.posthog.com', person_profiles: 'always' });
+        } else {
+            console.log('C.A.S.H. Unit: Analytics em modo de espera (aguardando chave real).');
+        }
+    </script>
+
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/animations.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/layout.css">
+    <link rel="stylesheet" href="css/views.css">
+    <link rel="stylesheet" href="css/mascot.css">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Supabase JS -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- GSAP & Draggable -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/Draggable.min.js"></script>
+    <link rel="icon" type="image/svg+xml" href="assets/mascot.svg">
+
+    <!-- PWA Setup -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#FF7A00">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="CashFlow">
+    <link rel="apple-touch-icon" href="assets/mascot.svg">
+
+    <!-- Reports Libs -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="js/search.js"></script>
+</head>
+
+<body class="dashboard-body">
+    <div id="sidebar-backdrop" class="sidebar-backdrop"></div>
+    <div id="loading-overlay" class="premium-loader-overlay">
+        <div class="brand">Cash<span>Flow</span></div>
+        <div class="loader-v4"></div>
+        <style>
+            .premium-loader-overlay {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: #09090B;
+                z-index: 9999;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                transition: opacity 0.5s ease;
+            }
+
+            .loader-v4 {
+                width: 40px;
+                height: 40px;
+                border: 3px solid rgba(255, 122, 0, 0.1);
+                border-top-color: #FF7A00;
+                border-radius: 50%;
+                animation: spin 0.8s linear infinite;
+            }
+
+            @keyframes spin {
+                to {
+                    transform: rotate(360deg);
+                }
+            }
+        </style>
+    </div>
+
+    <!-- Sidebar Navigation (Moved outside to prevent flow issues) -->
+    <aside class="sidebar-desktop">
+        <div class="sidebar-header">
+            <h2 class="brand">Cash<span>Flow</span></h2>
+            <button id="btn-close-sidebar-mobile" class="btn-close-premium mobile-only" onclick="closeSidebar()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <nav class="sidebar-nav">
+            <div class="nav-section-label">Geral</div>
+            <a href="#" class="nav-item active" data-target="dashboard">
+                <i class="fas fa-th-large"></i>
+                <span>Início</span>
+            </a>
+            <a href="#" class="nav-item" data-target="wallets">
+                <i class="fas fa-wallet"></i>
+                <span>Contas</span>
+            </a>
+
+            <div class="nav-section-label">Gestão</div>
+            <a href="#" class="nav-item" data-target="categories">
+                <i class="fas fa-list-ul"></i>
+                <span>Categorias</span>
+            </a>
+            <a href="#" class="nav-item" data-target="goals">
+                <i class="fas fa-bullseye"></i>
+                <span>Metas</span>
+            </a>
+
+            <div class="nav-section-label">Análises</div>
+            <a href="#" class="nav-item" data-target="transactions">
+                <i class="fas fa-history"></i>
+                <span>Histórico</span>
+            </a>
+            <a href="#" class="nav-item" data-target="reports">
+                <i class="fas fa-chart-line"></i>
+                <span>Relatórios</span>
+            </a>
+            <a href="#" class="nav-item" data-target="calendar">
+                <i class="fas fa-calendar-alt"></i>
+                <span>Calendário</span>
+            </a>
+
+            <div class="nav-section-label">Sistema</div>
+            <a href="#" class="nav-item" data-target="security">
+                <i class="fas fa-shield-alt"></i>
+                <span>Segurança</span>
+            </a>
+            <a href="#" class="nav-item" data-target="profile">
+                <i class="fas fa-user-circle"></i>
+                <span>Meu Perfil</span>
+            </a>
+        </nav>
+
+        <!-- Sidebar Stats (XP only now, Mascot is floating) -->
+        <div class="user-stats-sidebar"
+            style="width: 100%; margin-top: auto; padding-top: 1rem; border-top: 1px solid var(--color-border);">
+            <div class="xp-bar-container"
+                style="height: 6px; background: rgba(255,255,255,0.05); border-radius: 3px; overflow: hidden; margin-bottom: 0.5rem;">
+                <div id="user-xp-bar"
+                    style="height: 100%; width: 25%; background: var(--color-primary); box-shadow: 0 0 10px var(--color-primary);">
+                </div>
+            </div>
+            <div
+                style="display: flex; justify-content: space-between; font-size: 0.7rem; color: var(--color-text-muted);">
+                <span id="user-level-badge">LVL 1</span>
+                <span id="user-xp-text">25 / 100 XP</span>
+            </div>
+            <button id="btn-share-snapshot" class="btn-ghost-small" style="width: 100%; margin-top: 0.5rem;">
+                <i class="fas fa-share-alt"></i> Compartilhar Progresso
+            </button>
+
+            <!-- PWA Install Button (Fase 14) -->
+            <button id="pwa-install-btn" class="btn-primary" style="width: 100%; margin-top: 0.75rem;">
+                <i class="fas fa-download"></i> Instalar App
+            </button>
+        </div>
+        </div>
+
+        <div class="sidebar-footer">
+            <div class="user-profile">
+                <div id="avatar-header" class="profile-avatar-small"
+                    style="width: 32px; height: 32px; background: var(--color-primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: white;">
+                    R</div>
+                <div class="user-info">
+                    <div id="user-name-header" style="font-size: 0.85rem; font-weight: 600;">Rafael Marra</div>
+                    <div id="user-email-header" class="user-email">rafael@email.com</div>
+                </div>
+                <button id="btn-logout" class="btn-logout-icon" title="Sair">
+                    <i class="fas fa-sign-out-alt"></i>
+                </button>
+            </div>
+            <div class="footer-actions-row"
+                style="display: flex; justify-content: center; gap: 1rem; margin-top: 1rem;">
+                <button id="btn-toggle-privacy" class="btn-ghost-icon" title="Modo Privacidade">
+                    <i class="fas fa-eye"></i>
+                </button>
+                <button id="btn-toggle-theme-sidebar" class="btn-ghost-icon" title="Trocar Tema">
+                    <i class="fas fa-moon"></i>
+                </button>
+                <button id="btn-start-tour-sidebar" class="btn-ghost-icon" title="Ajuda">
+                    <i class="fas fa-question-circle"></i>
+                </button>
+            </div>
+        </div>
+    </aside>
+
+    <div class="dashboard-layout">
+        <!-- Main Content Area -->
+        <main class="dashboard-main-content" data-view="dashboard">
+            <!-- Mobile Topbar -->
+            <div class="topbar-mobile mobile-only">
+                <button id="btn-toggle-sidebar-mobile" class="btn-ghost-icon" onclick="openSidebar()">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <div class="mobile-brand">
+                    Cash<span>Flow</span>
+                </div>
+                <div class="mobile-actions">
+                    <button id="btn-new-transaction" class="btn-ghost-icon" title="Lançamento Rápido">
+                        <i class="fas fa-plus-circle" style="color: var(--color-primary);"></i>
+                    </button>
+                    <button id="btn-toggle-privacy-mobile" class="btn-ghost-icon" title="Modo Privacidade">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                    <button id="btn-toggle-theme-mobile" class="btn-ghost-icon">
+                        <i class="fas fa-moon"></i>
+                    </button>
+                    <div class="profile-avatar-small">R</div>
+                </div>
+            </div>
+
+            <!-- Hero Balance Section -->
+            <section class="hero-balance">
+                <div class="hero-content">
+                    <span class="hero-label">Saldo Total Disponível</span>
+                    <h2 id="total-balance" class="hero-amount privacy-blur">R$ 0,00</h2>
+                    <div class="hero-stats">
+                        <div class="stat-item">
+                            <label>Receitas</label>
+                            <span id="total-income" class="value positive privacy-blur">+ R$ 0,00</span>
+                        </div>
+                        <div class="stat-item">
+                            <label>Despesas</label>
+                            <span id="total-expense" class="value negative privacy-blur">- R$ 0,00</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Content Grid -->
+            <div class="dashboard-content-padding" style="padding: 2rem;">
+
+                <!-- 1. VIEW: DASHBOARD -->
+                <div id="view-dashboard" class="view-section active view-dashboard">
+                    <!-- Dashboard Charts Section -->
+                    <div class="charts-row">
+                        <div class="chart-container-card card-glass">
+                            <h3 class="section-title" style="font-size: 0.9rem; margin-bottom: 1rem;">Gastos por
+                                Categoria</h3>
+                            <canvas id="chart-categorias" class="privacy-blur"></canvas>
+                        </div>
+                        <div class="chart-container-card card-glass">
+                            <h3 class="section-title" style="font-size: 0.9rem; margin-bottom: 1rem;">Receitas vs
+                                Despesas</h3>
+                            <canvas id="chart-evolucao" class="privacy-blur"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Oráculo & Análise Avançada (Fase 11-13) -->
+                    <div id="oracle-section" class="oracle-grid">
+                        <div class="oracle-card card-glass">
+                            <div
+                                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                                <h3 class="section-title" style="font-size: 0.9rem; margin: 0;">Perfil Financeiro</h3>
+                                <div id="health-score-badge" class="score-badge">--</div>
+                            </div>
+                            <div class="oracle-chart-wrapper">
+                                <canvas id="chart-radar" class="privacy-blur"></canvas>
+                            </div>
+                        </div>
+                        <div class="oracle-card card-glass">
+                            <h3 class="section-title" style="font-size: 0.9rem; margin-bottom: 1rem;">Tendência de Saldo
+                                (30 Dias)</h3>
+                            <div class="oracle-chart-wrapper">
+                                <canvas id="chart-tendencia" class="privacy-blur"></canvas>
+                            </div>
+                        </div>
+                        <div class="oracle-card card-glass">
+                            <h3 class="section-title" style="font-size: 0.9rem; margin-bottom: 1rem;">Projeção de Fluxo
+                                (Próximos 30 Dias)</h3>
+                            <div class="oracle-chart-wrapper">
+                                <canvas id="chart-forecast" class="privacy-blur"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Conquistas & Badges (Fase 13) -->
+                    <section class="badges-section" style="margin-bottom: 2rem;">
+                        <div class="section-header-row">
+                            <h3 class="section-title">Minhas Conquistas</h3>
+                            <span class="badge-counter" id="unlocked-badges-count"
+                                style="font-size: 0.7rem; background: var(--color-primary); color: white; padding: 2px 8px; border-radius: 10px; font-weight: 700;">0/4</span>
+                        </div>
+                        <div id="badges-container" class="badges-grid-v2"
+                            style="display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 1rem; margin-top: 1rem;">
+                            <div class="badge-card-v2 locked" id="badge-economy-master">
+                                <div class="badge-icon-v2"><i class="fas fa-crown"></i></div>
+                                <h4>Mestre da Economia</h4>
+                                <p>Poupe R$ 1.000 em um mês</p>
+                            </div>
+                            <div class="badge-card-v2 locked" id="badge-serial-importer">
+                                <div class="badge-icon-v2"><i class="fas fa-file-import"></i></div>
+                                <h4>Importador Serial</h4>
+                                <p>Importe 3 extratos bancários</p>
+                            </div>
+                            <div class="badge-card-v2 locked" id="badge-oracle-apprentice">
+                                <div class="badge-icon-v2"><i class="fas fa-brain"></i></div>
+                                <h4>Aprendiz de Oráculo</h4>
+                                <p>Faça 5 previsões de compra</p>
+                            </div>
+                            <div class="badge-card-v2 locked" id="badge-level-5">
+                                <div class="badge-icon-v2"><i class="fas fa-rocket"></i></div>
+                                <h4>Foguete de Prata</h4>
+                                <p>Alcance o Nível 5</p>
+                            </div>
+                        </div>
+                    </section>
+
+                    <div class="grid-layout grid-responsive-2-1">
+                        <div class="data-column">
+                            <!-- Magic Input -->
+                            <div class="magic-input-card card-glass"
+                                style="margin-bottom: 2rem; padding: 1.5rem; border-radius: 16px; background: var(--color-surface); border: 1px solid var(--color-border);">
+                                <div
+                                    style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                                    <h3 style="margin: 0; font-size: 1rem;"><i class="fas fa-wand-magic-sparkles"
+                                            style="color: var(--color-primary);"></i> Magic Input</h3>
+                                    <button id="btn-open-parser" class="btn-ghost-small"
+                                        style="font-size: 0.7rem; padding: 0.3rem 0.6rem;">
+                                        <i class="fas fa-paste"></i> Parser de Notificações
+                                    </button>
+                                </div>
+                                <div id="budget-alerts-container" style="margin-bottom: 1rem;"></div>
+                                <div style="display: flex; gap: 1rem;">
+                                    <input type="text" id="magic-input" placeholder="Ex: Gastei 50 no almoço hoje..."
+                                        style="flex: 1; padding: 0.8rem; border-radius: 8px; background: var(--color-surface-secondary); border: 1px solid var(--color-border); color: white;">
+                                    <button id="btn-magic-submit" class="btn-primary-action"
+                                        style="margin: 0; padding: 0 1.5rem;">Lançar</button>
+                                </div>
+                            </div>
+
+                            <!-- Minhas Contas -->
+                            <section class="accounts-section">
+                                <div class="section-header-row">
+                                    <h3 class="section-title">Minhas Contas</h3>
+                                    <button id="btn-open-modal-conta" class="btn-ghost-small">+ Nova Conta</button>
+                                </div>
+                                <div id="accounts-list" class="accounts-grid"
+                                    style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem;">
+                                    <!-- Preenchido via JS -->
+                                </div>
+                            </section>
+
+                            <!-- Projeção e Insights -->
+                            <div class="stats-grid-v4 grid-responsive-1-1"
+                                style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-top: 2rem;">
+                                <div class="stat-card-v4 card-glass">
+                                    <div class="stat-icon"><i class="fas fa-magic"></i></div>
+                                    <div class="stat-info">
+                                        <label>Projeção Final do Mês</label>
+                                        <h3 id="projected-balance" class="amount privacy-blur">R$ 0,00</h3>
+                                        <p id="projection-insight-text"
+                                            style="font-size: 0.75rem; margin-top: 0.5rem; line-height: 1.4;">Baseado em
+                                            suas recorrências e ritmo de gastos.</p>
+                                    </div>
+                                </div>
+                                <div class="stat-card-v4 card-glass">
+                                    <div class="stat-icon"><i class="fas fa-bolt"></i></div>
+                                    <div class="stat-info">
+                                        <label>Economia Pendente</label>
+                                        <h3 id="valor-pendente" class="amount privacy-blur">R$ 0,00</h3>
+                                        <p>Próximos 7 dias</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Insights do Cashy -->
+                            <section class="insights-section" style="margin-top: 2rem;">
+                                <h3 class="section-title">Insights do Cashy</h3>
+                                <div id="insights-list" class="insights-grid">
+                                    <!-- Preenchido via JS -->
+                                </div>
+                            </section>
+
+                            <!-- Orçamentos por Categoria -->
+                            <section class="budgets-section" style="margin-top: 2rem;">
+                                <div class="section-header-row">
+                                    <h3 class="section-title">Orçamentos do Mês</h3>
+                                    <button id="btn-open-modal-orcamento" class="btn-ghost-small">+ Definir
+                                        Limite</button>
+                                </div>
+                                <div id="budgets-list" class="budgets-grid"
+                                    style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1rem;">
+                                    <!-- Preenchido via JS -->
+                                </div>
+                            </section>
+
+                            <!-- Simulador de Liberdade Financeira (Fase 13) -->
+                            <section class="simulator-section" style="margin-top: 2rem;">
+                                <h3 class="section-title">Simulador de Liberdade Financeira</h3>
+                                <div class="simulator-card card-glass grid-responsive-1-5-1">
+                                    <div class="sim-inputs">
+                                        <p
+                                            style="font-size: 0.8rem; color: var(--color-text-muted); margin-bottom: 1rem;">
+                                            Calcule quanto tempo falta para você viver apenas dos seus rendimentos.
+                                        </p>
+                                        <div class="form-field">
+                                            <label>Aporte Mensal Pretendido</label>
+                                            <input type="number" id="sim-aporte" value="500" step="50"
+                                                style="padding: 0.5rem;">
+                                        </div>
+                                        <div class="form-field" style="margin-top: 1rem;">
+                                            <label>Rentabilidade Anual Esperada (%)</label>
+                                            <input type="number" id="sim-rentabilidade" value="10" step="0.5"
+                                                style="padding: 0.5rem;">
+                                        </div>
+                                    </div>
+                                    <div class="sim-result"
+                                        style="background: rgba(255, 122, 0, 0.05); border-radius: 12px; padding: 1.5rem; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; border: 1px solid rgba(255, 122, 0, 0.1);">
+                                        <span
+                                            style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--color-primary);">Faltam
+                                            aproximadamente</span>
+                                        <h2 id="sim-result-years" style="font-size: 2.5rem; margin: 0.5rem 0;">-- Anos
+                                        </h2>
+                                        <p id="sim-result-text"
+                                            style="font-size: 0.8rem; color: var(--color-text-muted);">Com base nos seus
+                                            gastos atuais.</p>
+                                    </div>
+                                </div>
+                            </section>
+                        </div>
+
+                        <div class="actions-column">
+                            <div class="mobile-only-header"
+                                style="display: none; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid var(--color-border);">
+                                <h3 style="margin:0;">Lançamento Rápido</h3>
+                                <button id="btn-close-actions-mobile" class="btn-close-premium">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                            <div class="sticky-action">
+                                <h3 class="card-title">Nova Transação</h3>
+                                <form id="dashboard-transaction-form" class="modern-form">
+                                    <div class="form-field">
+                                        <label for="dash-descricao">Descrição</label>
+                                        <input type="text" id="dash-descricao" required placeholder="Ex: Aluguel">
+                                    </div>
+                                    <div class="form-row">
+                                        <div class="form-field">
+                                            <label for="dash-valor">Valor</label>
+                                            <input type="number" id="dash-valor" step="0.01" required
+                                                placeholder="0,00">
+                                        </div>
+                                        <div class="form-field">
+                                            <label for="dash-tipo">Tipo</label>
+                                            <select id="dash-tipo" required>
+                                                <option value="saida">Despesa</option>
+                                                <option value="entrada">Receita</option>
+                                                <option value="transferencia">Transferência</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="form-field">
+                                        <label for="dash-conta">Conta</label>
+                                        <select id="dash-conta" required>
+                                            <option value="">Carregando contas...</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-field">
+                                        <label for="dash-categoria">Categoria</label>
+                                        <select id="dash-categoria" required>
+                                            <option value="">Selecione o tipo primeiro...</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-field">
+                                        <label for="dash-data">Data</label>
+                                        <input type="date" id="dash-data" required>
+                                    </div>
+                                    <button type="submit" class="btn-primary-action" style="margin-top: 0.5rem;">Salvar
+                                        Transação</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. VIEW: TRANSACTIONS (HISTÓRICO) -->
+                <div id="view-transactions" class="view-section view-transactions">
+                    <div class="section-header-row" style="margin-bottom: 2rem;">
+                        <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                            <h2 class="section-title" style="margin: 0;">Histórico de Transações</h2>
+                            <p style="font-size: 0.8rem; color: var(--color-text-muted);">Explore e gerencie seus
+                                lançamentos.</p>
+                        </div>
+                        <div class="header-actions" style="display: flex; gap: 1rem; align-items: center;">
+                            <div class="search-box" style="position: relative;">
+                                <i class="fas fa-search"
+                                    style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--color-text-muted); font-size: 0.9rem;"></i>
+                                <input type="text" id="smart-search" placeholder="Buscar descrição ou categoria..."
+                                    style="padding: 0.6rem 1rem 0.6rem 2.5rem; border-radius: 8px; background: var(--color-surface-secondary); border: 1px solid var(--color-border); color: white; width: 250px; font-size: 0.9rem;">
+                            </div>
+                            <input type="file" id="csv-import-input" accept=".csv" style="display: none;">
+                            <button id="btn-trigger-import" class="btn-ghost-small" title="Importar Extrato CSV">
+                                <i class="fas fa-file-import"></i> Importar
+                            </button>
+                            <button id="btn-filter-transactions" class="btn-ghost-small"><i class="fas fa-filter"></i>
+                                Filtrar</button>
+                        </div>
+                    </div>
+
+                    <div class="card-glass" style="margin-top: 1rem; overflow-x: auto;">
+                        <table class="modern-table">
+                            <thead>
+                                <tr>
+                                    <th>Descrição</th>
+                                    <th>Categoria</th>
+                                    <th>Data</th>
+                                    <th class="text-right">Valor</th>
+                                    <th class="text-right">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="transactions-body">
+                                <!-- Preenchido via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- 3. VIEW: GOALS (METAS) -->
+                <div id="view-goals" class="view-section view-goals">
+                    <div class="section-header-row">
+                        <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                            <h2 class="section-title" style="margin:0;">Minhas Metas</h2>
+                            <p style="font-size: 0.8rem; color: var(--color-text-muted);">Acompanhe seu progresso e
+                                conquiste seus objetivos.</p>
+                        </div>
+                        <button id="btn-open-modal-meta" class="btn-primary-action"
+                            style="padding: 0.5rem 1rem; font-size: 0.8rem; width: auto;">+ Nova Meta</button>
+                    </div>
+                    <div id="metas-list" class="goals-grid"
+                        style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem; margin-top: 1.5rem;">
+                        <!-- Preenchido via JS -->
+                    </div>
+                </div>
+
+                <!-- 4. VIEW: REPORTS (RELATÓRIOS) -->
+                <div id="view-reports" class="view-section view-reports">
+                    <div class="section-header-row">
+                        <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                            <h2 class="section-title" style="margin:0;">Central de Relatórios</h2>
+                            <p style="font-size: 0.8rem; color: var(--color-text-muted);">Gere documentos profissionais
+                                e análises profundas do seu capital.</p>
+                        </div>
+                        <div class="export-actions" style="display: flex; gap: 0.8rem; flex-wrap: wrap;">
+                            <button onclick="generatePremiumMonthlyReport()" class="btn-primary-action"
+                                style="padding: 0.5rem 1.2rem; font-size: 0.8rem; width: auto; background: linear-gradient(135deg, #FF7A00 0%, #FFB800 100%);">
+                                <i class="fas fa-crown"></i> Relatório Mensal Premium
+                            </button>
+                            <button onclick="exportToExcel()" class="btn-ghost-small">
+                                <i class="fas fa-file-excel"></i> Excel (Bruto)
+                            </button>
+                        </div>
+                    </div>
+                    <div class="reports-grid">
+                        <div class="card-glass" style="padding: 1.5rem; height: 350px;">
+                            <h3 style="font-size: 0.9rem; margin-bottom: 1rem;">Distribuição de Despesas Anual</h3>
+                            <canvas id="chart-reports-annual"></canvas>
+                        </div>
+                        <div class="card-glass" style="padding: 1.5rem; height: 350px;">
+                            <h3 style="font-size: 0.9rem; margin-bottom: 1rem;">Economia Mensal Acumulada</h3>
+                            <canvas id="chart-reports-savings"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 4. VIEW: WALLETS (CONTAS & CARTEIRAS) -->
+                <div id="view-wallets" class="view-section view-wallets">
+                    <div class="section-header-row">
+                        <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                            <h2 class="section-title" style="margin:0;">Minhas Contas</h2>
+                            <p style="font-size: 0.8rem; color: var(--color-text-muted);">Gerencie seus saldos e
+                                transferências entre carteiras.</p>
+                        </div>
+                        <button id="btn-open-modal-account" class="btn-primary-action"
+                            style="padding: 0.5rem 1rem; font-size: 0.8rem; width: auto;">+ Nova Conta</button>
+                    </div>
+                    <div id="wallets-grid" class="wallets-grid"
+                        style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem; margin-top: 1.5rem;">
+                        <!-- Preenchido via JS -->
+                    </div>
+                </div>
+
+                <!-- 4. VIEW: CALENDAR (CALENDÁRIO & RECORRÊNCIAS) -->
+                <div id="view-calendar" class="view-section view-calendar">
+                    <div class="section-header-row">
+                        <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                            <h2 class="section-title" style="margin:0;">Planejamento Mensal</h2>
+                            <p style="font-size: 0.8rem; color: var(--color-text-muted);">Visualize vencimentos e
+                                histórico no tempo.</p>
+                        </div>
+                        <div class="calendar-controls" style="display: flex; gap: 1rem; align-items: center;">
+                            <button id="btn-prev-month" class="btn-icon-premium-mini"><i
+                                    class="fas fa-chevron-left"></i></button>
+                            <h3 id="calendar-month-year"
+                                style="margin:0; font-size: 1rem; min-width: 120px; text-align: center;">Maio 2026</h3>
+                            <button id="btn-next-month" class="btn-icon-premium-mini"><i
+                                    class="fas fa-chevron-right"></i></button>
+                        </div>
+                    </div>
+
+                    <div class="calendar-container card-glass" style="margin-top: 1.5rem; padding: 1.5rem;">
+                        <div class="calendar-grid-header"
+                            style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; text-align: center; font-size: 0.7rem; font-weight: 700; color: var(--color-text-muted); margin-bottom: 10px; text-transform: uppercase;">
+                            <span>Dom</span><span>Seg</span><span>Ter</span><span>Qua</span><span>Qui</span><span>Sex</span><span>Sáb</span>
+                        </div>
+                        <div id="calendar-days-grid" class="calendar-days-grid"
+                            style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px;">
+                            <!-- Preenchido via JS -->
+                        </div>
+                    </div>
+
+                    <div class="recurring-section card-glass" style="margin-top: 2rem; padding: 1.5rem;">
+                        <div class="section-header-inline"
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                            <h3 style="font-size: 1rem; margin: 0;"><i class="fas fa-sync"></i> Assinaturas e
+                                Recorrências</h3>
+                            <button id="btn-open-modal-recorrencia" class="btn-icon-add"
+                                style="background: var(--color-primary); color: white; border: none; width: 28px; height: 28px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s;">
+                                <i class="fas fa-plus" style="font-size: 0.8rem;"></i>
+                            </button>
+                        </div>
+                        <div id="recurring-list" class="mini-list">
+                            <!-- Preenchido via JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 5. VIEW: CATEGORIES (CATEGORIAS) -->
+                <div id="view-categories" class="view-section view-categories">
+                    <div class="section-header-row">
+                        <h2 class="section-title">Minhas Categorias</h2>
+                    </div>
+                    <div class="grid-layout"
+                        style="display: grid; grid-template-columns: 1fr 1.5fr; gap: 2rem; margin-top: 2rem;">
+                        <div class="card-glass" style="padding: 2rem;">
+                            <h3 style="font-size: 1rem; margin-bottom: 1.5rem;">Nova Categoria</h3>
+                            <form id="category-form-view" class="modern-form">
+                                <div class="form-field">
+                                    <label>Nome</label>
+                                    <input type="text" id="cat-nome-view" required placeholder="Ex: Mercado">
+                                </div>
+                                <div class="form-field">
+                                    <label>Tipo</label>
+                                    <select id="cat-tipo-view" required>
+                                        <option value="saida">Despesa</option>
+                                        <option value="entrada">Receita</option>
+                                    </select>
+                                </div>
+                                <button type="submit" class="btn-primary-action" style="width: 100%;">Criar
+                                    Categoria</button>
+                            </form>
+                        </div>
+                        <div class="card-glass" style="padding: 2rem;">
+                            <h3 style="font-size: 1rem; margin-bottom: 1.5rem;">Categorias Ativas</h3>
+                            <div id="categorias-list-view" class="mini-list">
+                                <!-- Preenchido via JS -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 5. VIEW: SECURITY (SEGURANÇA) -->
+                <div id="view-security" class="view-section view-security">
+                    <div class="section-header-row">
+                        <h2 class="section-title">Central de Segurança</h2>
+                    </div>
+                    <div class="security-grid">
+                        <div class="card-glass security-card">
+                            <h3 class="card-title">Configurações de Acesso</h3>
+
+                            <div class="security-item">
+                                <div class="security-info">
+                                    <label class="security-label">Biometria (FaceID/Digital)</label>
+                                    <small class="security-hint">Exigir autenticação ao abrir o app.</small>
+                                </div>
+                                <label class="switch">
+                                    <input type="checkbox" id="toggle-biometrics">
+                                    <span class="slider round"></span>
+                                </label>
+                            </div>
+
+                            <div class="security-item">
+                                <div class="security-info">
+                                    <label class="security-label">Piggy Bank (Arredondamento)</label>
+                                    <small class="security-hint">Poupe os centavos de cada despesa
+                                        automaticamente.</small>
+                                </div>
+                                <label class="switch">
+                                    <input type="checkbox" id="toggle-piggy-bank">
+                                    <span class="slider round"></span>
+                                </label>
+                            </div>
+
+                            <div class="security-actions">
+                                <button class="btn-secondary full-width"
+                                    onclick="showToast('Verificando integridade dos dados...', 'info')">
+                                    Verificar Integridade do Banco
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="card-glass security-card">
+                            <h3 class="card-title"><i class="fas fa-history"></i> Histórico de Acessos</h3>
+                            <div id="session-list" class="session-list">
+                                <!-- Preenchido via JS -->
+                            </div>
+                            <div class="security-footer">
+                                <button id="btn-logout-others" class="btn-ghost-small danger full-width">
+                                    <i class="fas fa-sign-out-alt"></i> Encerrar outras sessões
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 6. VIEW: PROFILE (PERFIL) -->
+                <div id="view-profile" class="view-section view-profile">
+                    <div class="section-header-row">
+                        <h2 class="section-title">Meu Perfil Profissional</h2>
+                    </div>
+                    <div class="profile-card card-glass"
+                        style="margin-top: 1.5rem; padding: 2.5rem; text-align: center; max-width: 600px; margin-left: auto; margin-right: auto;">
+                        <div class="profile-avatar-large"
+                            style="width: 120px; height: 120px; background: linear-gradient(135deg, var(--color-primary), #FF2D55); border-radius: 50%; margin: 0 auto 1.5rem; display: flex; align-items: center; justify-content: center; font-size: 3rem; font-weight: 800; color: white; box-shadow: 0 10px 40px rgba(255, 122, 0, 0.3); border: 4px solid var(--color-surface);">
+                            R</div>
+                        <h3 id="profile-name" style="font-size: 1.5rem; margin-bottom: 0.25rem;">Rafael Marra</h3>
+                        <p id="profile-email" style="color: var(--color-text-muted); margin-bottom: 2.5rem;">
+                            rafael@email.com</p>
+
+                        <div class="profile-stats-grid"
+                            style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.5rem; border-top: 1px solid var(--color-border); padding-top: 2rem;">
+                            <div class="profile-stat-box">
+                                <span
+                                    style="display: block; font-size: 1.25rem; font-weight: 700; color: var(--color-primary);">LVL
+                                    1</span>
+                                <small
+                                    style="color: var(--color-text-muted); text-transform: uppercase; font-size: 0.65rem; letter-spacing: 0.05em;">Nível</small>
+                            </div>
+                            <div class="profile-stat-box">
+                                <span style="display: block; font-size: 1.25rem; font-weight: 700;">25 XP</span>
+                                <small
+                                    style="color: var(--color-text-muted); text-transform: uppercase; font-size: 0.65rem; letter-spacing: 0.05em;">Pontos</small>
+                            </div>
+                            <div class="profile-stat-box">
+                                <span style="display: block; font-size: 1.25rem; font-weight: 700;">32</span>
+                                <small
+                                    style="color: var(--color-text-muted); text-transform: uppercase; font-size: 0.65rem; letter-spacing: 0.05em;">Lançamentos</small>
+                            </div>
+                        </div>
+
+                        <div style="margin-top: 3rem; display: flex; flex-direction: column; gap: 1rem;">
+                            <div style="display: flex; gap: 1rem;">
+                                <button id="btn-open-categorias-side" class="btn-primary-action" style="flex: 1;">
+                                    <i class="fas fa-list-ul"></i> Categorias
+                                </button>
+                                <button class="btn-secondary" style="flex: 1;" data-target="security"
+                                    onclick="document.querySelector('.dashboard-main-content').setAttribute('data-view', 'security')">
+                                    <i class="fas fa-shield-alt"></i> Segurança
+                                </button>
+                            </div>
+                            <div style="display: flex; gap: 1rem;">
+                                <button id="btn-edit-profile" class="btn-secondary" style="flex: 1;">Editar
+                                    Perfil</button>
+                                <button id="btn-logout-mobile" class="btn-danger-outline"
+                                    style="flex: 1; border: 1px solid var(--color-danger); color: var(--color-danger); background: transparent; border-radius: 8px; font-weight: 700; cursor: pointer;">
+                                    <i class="fas fa-sign-out-alt"></i> Sair
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- Profile Edit Modal -->
+    <div id="modal-profile" class="modal-overlay">
+        <div class="modal-content card-glass">
+            <div class="modal-header">
+                <h2><i class="fas fa-user-edit"></i> Editar Perfil</h2>
+                <button class="btn-close btn-close-premium"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <form id="profile-form" class="modern-form">
+                    <div class="form-field">
+                        <label>Nome Completo</label>
+                        <input type="text" id="edit-full-name" required placeholder="Seu nome completo">
+                    </div>
+                    <div class="form-field">
+                        <label>E-mail (Apenas visualização)</label>
+                        <input type="email" id="edit-email" disabled style="opacity: 0.6; cursor: not-allowed;">
+                        <small
+                            style="color: var(--color-text-muted); font-size: 0.7rem; margin-top: 0.5rem; display: block;">A
+                            alteração de e-mail requer confirmação de segurança.</small>
+                    </div>
+                    <button type="submit" class="btn-primary-action" style="width: 100%; margin-top: 1rem;">Salvar
+                        Alterações</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals Section -->
+    <div id="modal-transaction" class="modal-overlay">
+        <div class="modal-content card-glass">
+            <div class="modal-header">
+                <h2><i class="fas fa-exchange-alt"></i> Novo Lançamento</h2>
+                <button class="btn-close btn-close-premium"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <form id="transaction-form" class="modern-form">
+                    <div class="form-field">
+                        <label>Descrição</label>
+                        <input type="text" id="descricao" required placeholder="Ex: Mercado Semanal">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-field">
+                            <label>Valor (R$)</label>
+                            <input type="number" id="valor" required step="0.01" placeholder="0,00">
+                        </div>
+                        <div class="form-field">
+                            <label>Data</label>
+                            <input type="date" id="data" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-field">
+                            <label>Tipo</label>
+                            <select id="tipo" required>
+                                <option value="saida">Despesa</option>
+                                <option value="entrada">Receita</option>
+                                <option value="transferencia">Transferência</option>
+                            </select>
+                        </div>
+                        <div class="form-field">
+                            <label>Categoria</label>
+                            <select id="categoria" required>
+                                <!-- Populado via JS -->
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-field">
+                            <label>Conta / Carteira</label>
+                            <select id="conta" required>
+                                <!-- Populado via JS -->
+                            </select>
+                        </div>
+                        <div class="form-field">
+                            <label>Forma de Pagamento</label>
+                            <select id="forma-pagamento">
+                                <option value="dinheiro">Dinheiro / Pix</option>
+                                <option value="debito">Débito</option>
+                                <option value="credito">Crédito</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div id="field-parcelas" class="form-field" style="display: none;">
+                        <label>Número de Parcelas</label>
+                        <input type="number" id="parcelas" value="1" min="1">
+                    </div>
+                    <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+                        <button type="submit" class="btn-primary-action" style="flex: 2;">Confirmar Lançamento</button>
+                        <button type="button" id="btn-ocr-trigger" class="btn-secondary" style="flex: 1;"><i
+                                class="fas fa-camera"></i> Escanear</button>
+                        <input type="file" id="input-ocr-file" accept="image/*" style="display: none;">
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div id="modal-category" class="modal-overlay">
+        <div class="modal-content card-glass">
+            <div class="modal-header">
+                <h2><i class="fas fa-tags"></i> Gerenciar Categorias</h2>
+                <button class="btn-close btn-close-premium"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <form id="category-form" class="modern-form">
+                    <div class="form-field">
+                        <label>Nome da Categoria</label>
+                        <input type="text" id="cat-nome" required placeholder="Ex: Assinaturas">
+                    </div>
+                    <div class="form-field">
+                        <label>Tipo</label>
+                        <select id="cat-tipo" required>
+                            <option value="saida">Despesa</option>
+                            <option value="entrada">Receita</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn-primary-action">Salvar Categoria</button>
+                </form>
+                <div id="categorias-list" class="mini-list" style="margin-top: 1.5rem;"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-account" class="modal-overlay">
+        <div class="modal-content card-glass">
+            <div class="modal-header">
+                <h2><i class="fas fa-wallet"></i> Nova Conta</h2>
+                <button class="btn-close btn-close-premium"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <form id="account-form" class="modern-form">
+                    <input type="hidden" id="edit-account-id">
+                    <div class="form-field">
+                        <label>Nome da Conta</label>
+                        <input type="text" id="account-nome" required placeholder="Ex: Nubank">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-field">
+                            <label>Saldo Inicial</label>
+                            <input type="number" id="account-saldo" step="0.01" value="0.00">
+                        </div>
+                        <div class="form-field">
+                            <label>Tipo</label>
+                            <select id="account-tipo">
+                                <option value="corrente">Conta Corrente</option>
+                                <option value="poupanca">Poupança</option>
+                                <option value="investimento">Investimento</option>
+                                <option value="dinheiro">Dinheiro</option>
+                                <option value="credito">Cartão de Crédito</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div id="credit-card-settings"
+                        style="display: none; border-top: 1px dashed var(--color-border); padding-top: 1rem; margin-top: 1rem;">
+                        <div class="form-row">
+                            <div class="form-field">
+                                <label>Limite Total</label>
+                                <input type="number" id="account-limite" step="0.01" placeholder="0,00">
+                            </div>
+                            <div class="form-field">
+                                <label>Dia Vencimento</label>
+                                <input type="number" id="account-vencimento" min="1" max="31" placeholder="Ex: 10">
+                            </div>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn-primary-action">Criar Conta</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-goal" class="modal-overlay">
+        <div class="modal-content card-glass">
+            <div class="modal-header">
+                <h2><i class="fas fa-bullseye"></i> Definir Meta</h2>
+                <button class="btn-close btn-close-premium"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <form id="goal-form" class="modern-form">
+                    <div class="form-field">
+                        <label>O que você quer conquistar?</label>
+                        <input type="text" id="goal-name" required placeholder="Ex: Viagem de Fim de Ano">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-field">
+                            <label>Valor Objetivo</label>
+                            <input type="number" id="goal-target" required step="0.01" placeholder="0,00">
+                        </div>
+                        <div class="form-field">
+                            <label>Prazo (Opcional)</label>
+                            <input type="date" id="goal-deadline">
+                        </div>
+                    </div>
+                    <div class="form-field">
+                        <label>Quanto você já tem? (Opcional)</label>
+                        <input type="number" id="goal-current" step="0.01" value="0.00">
+                    </div>
+                    <button type="submit" class="btn-primary-action">Salvar Meta</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-budget" class="modal-overlay">
+        <div class="modal-content card-glass">
+            <div class="modal-header">
+                <h2><i class="fas fa-piggy-bank"></i> Limite de Gasto</h2>
+                <button class="btn-close btn-close-premium"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <form id="budget-form" class="modern-form">
+                    <div class="form-field">
+                        <label>Categoria</label>
+                        <select id="budget-category" required>
+                            <!-- Populado via JS -->
+                        </select>
+                    </div>
+                    <div class="form-field">
+                        <label>Valor Limite Mensal</label>
+                        <input type="number" id="budget-value" required step="0.01">
+                    </div>
+                    <button type="submit" class="btn-primary-action">Definir Limite</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- C.A.S.H. Unit: Mascote Interativo (V4) -->
+    <div id="mascot-trigger" class="cashy-v4-container">
+        <div class="mascot-speech-bubble active">
+            <div id="mascot-message">Inicializando sistemas...</div>
+            <div id="mascot-speech-actions" style="display: none; margin-top: 0.5rem; gap: 0.5rem;">
+                <button id="btn-mascot-next" class="btn-mascot-action">Próximo</button>
+            </div>
+            <div class="tip-close">&times;</div>
+        </div>
+        <div class="cashy-v4-svg-wrapper">
+            <div class="cashy-aura"></div>
+            <div id="mascot-svg-container"></div>
+            <div class="mascot-visor">
+                <div id="visor-eyes" class="visor-eyes"></div>
+                <div id="visor-numbers" class="visor-numbers" style="display: none;">
+                    <span id="visor-amount">0.00</span>
+                </div>
+                <div id="visor-alert" class="visor-alert" style="display: none;">!</div>
+            </div>
+        </div>
+        <div id="mascot-level-badge" class="mascot-level-badge">LVL 1</div>
+    </div>
+
+
+    <!-- Modal: Nova Recorrência -->
+    <div id="modal-recorrencia" class="modal-premium">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title-group">
+                    <div class="modal-icon-wrapper"
+                        style="background: rgba(255, 122, 0, 0.1); color: var(--color-primary);">
+                        <i class="fas fa-sync"></i>
+                    </div>
+                    <div>
+                        <h2>Nova Recorrência</h2>
+                        <p>Assinatura ou Gasto Fixo</p>
+                    </div>
+                </div>
+                <button class="btn-close-modal"
+                    onclick="this.closest('.modal-premium').classList.remove('active')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="recurring-form" class="modern-form">
+                    <div class="form-row">
+                        <div class="form-field">
+                            <label>Descrição</label>
+                            <input type="text" id="rec-desc" required placeholder="Ex: Netflix, Aluguel...">
+                        </div>
+                    </div>
+                    <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div class="form-field">
+                            <label>Valor</label>
+                            <input type="number" id="rec-valor" required step="0.01" placeholder="0,00">
+                        </div>
+                        <div class="form-field">
+                            <label>Categoria</label>
+                            <select id="rec-categoria" required>
+                                <option value="">Selecione...</option>
+                                <!-- Preenchido via JS -->
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div class="form-field">
+                            <label>Tipo</label>
+                            <select id="rec-tipo">
+                                <option value="saida">Despesa (Saída)</option>
+                                <option value="entrada">Receita (Entrada)</option>
+                            </select>
+                        </div>
+                        <div class="form-field">
+                            <label>Conta para Débito/Crédito</label>
+                            <select id="rec-conta" required>
+                                <option value="">Selecione...</option>
+                                <!-- Preenchido via JS -->
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-field">
+                            <label>Dia de Vencimento</label>
+                            <input type="number" id="rec-dia" required min="1" max="31" placeholder="Dia (Ex: 10)">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn-primary-action">Ativar Recorrência</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Global Search Modal (Spotlight Style) -->
+    <div id="global-search-overlay" class="modal-overlay search-overlay-spotlight">
+        <div class="search-modal-content card-glass">
+            <div class="search-input-wrapper">
+                <i class="fas fa-search search-icon"></i>
+                <input type="text" id="global-search-input"
+                    placeholder="O que você está procurando? (Ex: 'Pizza', 'Janeiro', 'Mercado'...)" autocomplete="off">
+                <kbd class="search-kbd">ESC</kbd>
+            </div>
+            <div id="global-search-results" class="search-results-area">
+                <div class="search-empty-state">
+                    <i class="fas fa-magic"></i>
+                    <p>Busque por descrições, categorias, meses ou valores...</p>
+                    <div class="search-tips">
+                        <span>Dica: Digite o nome de um mês para ver o resumo.</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Biometric Lock -->
+    <div id="biometric-lock-overlay" class="lock-overlay glass hidden">
+        <div class="lock-content" style="text-align: center;">
+            <i class="fas fa-fingerprint"
+                style="font-size: 3rem; color: var(--color-primary); margin-bottom: 1rem;"></i>
+            <h2>App Bloqueado</h2>
+            <button id="btn-unlock-biometrics" class="btn-primary-action">Desbloquear</button>
+        </div>
+    </div>
+
+    <!-- Mascot Briefing Modal -->
+    <div id="modal-briefing" class="modal-premium">
+        <div class="modal-content-briefing">
+            <div class="briefing-header">
+                <div class="briefing-robot-icon">
+                    <img src="assets/mascot.svg" alt="Cashy">
+                </div>
+                <div class="briefing-title">
+                    <h2>Briefing do Cashy</h2>
+                    <p id="briefing-date">Resumo de Hoje</p>
+                </div>
+                <button class="btn-close-briefing"
+                    style="position: absolute; top: 1.5rem; right: 1.5rem; background: none; border: none; color: var(--color-text-muted); font-size: 1.5rem; cursor: pointer;">&times;</button>
+            </div>
+            <div class="modal-body" style="padding: 2rem; overflow-y: auto;">
+                <div id="briefing-content" class="briefing-list"
+                    style="display: flex; flex-direction: column; gap: 1.5rem;">
+                    <!-- Preenchido via JS -->
+                </div>
+            </div>
+            <div class="modal-footer"
+                style="padding: 1.5rem; border-top: 1px solid var(--color-border); display: flex; justify-content: flex-end;">
+                <button id="btn-close-briefing-footer" class="btn-secondary">Entendido</button>
+            </div>
+        </div>
+    </div>
+
+
+
+
+
+    <!-- Footer Minimalista -->
+    <footer class="dashboard-footer-minimal">
+        <div class="footer-container">
+            <div class="footer-info">
+                <p>&copy; 2024 CashFlow Financial Intelligence</p>
+            </div>
+            <div class="footer-badges">
+                <div class="badge-safe">
+                    <i class="fas fa-shield-halved"></i>
+                    <span>Criptografia 256-bit</span>
+                </div>
+                <div class="badge-version">
+                    <span>v9.4.2 Premium</span>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    </div> <!-- Fim da dashboard-layout (linha 28) -->
+
+    <div id="toast-container"></div>
+    <div id="onboarding-overlay" class="onboarding-overlay"></div>
+
+    <!-- Modal PIN (Fort Knox) -->
+    <div id="modal-pin" class="modal-pin hidden">
+        <div class="pin-container">
+            <div class="mascot-icon" style="width: 80px; margin: 0 auto 1.5rem;">
+                <img src="assets/mascot.svg" alt="Cashy" style="width: 100%;">
+            </div>
+            <h2 id="pin-title" style="font-size: 1.25rem; margin-bottom: 0.5rem;">Segurança CashFlow</h2>
+            <p id="pin-msg" style="color: var(--color-text-muted); font-size: 0.9rem;">Insira seu PIN de 4 dígitos</p>
+
+            <div class="pin-dots">
+                <div class="pin-dot"></div>
+                <div class="pin-dot"></div>
+                <div class="pin-dot"></div>
+                <div class="pin-dot"></div>
+            </div>
+
+            <div class="pin-keyboard">
+                <button class="pin-key" onclick="handlePinInput('1')">1</button>
+                <button class="pin-key" onclick="handlePinInput('2')">2</button>
+                <button class="pin-key" onclick="handlePinInput('3')">3</button>
+                <button class="pin-key" onclick="handlePinInput('4')">4</button>
+                <button class="pin-key" onclick="handlePinInput('5')">5</button>
+                <button class="pin-key" onclick="handlePinInput('6')">6</button>
+                <button class="pin-key" onclick="handlePinInput('7')">7</button>
+                <button class="pin-key" onclick="handlePinInput('8')">8</button>
+                <button class="pin-key" onclick="handlePinInput('9')">9</button>
+                <button class="pin-key" style="visibility: hidden;"></button>
+                <button class="pin-key" onclick="handlePinInput('0')">0</button>
+                <button class="pin-key backspace" onclick="handlePinInput('DEL')">
+                    <i class="fas fa-backspace"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <!-- Config & Auth -->
+    <script src="js/config.js?v=9" defer></script>
+    <script src="auth.js?v=9" defer></script>
+
+    <script src="js/mascot.js?v=9" defer></script>
+    <script src="js/ui.js?v=9" defer></script>
+    <script src="js/finance.js?v=9" defer></script>
+    <script src="js/transactions.js?v=9" defer></script>
+    <script src="js/reports.js?v=9" defer></script>
+    <script src="js/gamification.js?v=9" defer></script>
+    <script src="js/security-vault.js?v=9" defer></script>
+    <script src="js/import.js"></script>
+    <div id="modal-parser" class="modal-overlay">
+        <div class="modal-content card-glass" style="max-width: 500px;">
+            <div class="modal-header">
+                <h2><i class="fas fa-paste"></i> Parser de Notificações</h2>
+                <button class="btn-close btn-close-premium"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <p style="font-size: 0.8rem; color: var(--color-text-muted); margin-bottom: 1.5rem;">
+                    Cole aqui o texto da notificação do seu banco ou SMS. O Cashy irá identificar o valor e a categoria
+                    para você.
+                </p>
+                <textarea id="parser-text"
+                    placeholder="Ex: Compra aprovada no seu cartão final 1234: R$ 45,90 em PADARIA SAO JOSE em 11/05..."
+                    style="width: 100%; height: 150px; padding: 1rem; border-radius: 12px; background: var(--color-surface-secondary); border: 1px solid var(--color-border); color: white; font-family: inherit; margin-bottom: 1.5rem; resize: none;"></textarea>
+
+                <div id="parser-preview" class="card-glass"
+                    style="display: none; padding: 1rem; margin-bottom: 1.5rem; background: rgba(255,255,255,0.05);">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                        <span
+                            style="font-size: 0.7rem; text-transform: uppercase; color: var(--color-primary); font-weight: 700;">Identificado:</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <h4 id="parser-preview-desc" style="margin:0;">--</h4>
+                        <h3 id="parser-preview-valor" style="margin:0; color: var(--color-danger);">R$ 0,00</h3>
+                    </div>
+                    <p id="parser-preview-cat"
+                        style="font-size: 0.75rem; color: var(--color-text-muted); margin-top: 0.25rem;">Categoria: --
+                    </p>
+                </div>
+
+                <button id="btn-parser-confirm" class="btn-primary-action" style="width: 100%;" disabled>Confirmar
+                    Lançamento</button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Mobile Bottom Navigation (Fase 14) -->
+    <nav class="mobile-nav-bar">
+        <a href="#" class="mobile-nav-item active" data-target="dashboard">
+            <i class="fas fa-th-large"></i>
+            <span>Início</span>
+        </a>
+        <a href="#" class="mobile-nav-item" data-target="wallets">
+            <i class="fas fa-wallet"></i>
+            <span>Contas</span>
+        </a>
+        <div style="display: flex; justify-content: center;">
+            <button id="btn-fab-add" class="mobile-fab-add"
+                onclick="document.getElementById('btn-new-transaction').click()">
+                <i class="fas fa-plus"></i>
+            </button>
+        </div>
+        <a href="#" class="mobile-nav-item" data-target="goals">
+            <i class="fas fa-bullseye"></i>
+            <span>Metas</span>
+        </a>
+        <a href="#" class="mobile-nav-item" data-target="profile">
+            <i class="fas fa-user-circle"></i>
+            <span>Perfil</span>
+        </a>
+    </nav>
+
+    <footer class="view-footer" style="margin-top: 4rem; padding-bottom: 8rem; text-align: center; border-top: 1px solid var(--color-border); padding-top: 2rem;">
+        <p style="color: var(--color-text-muted); font-size: 0.8rem; margin-bottom: 1rem;">&copy; 2026 CashFlow - Controle Financeiro Inteligente</p>
+        
+        <div class="trust-signals-grid">
+            <div class="trust-item">
+                <i class="fas fa-shield-alt"></i>
+                <span>Encriptação AES-256</span>
+            </div>
+            <div class="trust-item">
+                <i class="fas fa-lock"></i>
+                <span>SSL Seguro</span>
+            </div>
+            <div class="trust-item">
+                <i class="fas fa-user-shield"></i>
+                <span>Privacidade GDPR</span>
+            </div>
+        </div>
+    </footer>
+
+
+
+    <script src="js/charts.js?v=9" defer></script>
+    <script src="js/events.js?v=9" defer></script>
+    <script src="js/enhancements.js?v=9" defer></script>
+    <script src="js/pwa-analytics.js" defer></script>
+    <script src="main.js?v=9" defer></script>
+</body>
+
+</html>

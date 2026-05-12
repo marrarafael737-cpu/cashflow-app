@@ -1,0 +1,198 @@
+/* css/layout.css - Dashboard Structure, Sidebar & Navigation */
+
+.dashboard-layout {
+    display: flex;
+    min-height: 100vh;
+    width: 100%;
+    background-color: var(--color-background);
+    position: relative;
+    overflow-x: hidden;
+}
+
+@media (max-width: 1024px) {
+    .dashboard-layout {
+        flex-direction: column;
+    }
+}
+
+/* Sidebar Desktop */
+.sidebar-desktop {
+    width: 260px;
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    border-right: 1px solid var(--glass-border);
+    display: flex;
+    flex-direction: column;
+    padding: 2rem 1.5rem;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    z-index: 100;
+    overflow-y: auto;
+}
+
+.sidebar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 3rem;
+}
+
+.sidebar-header .brand {
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: -0.05em;
+}
+
+.brand span { color: var(--color-primary); }
+
+.sidebar-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    flex-grow: 1;
+}
+
+.nav-section-label {
+    font-size: 0.65rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+    letter-spacing: 1px;
+    margin: 1.25rem 0 0.5rem 0.75rem;
+    opacity: 0.6;
+}
+
+.nav-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.875rem 1rem;
+    color: var(--color-text-muted);
+    text-decoration: none;
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.nav-item:hover {
+    color: var(--color-text-main);
+    background-color: var(--color-surface-secondary);
+}
+
+.nav-item.active {
+    color: var(--color-primary);
+    background-color: rgba(255, 122, 0, 0.05);
+    box-shadow: inset 3px 0 0 var(--color-primary);
+}
+
+/* Main Content Area */
+.dashboard-main-content {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    overflow-x: hidden;
+    position: relative;
+    padding-bottom: 2rem;
+}
+
+/* Mobile Specifics */
+.topbar-mobile {
+    display: none;
+    padding: 1rem 1.5rem;
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    border-bottom: 1px solid var(--glass-border);
+    justify-content: space-between;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
+.view-section {
+    display: none;
+    width: 100%;
+    animation: fadeIn 0.4s ease;
+}
+
+.view-section.active {
+    display: block;
+}
+
+/* Dashboard view ativa por padrão */
+#view-dashboard.active {
+    display: block;
+}
+
+.bottom-nav-mobile {
+    display: none;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    border-top: 1px solid var(--glass-border);
+    padding: 0.75rem 1rem;
+    z-index: 2000;
+    justify-content: space-around;
+}
+
+@media (max-width: 1024px) {
+    .dashboard-layout {
+        display: block; /* No mobile, os elementos se empilham ou sobrepõem */
+        flex-direction: column;
+    }
+
+    .sidebar-desktop {
+        position: fixed;
+        top: 0;
+        left: -100%;
+        width: 85%;
+        max-width: 300px;
+        height: 100%; /* Use 100% para evitar problemas com barras de endereço mobile */
+        height: -webkit-fill-available;
+        z-index: 5000;
+        transition: left 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        display: flex !important;
+        box-shadow: 20px 0 50px rgba(0,0,0,0.5);
+    }
+
+    .sidebar-desktop.mobile-active {
+        left: 0;
+    }
+
+    .topbar-mobile {
+        display: flex;
+        width: 100%;
+        background: #09090B;
+        border-bottom: 1px solid var(--color-border);
+    }
+
+    .mobile-actions {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .bottom-nav-mobile { display: flex; }
+    
+    .dashboard-main-content { 
+        padding-top: 0;
+        padding-bottom: 100px; 
+        min-height: 100vh;
+    }
+    
+    .charts-row, .oracle-grid, .reports-grid {
+        display: grid !important;
+        grid-template-columns: 1fr !important;
+        gap: 1.5rem !important;
+    }
+
+    .dashboard-content-padding {
+        padding: 1.5rem !important;
+    }
+}

@@ -1,0 +1,45 @@
+<svg viewBox="0 0 200 200" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" id="mascot-svg">
+    <!-- Base Glow (Propulsion) -->
+    <ellipse class="cashy-base-glow" cx="100" cy="185" rx="35" ry="8" fill="#FF6A00" opacity="0.4" />
+    <!-- Arms (Back layer) -->
+    <path id="arm-left" d="M55 125 Q40 130 45 150" fill="none" stroke="#1F1F1F" stroke-width="8" stroke-linecap="round" />
+    <path id="arm-right" d="M145 125 Q160 130 155 150" fill="none" stroke="#1F1F1F" stroke-width="8" stroke-linecap="round" />
+    <!-- Neck -->
+    <rect x="90" y="105" width="20" height="10" fill="#121212" />
+    <!-- Torso (Body) -->
+    <rect class="cashy-body-gradient" x="60" y="110" width="80" height="60" rx="15" />
+    <!-- Chest Screen -->
+    <rect x="75" y="122" width="50" height="36" rx="6" fill="#0A0A0A" />
+    <g class="cashy-chest-icon">
+        <rect x="85" y="142" width="6" height="8" rx="1" fill="#FF6A00" />
+        <rect x="95" y="134" width="6" height="16" rx="1" fill="#FF6A00" opacity="0.8" />
+        <rect x="105" y="128" width="6" height="22" rx="1" fill="#FF6A00" opacity="0.6" />
+    </g>
+    <!-- Base (Bottom Part) -->
+    <path d="M70 170 L130 170 Q120 185 100 185 Q80 185 70 170" fill="#1F1F1F" />
+    <ellipse cx="100" cy="182" rx="20" ry="4" fill="#FF6A00" />
+    <!-- Head -->
+    <g id="head-group">
+        <circle id="ear-left" cx="55" cy="75" r="12" fill="#FF6A00" />
+        <circle id="ear-right" cx="145" cy="75" r="12" fill="#FF6A00" />
+        <rect class="cashy-head-gradient" x="55" y="35" width="90" height="75" rx="25" />
+        <rect x="62" y="45" width="76" height="55" rx="18" fill="#121212" />
+        <rect x="65" y="48" width="70" height="49" rx="16" fill="#050505" />
+        <g id="visor-eyes">
+            <g id="eye-group-left" class="eye-group">
+                <path id="eye-left" class="cashy-eye" d="M82 72 L94 72" stroke="#FF6A00" stroke-width="4" stroke-linecap="round" />
+            </g>
+            <g id="eye-group-right" class="eye-group">
+                <path id="eye-right" class="cashy-eye" d="M106 72 L118 72" stroke="#FF6A00" stroke-width="4" stroke-linecap="round" />
+            </g>
+        </g>
+        <g id="visor-numbers" style="display: none;">
+            <text x="100" y="78" fill="#FF6A00" text-anchor="middle" id="visor-amount" style="font-size: 14px; font-weight: bold;">R$0</text>
+        </g>
+        <g id="visor-alert" style="display: none;">
+            <text x="100" y="80" fill="#f87171" text-anchor="middle" style="font-size: 24px; font-weight: bold;">!</text>
+        </g>
+        <line x1="100" y1="35" x2="100" y2="15" stroke="#1F1F1F" stroke-width="4" />
+        <circle id="antenna-ball" cx="100" cy="15" r="5" fill="#FF6A00" />
+    </g>
+</svg>
