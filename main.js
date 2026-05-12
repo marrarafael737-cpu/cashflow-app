@@ -127,15 +127,7 @@ async function initDashboard() {
             if (typeof setupRecurringEvents === 'function') setupRecurringEvents(user.id);
             if (typeof setupParserEvents === 'function') setupParserEvents(user.id);
 
-            // Esconder Loader com suavidade
-            const loader = document.getElementById('loading-overlay');
-            if (loader) {
-                loader.style.opacity = '0';
-                setTimeout(() => {
-                    loader.remove();
-                    console.log('C.A.S.H. Unit: Interface Liberada.');
-                }, 500);
-            }
+
 
             // Background load
             loadMetas(user.id).catch(e => console.error('Erro Metas:', e));
@@ -148,6 +140,16 @@ async function initDashboard() {
             }
         } catch (dataError) {
             console.warn('Alguns dados não puderam ser carregados, mas o app continua funcional.', dataError);
+        } finally {
+            // --- REMOVER LOADER SEMPRE ---
+            const loader = document.getElementById('loading-overlay');
+            if (loader) {
+                loader.style.opacity = '0';
+                setTimeout(() => {
+                    loader.remove();
+                    console.log('C.A.S.H. Unit: Interface Liberada.');
+                }, 500);
+            }
         }
         
         showSkeletons(false);
