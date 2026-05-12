@@ -169,7 +169,8 @@ function setupGoalsLogic(userId) {
             const nome = document.getElementById('goal-name').value;
             const valor_objetivo = parseFloat(document.getElementById('goal-target').value.replace(',', '.')) || 0;
             const valor_atual = parseFloat(document.getElementById('goal-current').value.replace(',', '.')) || 0;
-            const prazo = document.getElementById('goal-deadline') ? document.getElementById('goal-deadline').value : null;
+            let prazo = document.getElementById('goal-deadline') ? document.getElementById('goal-deadline').value : null;
+            if (prazo === "") prazo = null;
 
             if (!nome || valor_objetivo <= 0) {
                 showToast('A meta deve ter um nome e um valor alvo maior que zero.', 'alert');
