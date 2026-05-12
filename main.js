@@ -45,6 +45,46 @@ function getCategoryConfig(name) {
 }
 
 
+/**
+ * Atualiza o avatar na sidebar (avatar-header) e no modal de perfil (profile-avatar-preview).
+ * Se houver URL de imagem, usa <img>. Senão, mostra as iniciais do nome.
+ */
+function updateAvatarUI(fullName, avatarUrl) {
+    const initials = (fullName || 'U').trim().split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+
+    // Sidebar avatar
+    const sidebarAvatar = document.getElementById('avatar-header');
+    const sidebarInitials = document.getElementById('avatar-initials');
+    if (sidebarAvatar) {
+        if (avatarUrl) {
+            sidebarAvatar.innerHTML = `<img src="${avatarUrl}" alt="Avatar" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+        } else {
+            sidebarAvatar.innerHTML = `<span id="avatar-initials" style="font-size:0.875rem;">${initials}</span>`;
+        }
+    }
+
+    // Modal preview
+    const previewEl = document.getElementById('profile-avatar-preview');
+    const previewInitials = document.getElementById('profile-avatar-initials');
+    if (previewEl) {
+        if (avatarUrl) {
+            previewEl.innerHTML = `<img src="${avatarUrl}" alt="Avatar" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+        } else if (previewInitials) {
+            previewInitials.textContent = initials;
+        }
+    }
+}
+
+/**
+ * Exibe uma prévia imediata da imagem escolhida no modal de perfil (antes do upload).
+ */
+function setAvatarPreview(dataUrl) {
+    const previewEl = document.getElementById('profile-avatar-preview');
+    if (previewEl) {
+        previewEl.innerHTML = `<img src="${dataUrl}" alt="Preview" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+    }
+}
+
 // Initialization
 document.addEventListener('DOMContentLoaded', async () => {
     const path = window.location.pathname;
@@ -79,6 +119,10 @@ async function initDashboard() {
             const nameElements = document.querySelectorAll('#user-name-header, #profile-name');
             const fullName = user.user_metadata?.full_name || user.user_metadata?.name || 'Usuário CashFlow';
             nameElements.forEach(el => el.textContent = fullName);
+
+            // Atualizar avatar na sidebar e na view de perfil
+            const avatarUrl = user.user_metadata?.avatar_url || null;
+            updateAvatarUI(fullName, avatarUrl);
             
             console.log('C.A.S.H. Unit: Perfil do usuário atualizado na UI.');
         } catch (e) {
@@ -240,6 +284,9 @@ function setupEventListeners(userId) {
             if (u) {
                 document.getElementById('edit-full-name').value = u.user_metadata?.full_name || '';
                 document.getElementById('edit-email').value = u.email || '';
+                const fullName = u.user_metadata?.full_name || u.user_metadata?.name || 'Usuário';
+                const avatarUrl = u.user_metadata?.avatar_url || null;
+                updateAvatarUI(fullName, avatarUrl);
             }
         }},
         { btn: 'btn-open-modal-recorrencia', modal: 'modal-recorrencia', onOpen: () => {
@@ -263,9 +310,25 @@ function setupEventListeners(userId) {
     // 3. Profile Form Submission
     const profileForm = document.getElementById('profile-form');
     if (profileForm) {
+        // Live preview when user picks a file
+        const avatarFileInput = document.getElementById('avatar-file-input');
+        if (avatarFileInput) {
+            avatarFileInput.addEventListener('change', () => {
+                const file = avatarFileInput.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                    setAvatarPreview(ev.target.result);
+                    const status = document.getElementById('avatar-upload-status');
+                    if (status) status.textContent = `📎 ${file.name} selecionada. Clique em Salvar para confirmar.`;
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
         profileForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const newName = document.getElementById('edit-full-name').value;
+            const newName = document.getElementById('edit-full-name').value.trim();
             const btn = profileForm.querySelector('button[type="submit"]');
             if (!btn) return;
             const originalText = btn.innerHTML;
@@ -274,22 +337,52 @@ function setupEventListeners(userId) {
             btn.disabled = true;
 
             try {
-                const { data, error } = await supabase.auth.updateUser({
-                    data: { full_name: newName }
-                });
+                let avatarUrl = null;
 
+                // 1. Upload avatar se um arquivo foi selecionado
+                const fileInput = document.getElementById('avatar-file-input');
+                const file = fileInput?.files[0];
+                if (file) {
+                    const status = document.getElementById('avatar-upload-status');
+                    if (status) status.textContent = '⬆️ Enviando foto...';
+
+                    const u = await getCurrentUser();
+                    const fileExt = file.name.split('.').pop();
+                    const filePath = `${u.id}/avatar.${fileExt}`;
+
+                    const { error: uploadError } = await supabase.storage
+                        .from('avatars')
+                        .upload(filePath, file, { upsert: true, contentType: file.type });
+
+                    if (uploadError) throw uploadError;
+
+                    const { data: urlData } = supabase.storage
+                        .from('avatars')
+                        .getPublicUrl(filePath);
+
+                    avatarUrl = urlData.publicUrl + `?t=${Date.now()}`; // cache bust
+                    if (status) status.textContent = '✅ Foto enviada!';
+                }
+
+                // 2. Montar metadata a salvar
+                const metaUpdate = { full_name: newName };
+                if (avatarUrl) metaUpdate.avatar_url = avatarUrl;
+
+                const { error } = await supabase.auth.updateUser({ data: metaUpdate });
                 if (error) throw error;
 
                 showToast('Perfil atualizado com sucesso! 🚀', 'success');
                 
-                // Atualizar UI imediatamente
+                // 3. Atualizar UI
                 const nameElements = document.querySelectorAll('#user-name-header, #profile-name');
                 nameElements.forEach(el => el.textContent = newName);
+
+                if (avatarUrl) updateAvatarUI(newName, avatarUrl);
                 
                 document.getElementById('modal-profile').classList.remove('active');
             } catch (err) {
                 console.error('Erro ao atualizar perfil:', err);
-                showToast('Erro ao atualizar perfil.', 'error');
+                showToast('Erro ao atualizar perfil: ' + (err.message || 'Tente novamente.'), 'error');
             } finally {
                 btn.innerHTML = originalText;
                 btn.disabled = false;

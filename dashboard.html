@@ -199,8 +199,10 @@
         <div class="sidebar-footer">
             <div class="user-profile">
                 <div id="avatar-header" class="profile-avatar-small"
-                    style="width: 32px; height: 32px; background: var(--color-primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: white;">
-                    R</div>
+                    style="width: 36px; height: 36px; background: var(--color-primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: white; overflow: hidden; flex-shrink: 0; cursor: pointer;"
+                    onclick="document.getElementById('btn-edit-profile')?.click()" title="Editar Perfil">
+                    <span id="avatar-initials">R</span>
+                </div>
                 <div class="user-info">
                     <div id="user-name-header" style="font-size: 0.85rem; font-weight: 600;">Rafael Marra</div>
                     <div id="user-email-header" class="user-email">rafael@email.com</div>
@@ -823,6 +825,22 @@
             </div>
             <div class="modal-body">
                 <form id="profile-form" class="modern-form">
+                    <!-- Avatar Upload Section -->
+                    <div style="display: flex; flex-direction: column; align-items: center; gap: 0.75rem; margin-bottom: 1.5rem;">
+                        <div id="profile-avatar-preview"
+                            style="width: 88px; height: 88px; border-radius: 50%; background: var(--color-primary); display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: 700; color: white; overflow: hidden; border: 3px solid var(--color-primary); position: relative; cursor: pointer;"
+                            onclick="document.getElementById('avatar-file-input').click()"
+                            title="Clique para trocar a foto">
+                            <span id="profile-avatar-initials" style="line-height:1;">R</span>
+                        </div>
+                        <input type="file" id="avatar-file-input" accept="image/*" style="display: none;">
+                        <button type="button" id="btn-change-avatar"
+                            onclick="document.getElementById('avatar-file-input').click()"
+                            style="background: var(--color-surface-secondary); color: var(--color-text-main); border: 1px solid var(--color-border); border-radius: 8px; padding: 0.4rem 1rem; font-size: 0.8rem; cursor: pointer; display: flex; align-items: center; gap: 0.4rem;">
+                            <i class="fas fa-camera"></i> Trocar Foto
+                        </button>
+                        <p id="avatar-upload-status" style="font-size: 0.72rem; color: var(--color-text-muted); margin: 0;"></p>
+                    </div>
                     <div class="form-field">
                         <label>Nome Completo</label>
                         <input type="text" id="edit-full-name" required placeholder="Seu nome completo">
@@ -830,12 +848,9 @@
                     <div class="form-field">
                         <label>E-mail (Apenas visualização)</label>
                         <input type="email" id="edit-email" disabled style="opacity: 0.6; cursor: not-allowed;">
-                        <small
-                            style="color: var(--color-text-muted); font-size: 0.7rem; margin-top: 0.5rem; display: block;">A
-                            alteração de e-mail requer confirmação de segurança.</small>
+                        <small style="color: var(--color-text-muted); font-size: 0.7rem; margin-top: 0.5rem; display: block;">A alteração de e-mail requer confirmação de segurança.</small>
                     </div>
-                    <button type="submit" class="btn-primary-action" style="width: 100%; margin-top: 1rem;">Salvar
-                        Alterações</button>
+                    <button type="submit" class="btn-primary-action" style="width: 100%; margin-top: 1rem;">Salvar Alterações</button>
                 </form>
             </div>
         </div>
