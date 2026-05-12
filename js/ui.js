@@ -412,30 +412,88 @@ async function renderWallets() {
     }
 
     grid.innerHTML = _contas.map(c => {
-        // Calcular saldo real
         const saldoTransacoes = _allTransactions
             .filter(t => t.conta_id === c.id)
             .reduce((acc, t) => acc + (t.tipo === "entrada" ? parseFloat(t.valor) : -parseFloat(t.valor)), 0);
         
         const saldoFinal = (parseFloat(c.saldo_inicial) || 0) + saldoTransacoes;
         const color = c.cor || "var(--color-primary)";
+        const isNegative = saldoFinal < 0;
+
+        const typeLabels = { corrente: 'Conta Corrente', poupanca: 'Poupança', investimento: 'Investimento', dinheiro: 'Dinheiro', credito: 'Cartão de Crédito' };
+        const typeLabel = typeLabels[c.tipo] || c.tipo || 'Conta';
+
+        const creditInfo = c.tipo === 'credito' ? `
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:0.6rem; padding-top:0.6rem; border-top: 1px solid rgba(255,255,255,0.07);">
+                <span style="font-size:0.68rem; color:var(--color-text-muted);">Limite</span>
+                <span style="font-size:0.75rem; font-weight:600; color:var(--color-text-main);">${formatar(c.limite || 0)}</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:0.3rem;">
+                <span style="font-size:0.68rem; color:var(--color-text-muted);">Vence dia</span>
+                <span style="font-size:0.75rem; font-weight:600; color:var(--color-warning);">${c.dia_vencimento || '—'}</span>
+            </div>
+        ` : '';
 
         return `
-            <div class="wallet-card card-glass" style="border-left: 4px solid ${color};">
-                <div>
-                    <div class="wallet-type-icon">
-                        <i class="${getAccountIcon(c.tipo)}"></i>
+            <div style="
+                background: var(--color-surface);
+                border: 1px solid var(--color-border);
+                border-radius: 16px;
+                overflow: hidden;
+                display: flex;
+                flex-direction: column;
+                box-shadow: var(--shadow-md);
+                transition: transform 0.2s ease, box-shadow 0.2s ease;
+            " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 30px rgba(0,0,0,0.4)'"
+               onmouseout="this.style.transform=''; this.style.boxShadow='var(--shadow-md)'">
+
+                <!-- Card Header -->
+                <div style="
+                    background: ${color}18;
+                    border-bottom: 1px solid ${color}30;
+                    padding: 1rem 1.25rem;
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                ">
+                    <div style="display:flex; align-items:center; gap:0.65rem;">
+                        <div style="
+                            width: 36px; height: 36px;
+                            background: ${color}25;
+                            border-radius: 10px;
+                            display: flex; align-items: center; justify-content: center;
+                            border: 1px solid ${color}40;
+                        ">
+                            <i class="${getAccountIcon(c.tipo)}" style="color:${color}; font-size:0.9rem;"></i>
+                        </div>
+                        <div>
+                            <div style="font-size:0.85rem; font-weight:700; color:var(--color-text-main); line-height:1.2;">${escapeHTML(c.nome)}</div>
+                            <div style="font-size:0.65rem; color:var(--color-text-muted); margin-top:0.1rem;">${typeLabel}</div>
+                        </div>
                     </div>
-                    <div class="wallet-balance privacy-blur">${formatar(saldoFinal)}</div>
-                    <div class="wallet-name">${escapeHTML(c.nome)}</div>
+                    <div style="display:flex; gap:0.35rem;">
+                        <button onclick="handleEditAccount('${c.id}')" title="Editar" style="background:transparent; border:none; color:var(--color-text-muted); cursor:pointer; padding:0.3rem; border-radius:6px; transition:color 0.2s;"
+                            onmouseover="this.style.color='var(--color-primary)'" onmouseout="this.style.color='var(--color-text-muted)'">
+                            <i class="fas fa-pen" style="font-size:0.75rem;"></i>
+                        </button>
+                        <button onclick="handleDeleteAccount('${c.id}')" title="Excluir" style="background:transparent; border:none; color:var(--color-text-muted); cursor:pointer; padding:0.3rem; border-radius:6px; transition:color 0.2s;"
+                            onmouseover="this.style.color='var(--color-danger)'" onmouseout="this.style.color='var(--color-text-muted)'">
+                            <i class="fas fa-trash" style="font-size:0.75rem;"></i>
+                        </button>
+                    </div>
                 </div>
-                <div class="wallet-actions">
-                    <button class="btn-icon-premium-mini" onclick="handleDeleteAccount('${c.id}')" title="Excluir">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                    <button class="btn-icon-premium-mini" onclick="handleEditAccount('${c.id}')" title="Editar">
-                        <i class="fas fa-edit"></i>
-                    </button>
+
+                <!-- Card Body -->
+                <div style="padding: 1rem 1.25rem; flex:1;">
+                    <div style="font-size:0.65rem; color:var(--color-text-muted); text-transform:uppercase; letter-spacing:0.06em; margin-bottom:0.3rem;">Saldo Atual</div>
+                    <div class="privacy-blur" style="
+                        font-size: 1.45rem;
+                        font-weight: 800;
+                        color: ${isNegative ? 'var(--color-danger)' : 'var(--color-text-main)'};
+                        letter-spacing: -0.02em;
+                        line-height: 1;
+                    ">${formatar(saldoFinal)}</div>
+                    ${creditInfo}
                 </div>
             </div>
         `;
