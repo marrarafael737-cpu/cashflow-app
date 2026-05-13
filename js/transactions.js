@@ -12,9 +12,9 @@ async function initializeCategories(userId) {
     try {
         const { data: cats, error: e1 } = await supabase.from('categorias').select('*').eq('user_id', userId);
         const { data: subs, error: e2 } = await supabase.from('subcategorias').select('*').eq('user_id', userId);
-        
+
         if (e1 || e2) throw (e1 || e2);
-        
+
         _categories = cats;
         _subcategories = subs;
         updateCategoryDropdown();
@@ -61,14 +61,14 @@ async function loadOrcamentos(userId) {
 function updateRecurringCategoryDropdown() {
     const catSelect = document.getElementById('rec-categoria');
     const accSelect = document.getElementById('rec-conta');
-    
+
     if (catSelect && _categories) {
-        catSelect.innerHTML = '<option value="">Selecione...</option>' + 
+        catSelect.innerHTML = '<option value="">Selecione...</option>' +
             _categories.map(c => `<option value="${c.id}">${escapeHTML(c.nome)}</option>`).join('');
     }
-    
+
     if (accSelect && _contas) {
-        accSelect.innerHTML = '<option value="">Selecione...</option>' + 
+        accSelect.innerHTML = '<option value="">Selecione...</option>' +
             _contas.map(c => `<option value="${c.id}">${escapeHTML(c.nome)}</option>`).join('');
     }
 }
@@ -121,18 +121,18 @@ async function handleAddRecurrence(userId) {
         if (!error) {
 
             showToast('Recorrência ativada com sucesso!', 'success');
-            
+
             // Resetar formulário
             const form = document.getElementById('recurring-form');
             if (form) form.reset();
-            
+
             // Fechar modal (tentar ambos os métodos para garantir)
             const modal = document.getElementById('modal-recorrencia');
             if (modal) {
                 modal.classList.remove('active');
                 modal.style.display = 'none';
             }
-            
+
             // Recarregar dados
             await loadRecorrencias(userId);
             if (typeof filterAndRenderData === 'function') filterAndRenderData();
@@ -152,7 +152,7 @@ async function handleAddRecurrence(userId) {
  */
 async function processRecurringTransactions(userId) {
 
-    
+
     if (!_recorrencias || _recorrencias.length === 0) return;
 
     const now = new Date();
@@ -173,7 +173,7 @@ async function processRecurringTransactions(userId) {
         // Se o dia de vencimento já passou (ou é hoje) e ainda não foi pago este mês
         if (today >= r.dia_vencimento && !isPaidThisMonth) {
 
-            
+
             try {
                 // 1. Criar a transação
                 const { error: transError } = await supabase.from('transacoes').insert([{
@@ -229,7 +229,7 @@ async function handleAddTransaction(userId) {
     const catId = document.getElementById('categoria').value;
     const contaId = document.getElementById('conta').value;
     const data = document.getElementById('data').value;
-    
+
     // Novos Campos
     const formaPagamento = document.getElementById('forma-pagamento').value;
     const parcelasTotal = parseInt(document.getElementById('parcelas').value) || 1;
@@ -281,7 +281,7 @@ async function handleAddTransaction(userId) {
             forma_pagamento,
             user_id: userId
         });
-    } 
+    }
     // --- Lógica de Crédito Parcelado ---
     else if (formaPagamento === 'credito' && parcelasTotal > 1) {
         const valorParcela = valor / parcelasTotal;
@@ -290,7 +290,7 @@ async function handleAddTransaction(userId) {
         for (let i = 1; i <= parcelasTotal; i++) {
             const dataParcela = new Date(dataBase);
             dataParcela.setMonth(dataBase.getMonth() + (i - 1));
-            
+
             transactionsToInsert.push({
                 descricao: `${desc} (${i}/${parcelasTotal})`,
                 valor: valorParcela,
@@ -304,7 +304,7 @@ async function handleAddTransaction(userId) {
                 user_id: userId
             });
         }
-    } 
+    }
     // --- Lógica Simples com Piggy Bank ---
     else {
         transactionsToInsert.push({
@@ -344,6 +344,26 @@ async function handleAddTransaction(userId) {
         }
     }
 
+    // --- OFFLINE CHECK (IndexedDB) ---
+    if (!navigator.onLine) {
+        try {
+            await saveOfflineTransaction(transactionsToInsert);
+            if (btn) { btn.classList.remove('loading'); btn.disabled = false; }
+            document.getElementById('transaction-form').reset();
+            if (document.getElementById('field-parcelas')) document.getElementById('field-parcelas').style.display = 'none';
+            
+            // Atualizar UI localmente
+            _allTransactions = [...(Array.isArray(transactionsToInsert) ? transactionsToInsert : [transactionsToInsert]), ..._allTransactions];
+            if (typeof filterAndRenderData === 'function') filterAndRenderData();
+            
+            showToast('Você está offline. O lançamento foi salvo localmente e será sincronizado depois! 📥', 'info');
+            if (typeof addXP === 'function') addXP(10);
+            return;
+        } catch (err) {
+            console.error('Erro ao salvar offline:', err);
+        }
+    }
+
     const { error } = await supabase.from('transacoes').insert(transactionsToInsert);
 
     if (btn) { btn.classList.remove('loading'); btn.disabled = false; }
@@ -351,7 +371,8 @@ async function handleAddTransaction(userId) {
     if (!error) {
         showToast(transactionsToInsert.length > 1 ? 'Transações geradas com sucesso!' : 'Transação salva!', 'success');
         document.getElementById('transaction-form').reset();
-        document.getElementById('field-parcelas').style.display = 'none';
+        const fp = document.getElementById('field-parcelas');
+        if (fp) fp.style.display = 'none';
         await loadTransactions(userId);
         if (typeof addXP === 'function') addXP(10 * transactionsToInsert.length);
 
@@ -379,7 +400,7 @@ function renderContas() {
         const balance = calculateAccountBalance(c.id, c.saldo_inicial);
         const isCredit = c.tipo === 'credito';
         const escapedNome = escapeHTML(c.nome);
-        
+
         return `
             <div class="account-card ${isCredit ? 'credit-card' : ''}" style="--account-color: ${c.cor}">
                 <div class="account-header">

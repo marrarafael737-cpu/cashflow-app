@@ -423,14 +423,33 @@ async function renderWallets() {
         const typeLabels = { corrente: 'Conta Corrente', poupanca: 'Poupança', investimento: 'Investimento', dinheiro: 'Dinheiro', credito: 'Cartão de Crédito' };
         const typeLabel = typeLabels[c.tipo] || c.tipo || 'Conta';
 
+        const totalSpent = saldoFinal < 0 ? Math.abs(saldoFinal) : 0;
+        const limit = parseFloat(c.limite) || 0;
+        const availableLimit = limit - totalSpent;
+        const usagePercent = limit > 0 ? Math.min((totalSpent / limit) * 100, 100) : 0;
+        const usageColor = usagePercent > 80 ? 'var(--color-danger)' : (usagePercent > 50 ? 'var(--color-warning)' : 'var(--color-success)');
+
         const creditInfo = c.tipo === 'credito' ? `
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:0.6rem; padding-top:0.6rem; border-top: 1px solid rgba(255,255,255,0.07);">
-                <span style="font-size:0.68rem; color:var(--color-text-muted);">Limite</span>
-                <span style="font-size:0.75rem; font-weight:600; color:var(--color-text-main);">${formatar(c.limite || 0)}</span>
-            </div>
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:0.3rem;">
-                <span style="font-size:0.68rem; color:var(--color-text-muted);">Vence dia</span>
-                <span style="font-size:0.75rem; font-weight:600; color:var(--color-warning);">${c.dia_vencimento || '—'}</span>
+            <div style="margin-top: 0.8rem; padding-top: 0.8rem; border-top: 1px solid rgba(255,255,255,0.07);">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 0.4rem;">
+                    <span style="font-size:0.68rem; color:var(--color-text-muted);">Uso do Limite</span>
+                    <span style="font-size:0.68rem; font-weight:700; color:${usageColor};">${usagePercent.toFixed(0)}%</span>
+                </div>
+                <div style="width: 100%; height: 6px; background: rgba(255,255,255,0.05); border-radius: 10px; overflow: hidden; margin-bottom: 0.8rem;">
+                    <div style="width: ${usagePercent}%; height: 100%; background: ${usageColor}; border-radius: 10px; transition: width 0.5s ease;"></div>
+                </div>
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <span style="font-size:0.68rem; color:var(--color-text-muted);">Fatura Atual</span>
+                    <span style="font-size:0.75rem; font-weight:700; color:var(--color-danger);">${formatar(totalSpent)}</span>
+                </div>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:0.3rem;">
+                    <span style="font-size:0.68rem; color:var(--color-text-muted);">Limite Disp.</span>
+                    <span style="font-size:0.75rem; font-weight:600; color:var(--color-success);">${formatar(availableLimit)}</span>
+                </div>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:0.3rem;">
+                    <span style="font-size:0.68rem; color:var(--color-text-muted);">Vencimento</span>
+                    <span style="font-size:0.75rem; font-weight:600; color:var(--color-warning);">Dia ${c.dia_vencimento || '—'}</span>
+                </div>
             </div>
         ` : '';
 

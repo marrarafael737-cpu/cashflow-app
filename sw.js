@@ -24,6 +24,8 @@ const ASSETS_TO_CACHE = [
   './js/gamification.js',
   './js/search.js',
   './js/pwa-analytics.js',
+  './js/offline-db.js',
+  './js/sync-engine.js',
   './assets/mascot.svg'
 ];
 

@@ -5,8 +5,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cadastro | CashFlow - Inteligência Financeira</title>
-    <meta name="description" content="Crie sua conta no CashFlow e comece a gerenciar suas finanças com simplicidade e inteligência.">
-    
+    <meta name="description"
+        content="Crie sua conta no CashFlow e comece a gerenciar suas finanças com simplicidade e inteligência.">
+
     <!-- Performance Hints -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -20,10 +21,10 @@
 
     <!-- PostHog Analytics (Fase 14) -->
     <script>
-        !function(t,e){var o,n,p,r;e.__SV||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement("script")).type="text/javascript",p.async=!0,p.src=s.api_host+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+".people (stub)"},o="capture identify alias person_profiles set_config register register_once unregister opt_out_capturing has_opted_out_capturing opt_in_capturing set_config reset isFeatureEnabled onFeatureFlags getFeatureFlag getFeatureFlagPayload reloadFeatureFlags group updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures onSessionId getSurveys getActiveMatchingSurveys renderSurvey canRenderSurvey getNextSurveyStep identifyReplacePerson".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1.0)}(document,window.posthog||[]);
+        !function (t, e) { var o, n, p, r; e.__SV || (window.posthog = e, e._i = [], e.init = function (i, s, a) { function g(t, e) { var o = e.split("."); 2 == o.length && (t = t[o[0]], e = o[1]), t[e] = function () { t.push([e].concat(Array.prototype.slice.call(arguments, 0))) } } (p = t.createElement("script")).type = "text/javascript", p.async = !0, p.src = s.api_host + "/static/array.js", (r = t.getElementsByTagName("script")[0]).parentNode.insertBefore(p, r); var u = e; for (void 0 !== a ? u = e[a] = [] : a = "posthog", u.people = u.people || [], u.toString = function (t) { var e = "posthog"; return "posthog" !== a && (e += "." + a), t || (e += " (stub)"), e }, u.people.toString = function () { return u.toString(1) + ".people (stub)" }, o = "capture identify alias person_profiles set_config register register_once unregister opt_out_capturing has_opted_out_capturing opt_in_capturing set_config reset isFeatureEnabled onFeatureFlags getFeatureFlag getFeatureFlagPayload reloadFeatureFlags group updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures onSessionId getSurveys getActiveMatchingSurveys renderSurvey canRenderSurvey getNextSurveyStep identifyReplacePerson".split(" "), n = 0; n < o.length; n++)g(u, o[n]); e._i.push([i, s, a]) }, e.__SV = 1.0) }(document, window.posthog || []);
         const PH_KEY = 'phc_dummy_key_for_launch';
         if (PH_KEY !== 'phc_dummy_key_for_launch') {
-            posthog.init(PH_KEY, {api_host:'https://us.i.posthog.com', person_profiles: 'always'});
+            posthog.init(PH_KEY, { api_host: 'https://us.i.posthog.com', person_profiles: 'always' });
         } else {
             console.log('C.A.S.H. Unit: Analytics em modo de espera (aguardando chave real).');
         }
@@ -122,7 +123,7 @@
 
         <footer class="auth-footer">
             <p>Já tem uma conta? <a href="login.html">Fazer login</a></p>
-            
+
             <div class="trust-signals-grid" style="margin-top: 3rem;">
                 <div class="trust-item">
                     <i class="fas fa-shield-alt"></i>
@@ -137,7 +138,7 @@
     </main>
 
     <script src="js/config.js?v=9" defer></script>
-    <script src="auth.js?v=9" defer></script>
+    <script src="auth.js?v=11" defer></script>
     <script src="js/pwa-analytics.js" defer></script>
     <script src="main.js" defer></script>
 </body>

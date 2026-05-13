@@ -388,14 +388,44 @@ function setupParserEvents(userId) {
 
     textarea.addEventListener('input', () => {
         const text = textarea.value.trim();
-        if (text.length > 10) {
-            const parsed = parseNotificationText(text);
+        if (text.length > 5) {
+            const parsed = SmartParser.parse(text);
             if (parsed && parsed.valor > 0) {
                 document.getElementById('parser-preview-desc').textContent = parsed.descricao;
                 document.getElementById('parser-preview-valor').textContent = formatCurrency(parsed.valor);
                 
-                const catName = _categories.find(c => c.id === parsed.categoryId)?.nome || 'Outros';
-                document.getElementById('parser-preview-cat').textContent = 'Categoria: ' + catName;
+                // Colorir valor conforme o tipo
+                const valorEl = document.getElementById('parser-preview-valor');
+                if (parsed.tipo === 'entrada') {
+                    valorEl.style.color = 'var(--color-success)';
+                } else if (parsed.tipo === 'transferencia') {
+                    valorEl.style.color = 'var(--color-primary)';
+                } else {
+                    valorEl.style.color = 'var(--color-danger)';
+                }
+
+                document.getElementById('parser-preview-cat').textContent = 'Categoria: ' + (parsed.categoria_nome || 'Geral');
+                document.getElementById('parser-preview-cat').innerHTML += `<br><span style="color: var(--color-text-muted); font-size: 0.65rem;">Conta: ${parsed.conta_nome || 'Padrão (1ª da lista)'}</span>`;
+                
+                // Update Confidence UI
+                const confTag = document.getElementById('parser-confidence-tag');
+                const confVal = document.getElementById('parser-confidence-value');
+                if (confTag && confVal) {
+                    const score = parsed.confidence || 0;
+                    if (score >= 25) {
+                        confVal.textContent = 'Confiança Alta';
+                        confTag.style.background = 'rgba(16, 185, 129, 0.1)';
+                        confTag.style.color = '#10B981';
+                    } else if (score >= 10) {
+                        confVal.textContent = 'Confiança Média';
+                        confTag.style.background = 'rgba(245, 158, 11, 0.1)';
+                        confTag.style.color = '#F59E0B';
+                    } else {
+                        confVal.textContent = 'Confiança Baixa (Revisão Sugerida)';
+                        confTag.style.background = 'rgba(239, 68, 68, 0.1)';
+                        confTag.style.color = '#EF4444';
+                    }
+                }
                 
                 preview.style.display = 'block';
                 btnConfirm.disabled = false;
@@ -411,20 +441,23 @@ function setupParserEvents(userId) {
 
     btnConfirm.addEventListener('click', async () => {
         const text = textarea.value.trim();
-        const parsed = parseNotificationText(text);
-        if (!parsed) return;
+        const parsed = SmartParser.parse(text);
+        if (!parsed || !parsed.valor) {
+            showToast('Não foi possível identificar dados nesta mensagem.', 'alert');
+            return;
+        }
 
         btnConfirm.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Lançando...';
         btnConfirm.disabled = true;
 
-        const conta_id = _contas.length > 0 ? _contas[0].id : null;
+        const conta_id = parsed.conta_id || (_contas.length > 0 ? _contas[0].id : null);
 
         const { error } = await supabase.from('transacoes').insert([{
             user_id: userId,
             descricao: parsed.descricao,
             valor: parsed.valor,
-            tipo: 'saida',
-            categoria_id: parsed.categoryId,
+            tipo: parsed.tipo,
+            categoria_id: parsed.categoria_id,
             conta_id: conta_id,
             data: parsed.data
         }]);

@@ -229,47 +229,6 @@ function updateBudgetAlerts() {
     }
 }
 
-function parseNotificationText(text) {
-    if (!text) return null;
-    const cleanText = text.toLowerCase();
-    
-    // Regex for values (R$ 12,34 or 12.34)
-    const amountMatch = text.match(/(?:R\$|r\$|\$)?\s?(\d+(?:[.,]\d{1,2})?)/);
-    const valor = amountMatch ? parseFloat(amountMatch[1].replace(',', '.')) : 0;
-
-    // Infer description (Look for "em", "no", "na" followed by capitalized words or uppercase)
-    // Example: "Compra aprovada em PADARIA SAO JOSE"
-    let descricao = "Nova Transação";
-    const descMatch = text.match(/(?:em|no|na|no estabelecimento)\s+([^,.:;]+)/i);
-    if (descMatch) {
-        descricao = descMatch[1].trim();
-    }
-
-    // Infer Category
-    let categoryId = null;
-    const catMappings = {
-        'alimentação': ['comi', 'almoço', 'jantar', 'café', 'restaurante', 'ifood', 'lanche', 'padaria', 'confeitaria', 'mcdonalds', 'burger king'],
-        'transporte': ['uber', 'gasolina', 'combustível', 'ônibus', 'metrô', '99app', 'posto'],
-        'lazer': ['cinema', 'show', 'festa', 'viagem', 'steam', 'netflix', 'spotify'],
-        'saúde': ['farmácia', 'médico', 'remédio', 'hospital', 'droga'],
-        'mercado': ['mercado', 'supermercado', 'carrefour', 'extra', 'pao de acucar', 'atacadao']
-    };
-
-    for (const [catName, keywords] of Object.entries(catMappings)) {
-        if (keywords.some(k => cleanText.includes(k))) {
-            const cat = _categories.find(c => c.nome.toLowerCase().includes(catName));
-            if (cat) categoryId = cat.id;
-            break;
-        }
-    }
-
-    if (!categoryId) {
-        const fallbackCat = _categories.find(c => c.tipo === 'saida');
-        categoryId = fallbackCat ? fallbackCat.id : null;
-    }
-
-    return { valor, descricao, categoryId, data: new Date().toISOString().split('T')[0] };
-}
 
 function calculateFutureForecast() {
     const now = new Date();
@@ -440,9 +399,25 @@ function calculateProjection(transactions) {
     const projectionTextEl = document.getElementById('projection-insight-text');
     if (!projectionEl) return;
 
-    const balance = calculateGlobalBalance();
-    let projected = balance;
+    // 1. Calcular Liquidez vs Dívida de Cartão
+    let cashBalance = 0;
+    let creditDebt = 0;
+    
+    if (typeof _contas !== 'undefined' && _contas) {
+        _contas.forEach(c => {
+            const initial = parseFloat(c.saldo_inicial || 0);
+            const transactions = _allTransactions.filter(t => t.conta_id === c.id);
+            const accountBalance = initial + transactions.reduce((acc, t) => {
+                if (t.tipo === 'entrada') return acc + parseFloat(t.valor);
+                return acc - parseFloat(t.valor);
+            }, 0);
 
+            if (c.tipo === 'credito') creditDebt += accountBalance; // Geralmente negativo
+            else cashBalance += accountBalance;
+        });
+    }
+
+    let projected = cashBalance; // Começamos com o que temos em "mãos"
     const now = new Date();
     const today = now.getDate();
     const curMonth = now.getMonth();
@@ -450,7 +425,20 @@ function calculateProjection(transactions) {
     const daysInMonth = new Date(curYear, curMonth + 1, 0).getDate();
     const daysRemaining = daysInMonth - today;
 
-    // 1. Considerar Recorrências Pendentes
+    // 2. Projetar Faturas de Cartão (Se houver dívida acumulada)
+    if (creditDebt < 0) {
+        // Encontrar a data de vencimento mais próxima (simplificado: pegamos a primeira conta de crédito)
+        const creditAccount = _contas.find(c => c.tipo === 'credito');
+        if (creditAccount && creditAccount.dia_vencimento) {
+            const vencimento = parseInt(creditAccount.dia_vencimento);
+            if (vencimento > today) {
+                // Se vence este mês ainda, subtraímos do projetado
+                projected += creditDebt; // creditDebt é negativo, então subtrai
+            }
+        }
+    }
+
+    // 3. Considerar Recorrências Pendentes
     if (typeof _recorrencias !== 'undefined') {
         _recorrencias.forEach(r => {
             const dia = parseInt(r.dia_vencimento);
@@ -464,38 +452,69 @@ function calculateProjection(transactions) {
         });
     }
 
-    // 2. Considerar Média de Gastos Variáveis (Ritmo)
-    // Pegamos transações não recorrentes deste mês para ver o ritmo
+    // 4. Considerar Média de Gastos Variáveis (Ritmo)
     const monthTransactions = _allTransactions.filter(t => {
         const d = parseDate(t.data);
         return d.getMonth() === curMonth && d.getFullYear() === curYear && t.tipo === 'saida';
     });
     
-    // Filtrar apenas as que NÃO são recorrências conhecidas (simplificado: ignoramos as que batem valor exato de recorrências ou marcamos no DB futuramente)
-    // Por enquanto, pegamos todos os gastos do mês e dividimos pelos dias transcorridos
     const totalSpentSoFar = monthTransactions.reduce((acc, t) => acc + parseFloat(t.valor), 0);
     const dailyPace = today > 0 ? (totalSpentSoFar / today) : 0;
-    
-    // Projeção baseada no ritmo: Gastos Variáveis Estimados = Ritmo Diário * Dias Restantes
     const estimatedFutureSpending = dailyPace * daysRemaining;
     projected -= estimatedFutureSpending;
 
     // 3. Atualizar UI e Estado Global
     window._projectedBalance = projected;
-    projectionEl.textContent = formatCurrency(projected);
     
+    // Update New Hero Vision Card
+    const heroProjEl = document.getElementById('projected-balance-hero');
+    const heroInsightEl = document.getElementById('projection-insight-hero');
+    const heroBillsEl = document.getElementById('upcoming-bills-hero');
+    const heroPaceEl = document.getElementById('daily-pace-hero');
+
+    if (heroProjEl) heroProjEl.textContent = formatCurrency(projected);
+    
+    // Update Credit Card Hero Info
+    const heroCreditEl = document.getElementById('credit-invoice-hero');
+    if (heroCreditEl) heroCreditEl.textContent = formatCurrency(Math.abs(creditDebt));
+
+    // Calculate Upcoming Bills (Next 30 days)
+    let upcomingTotal = 0;
+    if (typeof _recorrencias !== 'undefined') {
+        _recorrencias.forEach(r => {
+            const dia = parseInt(r.dia_vencimento);
+            if (dia > today) {
+                if (r.tipo === 'saida') upcomingTotal += parseFloat(r.valor);
+            }
+        });
+    }
+    if (heroBillsEl) heroBillsEl.textContent = formatCurrency(upcomingTotal);
+    if (heroPaceEl) heroPaceEl.textContent = formatCurrency(dailyPace);
+
+    if (heroInsightEl) {
+        if (projected < 0) {
+            heroInsightEl.innerHTML = `⚠️ <span style="color: #EF4444; font-weight: 700;">Risco de saldo negativo!</span> Você precisaria de ${formatCurrency(Math.abs(projected))} para equilibrar.`;
+        } else if (projected < cashBalance * 0.5) {
+            heroInsightEl.innerHTML = `💡 <span style="color: #F59E0B; font-weight: 700;">Alerta de liquidez.</span> Suas reservas estão baixas em relação às despesas.`;
+        } else {
+            heroInsightEl.innerHTML = `✨ <span style="color: #10B981; font-weight: 700;">Céu limpo à frente.</span> Sua saúde financeira projetada está excelente.`;
+        }
+    }
+
+    // Original elements (Fallback)
+    if (projectionEl) projectionEl.textContent = formatCurrency(projected);
     if (projectionTextEl) {
         if (projected < 0) {
             projectionTextEl.innerHTML = `⚠️ <span style="color: var(--color-danger); font-weight: 700;">Risco de saldo negativo!</span> Seu ritmo atual indica que faltarão ${formatCurrency(Math.abs(projected))} no final do mês.`;
-            if (typeof showMascotMessage === 'function' && Math.random() > 0.7) {
-                showMascotMessage(`Humano, se continuar gastando nesse ritmo, seu saldo ficará negativo em ${formatCurrency(Math.abs(projected))}!`, 'alert', '', 'angry');
-            }
         } else {
             projectionTextEl.innerHTML = `✨ <span style="color: var(--color-success); font-weight: 700;">Tudo sob controle.</span> Projeção de sobra de ${formatCurrency(projected)} até dia ${daysInMonth}.`;
         }
     }
 
     projectionEl.className = projected >= 0 ? 'stat-value success' : 'stat-value danger';
+    
+    // Trigger Mini Chart Update
+    if (typeof renderMiniForecast === 'function') renderMiniForecast(calculateFutureForecast());
 }
 
 

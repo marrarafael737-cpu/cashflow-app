@@ -5,6 +5,8 @@ let _chartEvolucao = null;
 let _chartRadar = null;
 let _chartTendencia = null;
 let _chartForecast = null;
+let _chartAnnual = null;
+let _chartSavings = null;
 
 function updateCharts(transactions) {
     if (typeof Chart === 'undefined') return;
@@ -33,14 +35,32 @@ function renderReportsCharts(transactions) {
     const savingsCtx = document.getElementById('chart-reports-savings')?.getContext('2d');
 
     if (annualCtx) {
-        // Mocked annual data for demonstration
-        new Chart(annualCtx, {
+        if (_chartAnnual) _chartAnnual.destroy();
+        
+        // Calcular gastos reais por categoria (Anual)
+        const currentYear = new Date().getFullYear();
+        const annualExpenses = transactions.filter(t => {
+            const d = parseDate(t.data);
+            return t.tipo === 'saida' && d.getFullYear() === currentYear;
+        });
+
+        const catTotals = {};
+        annualExpenses.forEach(t => {
+            const cat = t.categoria_nome || 'Geral';
+            catTotals[cat] = (catTotals[cat] || 0) + parseFloat(t.valor);
+        });
+
+        const sortedCats = Object.entries(catTotals)
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 5); // Top 5 categorias
+
+        _chartAnnual = new Chart(annualCtx, {
             type: 'bar',
             data: {
-                labels: ['Moradia', 'Alimentação', 'Educação', 'Lazer', 'Saúde'],
+                labels: sortedCats.map(c => c[0]),
                 datasets: [{
                     label: 'Gasto Total',
-                    data: [5000, 3500, 1500, 1200, 800],
+                    data: sortedCats.map(c => c[1]),
                     backgroundColor: [
                         'rgba(52, 199, 89, 0.6)', 
                         'rgba(255, 45, 85, 0.6)', 
@@ -74,19 +94,55 @@ function renderReportsCharts(transactions) {
     }
 
     if (savingsCtx) {
-        new Chart(savingsCtx, {
+        if (_chartSavings) _chartSavings.destroy();
+
+        // Calcular economia mensal acumulada real
+        const monthNames = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+        const currentYear = new Date().getFullYear();
+        const monthlyBalances = new Array(12).fill(0);
+
+        transactions.forEach(t => {
+            const d = parseDate(t.data);
+            if (d.getFullYear() === currentYear) {
+                const m = d.getMonth();
+                if (t.tipo === 'entrada') monthlyBalances[m] += parseFloat(t.valor);
+                else monthlyBalances[m] -= parseFloat(t.valor);
+            }
+        });
+
+        const accumulatedSavings = [];
+        let runningTotal = 0;
+        monthlyBalances.forEach(val => {
+            runningTotal += val;
+            accumulatedSavings.push(runningTotal);
+        });
+
+        _chartSavings = new Chart(savingsCtx, {
             type: 'line',
             data: {
-                labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun'],
+                labels: monthNames,
                 datasets: [{
                     label: 'Reserva Acumulada',
-                    data: [500, 1200, 1800, 2400, 3100, 4000],
+                    data: accumulatedSavings,
                     borderColor: '#4ade80',
+                    backgroundColor: 'rgba(74, 222, 128, 0.1)',
                     fill: true,
-                    tension: 0.4
+                    tension: 0.4,
+                    pointRadius: 4,
+                    pointBackgroundColor: '#4ade80'
                 }]
             },
-            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+            options: { 
+                responsive: true, 
+                maintainAspectRatio: false, 
+                plugins: { 
+                    legend: { display: false } 
+                },
+                scales: {
+                    x: { ticks: { color: '#A1A1AA' }, grid: { display: false } },
+                    y: { ticks: { color: '#A1A1AA' }, grid: { color: 'rgba(255, 255, 255, 0.05)' } }
+                }
+            }
         });
     }
 }
@@ -333,6 +389,39 @@ function renderForecastChart(transactions) {
                     ticks: { color: '#A1A1AA' } 
                 }
             }
+        }
+    });
+}
+
+let _chartMiniForecast = null;
+function renderMiniForecast(forecastData) {
+    const ctx = document.getElementById('chart-mini-forecast')?.getContext('2d');
+    if (!ctx || !forecastData) return;
+
+    if (_chartMiniForecast) _chartMiniForecast.destroy();
+
+    _chartMiniForecast = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: forecastData.map(d => d.day),
+            datasets: [{
+                data: forecastData.map(d => d.balance),
+                borderColor: '#FF7A00',
+                borderWidth: 2,
+                pointRadius: 0,
+                tension: 0.4,
+                fill: false
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false }, tooltip: { enabled: false } },
+            scales: {
+                x: { display: false },
+                y: { display: false }
+            },
+            animation: { duration: 1000 }
         }
     });
 }

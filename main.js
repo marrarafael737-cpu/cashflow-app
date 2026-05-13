@@ -462,15 +462,36 @@ async function handleDashboardAddTransaction(userId) {
     const btn = document.querySelector('#dashboard-transaction-form button[type="submit"]');
     if (btn) { btn.classList.add('loading'); btn.disabled = true; }
 
-    const { error } = await supabase.from('transacoes').insert([{
+    const transactionData = {
         user_id: userId,
         descricao: desc,
         valor: parseFloat(valorRaw),
         tipo: tipo,
         categoria_id: catId,
         conta_id: contaId,
-        data: data // Coluna correta é 'data'
-    }]);
+        data: data
+    };
+
+    // --- OFFLINE CHECK (IndexedDB) ---
+    if (!navigator.onLine) {
+        try {
+            await saveOfflineTransaction(transactionData);
+            if (btn) { btn.classList.remove('loading'); btn.disabled = false; }
+            document.getElementById('dashboard-transaction-form').reset();
+            
+            // Atualizar UI localmente
+            if (typeof _allTransactions !== 'undefined') _allTransactions = [transactionData, ..._allTransactions];
+            if (typeof filterAndRenderData === 'function') filterAndRenderData();
+            if (typeof updateSummary === 'function') updateSummary();
+            
+            showToast('Offline: Lançamento rápido salvo localmente! 🤖', 'info');
+            return;
+        } catch (err) {
+            console.error('Erro ao salvar offline:', err);
+        }
+    }
+
+    const { error } = await supabase.from('transacoes').insert([transactionData]);
 
     if (btn) { btn.classList.remove('loading'); btn.disabled = false; }
 

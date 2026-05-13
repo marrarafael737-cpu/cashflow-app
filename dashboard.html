@@ -5,9 +5,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard | CashFlow - Inteligência Financeira</title>
-    <meta name="description" content="Controle seus gastos, defina metas e alcance sua liberdade financeira com o CashFlow. O gestor financeiro inteligente com gamificação.">
-    <meta name="keywords" content="finanças, controle financeiro, economia, investimentos, dinheiro, dashboard financeiro">
-    
+    <meta name="description"
+        content="Controle seus gastos, defina metas e alcance sua liberdade financeira com o CashFlow. O gestor financeiro inteligente com gamificação.">
+    <meta name="keywords"
+        content="finanças, controle financeiro, economia, investimentos, dinheiro, dashboard financeiro">
+
     <!-- Performance Hints -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -25,7 +27,8 @@
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image">
     <meta property="twitter:title" content="CashFlow - Inteligência Financeira">
-    <meta property="twitter:description" content="Controle seus gastos e alcance sua liberdade financeira com o CashFlow.">
+    <meta property="twitter:description"
+        content="Controle seus gastos e alcance sua liberdade financeira com o CashFlow.">
 
     <link rel="icon" type="image/svg+xml" href="assets/mascot.svg">
     <link rel="apple-touch-icon" href="assets/mascot.svg">
@@ -185,41 +188,55 @@
                     <span id="avatar-initials" style="font-size:0.875rem;">R</span>
                 </div>
                 <div style="flex: 1; min-width: 0;">
-                    <div id="user-name-header" style="font-size: 0.82rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--color-text-main);">Rafael Marra</div>
-                    <div id="user-email-header" class="user-email" style="font-size: 0.7rem; color: var(--color-text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"></div>
+                    <div id="user-name-header"
+                        style="font-size: 0.82rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--color-text-main);">
+                        Rafael Marra</div>
+                    <div id="user-email-header" class="user-email"
+                        style="font-size: 0.7rem; color: var(--color-text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                    </div>
                 </div>
-                <button id="btn-logout" title="Sair" style="flex-shrink:0; background: transparent; border: none; color: var(--color-text-muted); cursor: pointer; padding: 0.25rem; border-radius: 6px; transition: color 0.2s;"
-                    onmouseover="this.style.color='var(--color-danger)'" onmouseout="this.style.color='var(--color-text-muted)'">
+                <button id="btn-logout" title="Sair"
+                    style="flex-shrink:0; background: transparent; border: none; color: var(--color-text-muted); cursor: pointer; padding: 0.25rem; border-radius: 6px; transition: color 0.2s;"
+                    onmouseover="this.style.color='var(--color-danger)'"
+                    onmouseout="this.style.color='var(--color-text-muted)'">
                     <i class="fas fa-sign-out-alt" style="font-size: 0.85rem;"></i>
                 </button>
             </div>
 
             <!-- XP Bar -->
             <div style="margin-bottom: 0.6rem;">
-                <div style="display: flex; justify-content: space-between; font-size: 0.65rem; color: var(--color-text-muted); margin-bottom: 0.3rem;">
+                <div
+                    style="display: flex; justify-content: space-between; font-size: 0.65rem; color: var(--color-text-muted); margin-bottom: 0.3rem;">
                     <span id="user-level-badge" style="font-weight: 600;">LVL 1</span>
                     <span id="user-xp-text">0 XP</span>
                 </div>
                 <div style="height: 4px; background: rgba(255,255,255,0.07); border-radius: 2px; overflow: hidden;">
-                    <div id="user-xp-bar" style="height: 100%; width: 25%; background: var(--color-primary); border-radius: 2px; box-shadow: 0 0 8px var(--color-primary); transition: width 0.6s ease;"></div>
+                    <div id="user-xp-bar"
+                        style="height: 100%; width: 25%; background: var(--color-primary); border-radius: 2px; box-shadow: 0 0 8px var(--color-primary); transition: width 0.6s ease;">
+                    </div>
                 </div>
             </div>
 
             <!-- Icon Actions Row -->
             <div style="display: flex; align-items: center; gap: 0.35rem;">
-                <button id="btn-toggle-privacy" title="Modo Privacidade" style="flex:1; background: var(--color-surface-secondary); border: 1px solid var(--color-border); color: var(--color-text-muted); border-radius: 8px; padding: 0.4rem; cursor: pointer; transition: all 0.2s; font-size:0.8rem;">
+                <button id="btn-toggle-privacy" title="Modo Privacidade"
+                    style="flex:1; background: var(--color-surface-secondary); border: 1px solid var(--color-border); color: var(--color-text-muted); border-radius: 8px; padding: 0.4rem; cursor: pointer; transition: all 0.2s; font-size:0.8rem;">
                     <i class="fas fa-eye"></i>
                 </button>
-                <button id="btn-toggle-theme-sidebar" title="Trocar Tema" style="flex:1; background: var(--color-surface-secondary); border: 1px solid var(--color-border); color: var(--color-text-muted); border-radius: 8px; padding: 0.4rem; cursor: pointer; transition: all 0.2s; font-size:0.8rem;">
+                <button id="btn-toggle-theme-sidebar" title="Trocar Tema"
+                    style="flex:1; background: var(--color-surface-secondary); border: 1px solid var(--color-border); color: var(--color-text-muted); border-radius: 8px; padding: 0.4rem; cursor: pointer; transition: all 0.2s; font-size:0.8rem;">
                     <i class="fas fa-moon"></i>
                 </button>
-                <button id="btn-share-snapshot" title="Compartilhar Progresso" style="flex:1; background: var(--color-surface-secondary); border: 1px solid var(--color-border); color: var(--color-text-muted); border-radius: 8px; padding: 0.4rem; cursor: pointer; transition: all 0.2s; font-size:0.8rem;">
+                <button id="btn-share-snapshot" title="Compartilhar Progresso"
+                    style="flex:1; background: var(--color-surface-secondary); border: 1px solid var(--color-border); color: var(--color-text-muted); border-radius: 8px; padding: 0.4rem; cursor: pointer; transition: all 0.2s; font-size:0.8rem;">
                     <i class="fas fa-share-alt"></i>
                 </button>
-                <button id="pwa-install-btn" title="Instalar App" style="flex:1; background: var(--color-surface-secondary); border: 1px solid var(--color-border); color: var(--color-text-muted); border-radius: 8px; padding: 0.4rem; cursor: pointer; transition: all 0.2s; font-size:0.8rem;">
+                <button id="pwa-install-btn" title="Instalar App"
+                    style="flex:1; background: var(--color-surface-secondary); border: 1px solid var(--color-border); color: var(--color-text-muted); border-radius: 8px; padding: 0.4rem; cursor: pointer; transition: all 0.2s; font-size:0.8rem;">
                     <i class="fas fa-download"></i>
                 </button>
-                <button id="btn-start-tour-sidebar" title="Ajuda" style="flex:1; background: var(--color-surface-secondary); border: 1px solid var(--color-border); color: var(--color-text-muted); border-radius: 8px; padding: 0.4rem; cursor: pointer; transition: all 0.2s; font-size:0.8rem;">
+                <button id="btn-start-tour-sidebar" title="Ajuda"
+                    style="flex:1; background: var(--color-surface-secondary); border: 1px solid var(--color-border); color: var(--color-text-muted); border-radius: 8px; padding: 0.4rem; cursor: pointer; transition: all 0.2s; font-size:0.8rem;">
                     <i class="fas fa-question-circle"></i>
                 </button>
             </div>
@@ -269,6 +286,43 @@
                     </div>
                 </div>
             </section>
+
+            <!-- Future Vision Highlight (Fase 11 - Upgrade) -->
+            <div class="vision-wrapper" style="padding: 0 2rem; margin-top: -3rem; position: relative; z-index: 10;">
+                <section class="future-vision-highlight card-glass">
+                    <div class="vision-header">
+                        <div class="vision-title">
+                            <i class="fas fa-wand-magic-sparkles"></i>
+                            <span>Oráculo CashFlow</span>
+                        </div>
+                        <div class="vision-tag">Preditivo</div>
+                    </div>
+                    <div class="vision-content-row">
+                        <div class="vision-main-info">
+                            <label>Projeção de Saldo Final</label>
+                            <h2 id="projected-balance-hero" class="amount-hero privacy-blur">R$ 0,00</h2>
+                            <p id="projection-insight-hero" class="insight-hero">Analisando seus padrões de consumo...</p>
+                        </div>
+                        <div class="vision-chart-mini">
+                            <canvas id="chart-mini-forecast" height="80"></canvas>
+                        </div>
+                        <div class="vision-quick-stats">
+                            <div class="q-stat">
+                                <label>Próxima Fatura</label>
+                                <span id="credit-invoice-hero" class="val-neg privacy-blur" style="color: #FF4D4D;">R$ 0,00</span>
+                            </div>
+                            <div class="q-stat">
+                                <label>Saídas Previstas</label>
+                                <span id="upcoming-bills-hero" class="val-neg privacy-blur">R$ 0,00</span>
+                            </div>
+                            <div class="q-stat">
+                                <label>Ritmo Diário</label>
+                                <span id="daily-pace-hero" class="val-neutral privacy-blur">R$ 0,00</span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
 
             <!-- Content Grid -->
             <div class="dashboard-content-padding" style="padding: 2rem;">
@@ -827,7 +881,8 @@
             <div class="modal-body">
                 <form id="profile-form" class="modern-form">
                     <!-- Avatar Upload Section -->
-                    <div style="display: flex; flex-direction: column; align-items: center; gap: 0.75rem; margin-bottom: 1.5rem;">
+                    <div
+                        style="display: flex; flex-direction: column; align-items: center; gap: 0.75rem; margin-bottom: 1.5rem;">
                         <div id="profile-avatar-preview"
                             style="width: 88px; height: 88px; border-radius: 50%; background: var(--color-primary); display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: 700; color: white; overflow: hidden; border: 3px solid var(--color-primary); position: relative; cursor: pointer;"
                             onclick="document.getElementById('avatar-file-input').click()"
@@ -840,7 +895,8 @@
                             style="background: var(--color-surface-secondary); color: var(--color-text-main); border: 1px solid var(--color-border); border-radius: 8px; padding: 0.4rem 1rem; font-size: 0.8rem; cursor: pointer; display: flex; align-items: center; gap: 0.4rem;">
                             <i class="fas fa-camera"></i> Trocar Foto
                         </button>
-                        <p id="avatar-upload-status" style="font-size: 0.72rem; color: var(--color-text-muted); margin: 0;"></p>
+                        <p id="avatar-upload-status"
+                            style="font-size: 0.72rem; color: var(--color-text-muted); margin: 0;"></p>
                     </div>
                     <div class="form-field">
                         <label>Nome Completo</label>
@@ -849,9 +905,12 @@
                     <div class="form-field">
                         <label>E-mail (Apenas visualização)</label>
                         <input type="email" id="edit-email" disabled style="opacity: 0.6; cursor: not-allowed;">
-                        <small style="color: var(--color-text-muted); font-size: 0.7rem; margin-top: 0.5rem; display: block;">A alteração de e-mail requer confirmação de segurança.</small>
+                        <small
+                            style="color: var(--color-text-muted); font-size: 0.7rem; margin-top: 0.5rem; display: block;">A
+                            alteração de e-mail requer confirmação de segurança.</small>
                     </div>
-                    <button type="submit" class="btn-primary-action" style="width: 100%; margin-top: 1rem;">Salvar Alterações</button>
+                    <button type="submit" class="btn-primary-action" style="width: 100%; margin-top: 1rem;">Salvar
+                        Alterações</button>
                 </form>
             </div>
         </div>
@@ -1221,7 +1280,8 @@
         color: var(--color-text-muted);
         letter-spacing: 0.03em;
     ">
-        <span><i class="fas fa-shield-halved" style="color: var(--color-success); margin-right: 0.3rem;"></i>256-bit</span>
+        <span><i class="fas fa-shield-halved"
+                style="color: var(--color-success); margin-right: 0.3rem;"></i>256-bit</span>
         <span style="opacity:0.4;">|</span>
         <span>© 2024 CashFlow</span>
         <span style="opacity:0.4;">|</span>
@@ -1274,6 +1334,8 @@
     <script src="auth.js?v=9" defer></script>
 
     <script src="js/mascot.js?v=9" defer></script>
+    <script src="js/offline-db.js?v=9"></script>
+    <script src="js/sync-engine.js?v=9"></script>
     <script src="js/ui.js?v=9" defer></script>
     <script src="js/finance.js?v=9" defer></script>
     <script src="js/transactions.js?v=9" defer></script>
@@ -1298,11 +1360,13 @@
 
                 <div id="parser-preview" class="card-glass"
                     style="display: none; padding: 1rem; margin-bottom: 1.5rem; background: rgba(255,255,255,0.05);">
-                    <div
-                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-                        <span
-                            style="font-size: 0.7rem; text-transform: uppercase; color: var(--color-primary); font-weight: 700;">Identificado:</span>
-                    </div>
+                        <div style="display: flex; flex-direction: column; gap: 0.2rem;">
+                            <span style="font-size: 0.7rem; text-transform: uppercase; color: var(--color-primary); font-weight: 700;">Identificado:</span>
+                            <div id="parser-confidence-tag" style="display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.6rem; font-weight: 800; background: rgba(16, 185, 129, 0.1); color: #10B981; padding: 2px 8px; border-radius: 100px; text-transform: uppercase; width: fit-content;">
+                                <i class="fas fa-brain"></i>
+                                <span id="parser-confidence-value">Confiança Alta</span>
+                            </div>
+                        </div>
                     <div style="display: flex; justify-content: space-between; align-items: center;">
                         <h4 id="parser-preview-desc" style="margin:0;">--</h4>
                         <h3 id="parser-preview-valor" style="margin:0; color: var(--color-danger);">R$ 0,00</h3>
@@ -1345,9 +1409,11 @@
         </a>
     </nav>
 
-    <footer class="view-footer" style="margin-top: 4rem; padding-bottom: 8rem; text-align: center; border-top: 1px solid var(--color-border); padding-top: 2rem;">
-        <p style="color: var(--color-text-muted); font-size: 0.8rem; margin-bottom: 1rem;">&copy; 2026 CashFlow - Controle Financeiro Inteligente</p>
-        
+    <footer class="view-footer"
+        style="margin-top: 4rem; padding-bottom: 8rem; text-align: center; border-top: 1px solid var(--color-border); padding-top: 2rem;">
+        <p style="color: var(--color-text-muted); font-size: 0.8rem; margin-bottom: 1rem;">&copy; 2026 CashFlow -
+            Controle Financeiro Inteligente</p>
+
         <div class="trust-signals-grid">
             <div class="trust-item">
                 <i class="fas fa-shield-alt"></i>
@@ -1370,6 +1436,7 @@
     <script src="js/events.js?v=9" defer></script>
     <script src="js/enhancements.js?v=9" defer></script>
     <script src="js/pwa-analytics.js" defer></script>
+    <script src="js/smart-parser.js?v=9" defer></script>
     <script src="main.js?v=9" defer></script>
 </body>
 
