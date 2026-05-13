@@ -10,7 +10,7 @@ async function syncOfflineData() {
     if (pending.length === 0) return;
 
     console.log(`C.A.S.H. Unit: Detectadas ${pending.length} transações pendentes de sincronização.`);
-    
+
     // Mostrar indicador de sync no UI se existir
     showSyncIndicator(true, pending.length);
 
@@ -21,9 +21,9 @@ async function syncOfflineData() {
         try {
             // Remover o ID local do IndexedDB para não dar conflito no Supabase (que gera o seu próprio)
             const { id, offline_created_at, ...supabaseData } = item;
-            
+
             const { error } = await supabase.from('transacoes').insert([supabaseData]);
-            
+
             if (error) throw error;
 
             // Se inseriu com sucesso no Supabase, removemos do IndexedDB
@@ -37,7 +37,7 @@ async function syncOfflineData() {
 
     if (successCount > 0) {
         showToast(`${successCount} transações sincronizadas com sucesso! ✨`, 'success');
-        
+
         // Recarregar dados globais para refletir as novas transações no dashboard
         const { data: { user } } = await supabase.auth.getUser();
         if (user && typeof loadTransactions === 'function') {
@@ -57,7 +57,7 @@ async function syncOfflineData() {
  */
 function showSyncIndicator(active, count = 0) {
     let indicator = document.getElementById('sync-indicator');
-    
+
     if (!indicator) {
         // Criar elemento se não existir
         indicator = document.createElement('div');

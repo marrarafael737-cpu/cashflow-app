@@ -91,6 +91,7 @@ function setupAccountFormEvents(userId) {
             const limiteRaw = document.getElementById('account-limite') ? document.getElementById('account-limite').value.replace(',', '.') : null;
             const limite = limiteRaw ? parseFloat(limiteRaw) : null;
             const dia_vencimento = parseInt(document.getElementById('account-vencimento').value) || null;
+            const dia_fechamento = parseInt(document.getElementById('account-fechamento').value) || null;
 
             if (!nome) {
                 showToast('O nome da conta é obrigatório.', 'alert');
@@ -104,13 +105,13 @@ function setupAccountFormEvents(userId) {
             if (editId) {
                 // Atualizar conta existente
                 result = await supabase.from('contas').update({
-                    nome, saldo_inicial, tipo, limite, dia_vencimento
+                    nome, saldo_inicial, tipo, limite, dia_vencimento, dia_fechamento
                 }).eq('id', editId);
             } else {
                 // Criar nova conta
                 const cor = '#' + Math.floor(Math.random()*16777215).toString(16);
                 result = await supabase.from('contas').insert([{
-                    nome, saldo_inicial, tipo, cor, user_id: userId, limite, dia_vencimento
+                    nome, saldo_inicial, tipo, cor, user_id: userId, limite, dia_vencimento, dia_fechamento
                 }]);
             }
 
@@ -148,13 +149,75 @@ async function handleEditAccount(id) {
         document.getElementById('account-nome').value = account.nome;
         document.getElementById('account-saldo').value = account.saldo_inicial;
         document.getElementById('account-tipo').value = account.tipo;
-        if (document.getElementById('account-limite')) document.getElementById('account-limite').value = account.limite || '';
-        if (document.getElementById('account-vencimento')) document.getElementById('account-vencimento').value = account.dia_vencimento || '';
         
+        document.getElementById('account-limite').value = account.limite || '';
+        document.getElementById('account-vencimento').value = account.dia_vencimento || '';
+        document.getElementById('account-fechamento').value = account.dia_fechamento || '';
+        document.getElementById('credit-card-settings').style.display = account.tipo === 'credito' ? 'block' : 'none';
+        
+        // Configurar botões do modal
+        const deleteBtn = document.getElementById('btn-delete-account');
+        if (deleteBtn) deleteBtn.style.display = 'block';
+        
+        const submitBtn = document.getElementById('btn-account-submit');
+        if (submitBtn) submitBtn.textContent = 'Salvar Alterações';
+
+        const modalTitle = modal.querySelector('h2');
+        if (modalTitle) modalTitle.innerHTML = '<i class="fas fa-wallet"></i> Editar Conta';
+
         // Trigger change event for credit card settings
         document.getElementById('account-tipo').dispatchEvent(new Event('change'));
     }
 }
+
+async function handleDeleteAccount() {
+    const id = document.getElementById('edit-account-id').value;
+    if (!id) return;
+
+    const account = _contas.find(c => c.id === id);
+    if (!account) return;
+
+    if (!confirm(`Deseja realmente excluir a conta "${account.nome}"? Esta ação não excluirá as transações vinculadas, mas elas ficarão sem conta associada.`)) {
+        return;
+    }
+
+    try {
+        const btn = document.getElementById('btn-delete-account');
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Excluindo...';
+        }
+
+        const { error } = await supabase.from('contas').delete().eq('id', id);
+
+        if (!error) {
+            showToast('Conta excluída com sucesso!', 'info');
+            document.getElementById('modal-account').classList.remove('active');
+            setTimeout(() => {
+                document.getElementById('modal-account').style.display = 'none';
+            }, 300);
+            
+            const user = await getCurrentUser();
+            if (user && typeof loadContas === 'function') {
+                await loadContas(user.id);
+            }
+        } else {
+            showToast('Erro ao excluir conta: ' + error.message, 'error');
+        }
+    } catch (err) {
+        console.error('Erro ao excluir conta:', err);
+        showToast('Erro inesperado ao excluir conta.', 'error');
+    } finally {
+        const btn = document.getElementById('btn-delete-account');
+        if (btn) {
+            btn.disabled = false;
+            btn.textContent = 'Excluir';
+        }
+    }
+}
+
+window.handleDeleteAccount = handleDeleteAccount;
+
 
 
 
@@ -247,7 +310,7 @@ async function handleDeleteAccount(id, name) {
             if (user) {
                 if (typeof loadContas === 'function') await loadContas(user.id);
                 if (typeof loadTransactions === 'function') await loadTransactions(user.id);
-                if (typeof renderWallets === 'function') renderWallets();
+                if (typeof renderContas === 'function') renderContas();
             }
         } else {
             showToast('Erro ao excluir conta: ' + error.message, 'error');
@@ -405,7 +468,12 @@ function setupParserEvents(userId) {
                 }
 
                 document.getElementById('parser-preview-cat').textContent = 'Categoria: ' + (parsed.categoria_nome || 'Geral');
-                document.getElementById('parser-preview-cat').innerHTML += `<br><span style="color: var(--color-text-muted); font-size: 0.65rem;">Conta: ${parsed.conta_nome || 'Padrão (1ª da lista)'}</span>`;
+                
+                // Atualizar o seletor de contas no preview
+                const accSelect = document.getElementById('parser-account-select');
+                if (accSelect && typeof _contas !== 'undefined') {
+                    accSelect.innerHTML = _contas.map(c => `<option value="${c.id}" ${c.id === parsed.conta_id ? 'selected' : ''}>${c.nome}</option>`).join('');
+                }
                 
                 // Update Confidence UI
                 const confTag = document.getElementById('parser-confidence-tag');
@@ -450,7 +518,18 @@ function setupParserEvents(userId) {
         btnConfirm.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Lançando...';
         btnConfirm.disabled = true;
 
-        const conta_id = parsed.conta_id || (_contas.length > 0 ? _contas[0].id : null);
+        // Usar a conta selecionada pelo usuário no dropdown (ou a detectada)
+        const accSelect = document.getElementById('parser-account-select');
+        let final_conta_id = accSelect ? accSelect.value : parsed.conta_id;
+        let isCredit = false;
+
+        if (!final_conta_id && typeof _contas !== 'undefined' && _contas.length > 0) {
+            final_conta_id = _contas[0].id;
+        }
+
+        // Detectar se é crédito para setar forma_pagamento
+        const selectedAcc = (typeof _contas !== 'undefined') ? _contas.find(c => c.id === final_conta_id) : null;
+        if (selectedAcc && selectedAcc.tipo === 'credito') isCredit = true;
 
         const { error } = await supabase.from('transacoes').insert([{
             user_id: userId,
@@ -458,19 +537,20 @@ function setupParserEvents(userId) {
             valor: parsed.valor,
             tipo: parsed.tipo,
             categoria_id: parsed.categoria_id,
-            conta_id: conta_id,
-            data: parsed.data
+            conta_id: final_conta_id,
+            data: parsed.data,
+            forma_pagamento: isCredit ? 'credito' : 'dinheiro'
         }]);
 
         if (!error) {
-            showToast('Lançamento via Parser realizado!', 'success');
+            showToast('Lançamento via Oráculo realizado com sucesso! 🧠', 'success');
             textarea.value = '';
             preview.style.display = 'none';
             modal.classList.remove('active');
             setTimeout(() => modal.style.display = 'none', 300);
             
             if (typeof loadTransactions === 'function') await loadTransactions(userId);
-            if (typeof updateSummary === 'function') updateSummary();
+            if (typeof filterAndRenderData === 'function') filterAndRenderData();
         } else {
             showToast('Erro ao lançar: ' + error.message, 'error');
         }

@@ -20,6 +20,27 @@ function parseDate(dateStr) {
     return new Date(dateStr + 'T00:00:00');
 }
 
+/**
+ * Retorna o mês e ano da fatura em que uma transação de crédito cairá.
+ * @param {Date} purchaseDate - Data da compra
+ * @param {Object} account - Conta do tipo 'credito'
+ */
+function getInvoiceMonth(purchaseDate, account) {
+    if (!account || account.tipo !== 'credito') return purchaseDate;
+
+    const fechamento = parseInt(account.dia_fechamento || 1);
+    const diaCompra = purchaseDate.getDate();
+    
+    let invoiceDate = new Date(purchaseDate.getTime());
+    
+    // Se a compra foi no dia do fechamento ou depois, cai na fatura do mês seguinte
+    if (diaCompra >= fechamento) {
+        invoiceDate.setMonth(invoiceDate.getMonth() + 1);
+    }
+    
+    return invoiceDate;
+}
+
 function calculateGlobalBalance() {
     const initialSum = (typeof _contas !== 'undefined' && _contas) ? _contas.reduce((acc, c) => acc + parseFloat(c.saldo_inicial || 0), 0) : 0;
     let income = 0;
@@ -34,36 +55,79 @@ function calculateGlobalBalance() {
 }
 
 function calculateSummary(transactions) {
+    // Safety check para prevenir crash se transactions for undefined ou não for um array
+    if (!transactions || !Array.isArray(transactions)) {
+        transactions = (typeof _allTransactions !== 'undefined' && Array.isArray(_allTransactions)) ? _allTransactions : [];
+    }
+
     let receitas = 0;
     let despesas = 0;
+    let liquidBalance = 0;
+    let creditDebt = 0;
 
+    // 1. Calcular Saldo de Contas Iniciais (Separado por tipo)
+    if (typeof _contas !== 'undefined') {
+        _contas.forEach(c => {
+            if (c.tipo === 'credito') {
+                // No cartão, o saldo inicial costuma ser o que você já devia ao cadastrar
+                creditDebt += parseFloat(c.saldo_inicial || 0);
+            } else {
+                liquidBalance += parseFloat(c.saldo_inicial || 0);
+            }
+        });
+    }
+
+    // 2. Processar Transações Reais
     transactions.forEach(t => {
+        const val = parseFloat(t.valor || 0);
+        const conta = (typeof _contas !== 'undefined') ? _contas.find(c => c.id === t.conta_id) : null;
+        
         if (t.tipo === 'entrada') {
-            receitas += parseFloat(t.valor);
+            receitas += val;
+            if (conta && conta.tipo !== 'credito') {
+                liquidBalance += val;
+            } else if (conta && conta.tipo === 'credito') {
+                // Pagamento de fatura ou estorno no cartão reduz a dívida
+                creditDebt -= val;
+            }
         } else {
-            despesas += parseFloat(t.valor);
+            despesas += val;
+            if (conta && conta.tipo !== 'credito') {
+                liquidBalance -= val;
+            } else if (conta && conta.tipo === 'credito') {
+                // Gasto no cartão aumenta a dívida
+                creditDebt += val;
+            }
         }
     });
 
-    const initialSum = (typeof _contas !== 'undefined') ? _contas.reduce((acc, c) => acc + parseFloat(c.saldo_inicial), 0) : 0;
-    const saldoTotal = initialSum + receitas - despesas;
+    const saldoTotal = liquidBalance - creditDebt;
 
+    // 3. Atualizar UI
     const recReceitas = document.getElementById('total-income');
     const recDespesas = document.getElementById('total-expense');
     if (recReceitas) recReceitas.textContent = formatCurrency(receitas);
     if (recDespesas) recDespesas.textContent = formatCurrency(despesas);
     
-    const saldoEl = document.getElementById('total-balance');
-    if (saldoEl) {
-        saldoEl.textContent = formatCurrency(saldoTotal);
-        if (saldoTotal > 0) {
-            saldoEl.style.color = 'var(--color-success)';
-        } else if (saldoTotal < 0) {
-            saldoEl.style.color = 'var(--color-danger)';
-        } else {
-            saldoEl.style.color = 'white';
-        }
+    // Novas IDs do Split Hero
+    const liquidEl = document.getElementById('liquid-balance');
+    const creditEl = document.getElementById('credit-debt');
+    const totalEl = document.getElementById('total-balance');
+
+    if (liquidEl) liquidEl.textContent = formatCurrency(liquidBalance);
+    if (creditEl) {
+        creditEl.textContent = formatCurrency(creditDebt);
+        creditEl.className = creditDebt > 0 ? 'val neg privacy-blur' : 'val privacy-blur';
     }
+    if (totalEl) {
+        totalEl.textContent = formatCurrency(saldoTotal);
+        totalEl.style.color = saldoTotal >= 0 ? 'var(--color-success)' : 'var(--color-danger)';
+    }
+
+    // Exportar para uso global em outros módulos
+    window._liquidBalance = liquidBalance;
+    window._creditDebt = creditDebt;
+    window._netWealth = saldoTotal;
 
     // --- Upcoming (Próximos 7 dias) ---
     const upcomingRange = 7;
@@ -399,25 +463,6 @@ function calculateProjection(transactions) {
     const projectionTextEl = document.getElementById('projection-insight-text');
     if (!projectionEl) return;
 
-    // 1. Calcular Liquidez vs Dívida de Cartão
-    let cashBalance = 0;
-    let creditDebt = 0;
-    
-    if (typeof _contas !== 'undefined' && _contas) {
-        _contas.forEach(c => {
-            const initial = parseFloat(c.saldo_inicial || 0);
-            const transactions = _allTransactions.filter(t => t.conta_id === c.id);
-            const accountBalance = initial + transactions.reduce((acc, t) => {
-                if (t.tipo === 'entrada') return acc + parseFloat(t.valor);
-                return acc - parseFloat(t.valor);
-            }, 0);
-
-            if (c.tipo === 'credito') creditDebt += accountBalance; // Geralmente negativo
-            else cashBalance += accountBalance;
-        });
-    }
-
-    let projected = cashBalance; // Começamos com o que temos em "mãos"
     const now = new Date();
     const today = now.getDate();
     const curMonth = now.getMonth();
@@ -425,20 +470,31 @@ function calculateProjection(transactions) {
     const daysInMonth = new Date(curYear, curMonth + 1, 0).getDate();
     const daysRemaining = daysInMonth - today;
 
-    // 2. Projetar Faturas de Cartão (Se houver dívida acumulada)
-    if (creditDebt < 0) {
-        // Encontrar a data de vencimento mais próxima (simplificado: pegamos a primeira conta de crédito)
-        const creditAccount = _contas.find(c => c.tipo === 'credito');
-        if (creditAccount && creditAccount.dia_vencimento) {
-            const vencimento = parseInt(creditAccount.dia_vencimento);
-            if (vencimento > today) {
-                // Se vence este mês ainda, subtraímos do projetado
-                projected += creditDebt; // creditDebt é negativo, então subtrai
+    // 1. Saldo Líquido Atual (Dinheiro na Mão)
+    const liquidBalance = window._liquidBalance || 0;
+    const creditDebtTotal = window._creditDebt || 0;
+
+    // 2. Projetar Faturas de Cartão que vencem este mês
+    let currentInvoiceToPay = 0;
+    if (typeof _contas !== 'undefined') {
+        const creditCards = _contas.filter(c => c.tipo === 'credito');
+        transactions.forEach(t => {
+            const account = creditCards.find(c => c.id === t.conta_id);
+            if (account) {
+                const purchaseDate = parseDate(t.data);
+                const invoiceDate = getInvoiceMonth(purchaseDate, account);
+                
+                // Se a fatura cai no mês atual
+                if (invoiceDate.getMonth() === curMonth && invoiceDate.getFullYear() === curYear) {
+                    if (t.tipo === 'saida') currentInvoiceToPay += parseFloat(t.valor);
+                    else currentInvoiceToPay -= parseFloat(t.valor);
+                }
             }
-        }
+        });
     }
 
-    // 3. Considerar Recorrências Pendentes
+    // 3. Considerar Recorrências Pendentes (Contas Fixas)
+    let billsToPay = 0;
     if (typeof _recorrencias !== 'undefined') {
         _recorrencias.forEach(r => {
             const dia = parseInt(r.dia_vencimento);
@@ -446,75 +502,60 @@ function calculateProjection(transactions) {
             const isPaidThisMonth = lastPaid && lastPaid.getMonth() === curMonth && lastPaid.getFullYear() === curYear;
 
             if (dia > today && !isPaidThisMonth) {
-                if (r.tipo === 'entrada') projected += parseFloat(r.valor);
-                else projected -= parseFloat(r.valor);
+                if (r.tipo === 'saida') billsToPay += parseFloat(r.valor);
             }
         });
     }
 
-    // 4. Considerar Média de Gastos Variáveis (Ritmo)
-    const monthTransactions = _allTransactions.filter(t => {
+    // 4. Considerar Média de Gastos Variáveis (Ritmo Diário)
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(now.getDate() - 30);
+    const variableExpenses = transactions.filter(t => {
         const d = parseDate(t.data);
-        return d.getMonth() === curMonth && d.getFullYear() === curYear && t.tipo === 'saida';
-    });
-    
-    const totalSpentSoFar = monthTransactions.reduce((acc, t) => acc + parseFloat(t.valor), 0);
-    const dailyPace = today > 0 ? (totalSpentSoFar / today) : 0;
+        return t.tipo === 'saida' && d >= thirtyDaysAgo;
+    }).reduce((acc, t) => acc + parseFloat(t.valor), 0);
+    const dailyPace = variableExpenses / 30;
     const estimatedFutureSpending = dailyPace * daysRemaining;
-    projected -= estimatedFutureSpending;
 
-    // 3. Atualizar UI e Estado Global
+    // 5. SALDO PROJETADO FINAL (Liquidez ao fim do mês)
+    const projected = liquidBalance - currentInvoiceToPay - billsToPay - estimatedFutureSpending;
     window._projectedBalance = projected;
-    
-    // Update New Hero Vision Card
+
+    // --- Atualizar UI Dashboard Hero ---
     const heroProjEl = document.getElementById('projected-balance-hero');
     const heroInsightEl = document.getElementById('projection-insight-hero');
+    const heroCreditEl = document.getElementById('credit-invoice-hero');
     const heroBillsEl = document.getElementById('upcoming-bills-hero');
     const heroPaceEl = document.getElementById('daily-pace-hero');
 
     if (heroProjEl) heroProjEl.textContent = formatCurrency(projected);
-    
-    // Update Credit Card Hero Info
-    const heroCreditEl = document.getElementById('credit-invoice-hero');
-    if (heroCreditEl) heroCreditEl.textContent = formatCurrency(Math.abs(creditDebt));
-
-    // Calculate Upcoming Bills (Next 30 days)
-    let upcomingTotal = 0;
-    if (typeof _recorrencias !== 'undefined') {
-        _recorrencias.forEach(r => {
-            const dia = parseInt(r.dia_vencimento);
-            if (dia > today) {
-                if (r.tipo === 'saida') upcomingTotal += parseFloat(r.valor);
-            }
-        });
-    }
-    if (heroBillsEl) heroBillsEl.textContent = formatCurrency(upcomingTotal);
-    if (heroPaceEl) heroPaceEl.textContent = formatCurrency(dailyPace);
+    if (heroCreditEl) heroCreditEl.textContent = formatCurrency(currentInvoiceToPay);
+    if (heroBillsEl) heroBillsEl.textContent = formatCurrency(billsToPay);
+    if (heroPaceEl) heroPaceEl.textContent = formatCurrency(dailyPace) + '/dia';
 
     if (heroInsightEl) {
         if (projected < 0) {
             heroInsightEl.innerHTML = `⚠️ <span style="color: #EF4444; font-weight: 700;">Risco de saldo negativo!</span> Você precisaria de ${formatCurrency(Math.abs(projected))} para equilibrar.`;
-        } else if (projected < cashBalance * 0.5) {
-            heroInsightEl.innerHTML = `💡 <span style="color: #F59E0B; font-weight: 700;">Alerta de liquidez.</span> Suas reservas estão baixas em relação às despesas.`;
+        } else if (projected < liquidBalance * 0.3) {
+            heroInsightEl.innerHTML = `💡 <span style="color: #F59E0B; font-weight: 700;">Alerta de liquidez.</span> Suas reservas estão baixas em relação às despesas previstas.`;
         } else {
-            heroInsightEl.innerHTML = `✨ <span style="color: #10B981; font-weight: 700;">Céu limpo à frente.</span> Sua saúde financeira projetada está excelente.`;
+            heroInsightEl.innerHTML = `✨ <span style="color: #10B981; font-weight: 700;">Saúde financeira excelente.</span> Projeção de sobra confortável até o fim do mês.`;
         }
     }
 
-    // Original elements (Fallback)
-    if (projectionEl) projectionEl.textContent = formatCurrency(projected);
+    // Fallback UI (Para o modal/outras áreas)
+    if (projectionEl) {
+        projectionEl.textContent = formatCurrency(projected);
+        projectionEl.className = projected >= 0 ? 'stat-value success' : 'stat-value danger';
+    }
     if (projectionTextEl) {
-        if (projected < 0) {
-            projectionTextEl.innerHTML = `⚠️ <span style="color: var(--color-danger); font-weight: 700;">Risco de saldo negativo!</span> Seu ritmo atual indica que faltarão ${formatCurrency(Math.abs(projected))} no final do mês.`;
-        } else {
-            projectionTextEl.innerHTML = `✨ <span style="color: var(--color-success); font-weight: 700;">Tudo sob controle.</span> Projeção de sobra de ${formatCurrency(projected)} até dia ${daysInMonth}.`;
-        }
+        projectionTextEl.innerHTML = projected < 0 
+            ? `⚠️ Faltarão ${formatCurrency(Math.abs(projected))} no fim do mês.` 
+            : `✨ Sobra de ${formatCurrency(projected)} prevista.`;
     }
 
-    projectionEl.className = projected >= 0 ? 'stat-value success' : 'stat-value danger';
-    
-    // Trigger Mini Chart Update
     if (typeof renderMiniForecast === 'function') renderMiniForecast(calculateFutureForecast());
+    updateBudgetAlerts();
 }
 
 

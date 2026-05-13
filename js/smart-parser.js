@@ -162,12 +162,17 @@ const SmartParser = {
         // 5. Detect Account (Zero-Click)
         let detectedAccountId = null;
         let detectedAccountName = null;
-        if (typeof _contas !== 'undefined') {
-            const accMatch = _contas.find(c => cleanText.includes(c.nome.toLowerCase()));
+        if (typeof _contas !== 'undefined' && _contas) {
+            // Tentar match exato primeiro, depois parcial
+            const accMatch = _contas.find(c => {
+                const accName = c.nome.toLowerCase();
+                return cleanText.includes(accName) || accName.includes(cleanText.replace('cartão', '').replace('conta', '').trim());
+            });
+            
             if (accMatch) {
                 detectedAccountId = accMatch.id;
                 detectedAccountName = accMatch.nome;
-                highestScore += 20; 
+                highestScore += 25; 
             }
         }
 

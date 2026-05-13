@@ -394,6 +394,85 @@ function renderForecastChart(transactions) {
 }
 
 let _chartMiniForecast = null;
+let _chartInvoiceEvolution = null;
+
+function renderInvoiceEvolutionChart(invoiceTransactions) {
+    const ctx = document.getElementById('chart-invoice-evolution')?.getContext('2d');
+    if (!ctx) return;
+
+    if (_chartInvoiceEvolution) _chartInvoiceEvolution.destroy();
+
+    // Agrupar por dia e calcular acumulado
+    const dailyData = {};
+    invoiceTransactions.forEach(t => {
+        const d = new Date(t.data + 'T00:00:00').getDate();
+        const val = t.tipo === 'entrada' ? -parseFloat(t.valor) : parseFloat(t.valor);
+        dailyData[d] = (dailyData[d] || 0) + val;
+    });
+
+    const days = Object.keys(dailyData).map(Number).sort((a, b) => a - b);
+    let runningTotal = 0;
+    const labels = [];
+    const dataPoints = [];
+
+    if (days.length === 0) {
+        labels.push(1);
+        dataPoints.push(0);
+    } else {
+        const lastDay = Math.max(...days);
+        for (let i = 1; i <= lastDay; i++) {
+            runningTotal += (dailyData[i] || 0);
+            labels.push(i);
+            dataPoints.push(runningTotal);
+        }
+    }
+
+    _chartInvoiceEvolution = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Gasto Acumulado',
+                data: dataPoints,
+                borderColor: '#FF7A00',
+                backgroundColor: 'rgba(255, 122, 0, 0.1)',
+                fill: true,
+                tension: 0.4,
+                pointRadius: days.length > 1 ? 0 : 4,
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    intersect: false,
+                    mode: 'index',
+                    callbacks: {
+                        label: function(context) {
+                            return 'Acumulado: R$ ' + context.parsed.y.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+                        },
+                        title: function(context) {
+                            return 'Dia ' + context[0].label;
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    grid: { display: false },
+                    ticks: { color: '#8E8E93', font: { size: 10 }, maxRotation: 0 }
+                },
+                y: {
+                    display: false,
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+}
 function renderMiniForecast(forecastData) {
     const ctx = document.getElementById('chart-mini-forecast')?.getContext('2d');
     if (!ctx || !forecastData) return;

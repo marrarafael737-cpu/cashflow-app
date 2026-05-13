@@ -335,10 +335,12 @@ function switchView(target) {
         }
 
         // Trigger Renders específicos
-        if (target === 'wallets' && typeof renderWallets === 'function') renderWallets();
+        if (target === 'wallets' && typeof renderContas === 'function') renderContas();
         if (target === 'calendar' && typeof renderCalendar === 'function') renderCalendar();
         if (target === 'goals' && typeof renderMetas === 'function') renderMetas();
-        if (target === 'dashboard' && typeof updateSummary === 'function') updateSummary();
+        if (target === 'dashboard' && typeof filterAndRenderData === 'function') {
+            filterAndRenderData();
+        }
     };
 
     // Transição Premium com GSAP
@@ -391,14 +393,16 @@ function clearMascotInitMessage() {
 window.switchView = switchView;
 
 /**
- * Renderiza a visualização de Contas e Carteiras
+ * Renderiza a visualização de Contas e Carteiras (Carousel)
  */
-async function renderWallets() {
+function renderContas() {
     const grid = document.getElementById("wallets-grid");
-    if (!grid) return;
+    const dashList = document.getElementById("accounts-list");
+    
+    if (!grid && !dashList) return;
 
     if (!_contas || _contas.length === 0) {
-        grid.innerHTML = `
+        const emptyHTML = `
             <div class="empty-state" style="grid-column: 1/-1;">
                 <div class="empty-icon-wrapper">
                     <i class="fas fa-wallet"></i>
@@ -408,115 +412,110 @@ async function renderWallets() {
                 <button class="btn-primary-action" style="width: auto; padding: 0.75rem 2rem;" onclick="document.getElementById('btn-open-modal-conta').click()">Cadastrar Carteira</button>
             </div>
         `;
+        if (grid) grid.innerHTML = emptyHTML;
+        if (dashList) dashList.innerHTML = emptyHTML;
         return;
     }
 
-    grid.innerHTML = _contas.map(c => {
-        const saldoTransacoes = _allTransactions
+    const cardsHTML = _contas.map(c => {
+        const transactions = (typeof _allTransactions !== 'undefined' && _allTransactions) ? _allTransactions : [];
+        const saldoTransacoes = transactions
             .filter(t => t.conta_id === c.id)
             .reduce((acc, t) => acc + (t.tipo === "entrada" ? parseFloat(t.valor) : -parseFloat(t.valor)), 0);
         
-        const saldoFinal = (parseFloat(c.saldo_inicial) || 0) + saldoTransacoes;
+        const saldoInicial = parseFloat(c.saldo_inicial) || 0;
+        const saldoFinal = (c.tipo === 'credito') ? (-saldoInicial + saldoTransacoes) : (saldoInicial + saldoTransacoes);
         const color = c.cor || "var(--color-primary)";
-        const isNegative = saldoFinal < 0;
-
+        
         const typeLabels = { corrente: 'Conta Corrente', poupanca: 'Poupança', investimento: 'Investimento', dinheiro: 'Dinheiro', credito: 'Cartão de Crédito' };
-        const typeLabel = typeLabels[c.tipo] || c.tipo || 'Conta';
+        const typeLabel = typeLabels[c.tipo] || 'Conta';
 
-        const totalSpent = saldoFinal < 0 ? Math.abs(saldoFinal) : 0;
-        const limit = parseFloat(c.limite) || 0;
-        const availableLimit = limit - totalSpent;
-        const usagePercent = limit > 0 ? Math.min((totalSpent / limit) * 100, 100) : 0;
-        const usageColor = usagePercent > 80 ? 'var(--color-danger)' : (usagePercent > 50 ? 'var(--color-warning)' : 'var(--color-success)');
-
-        const creditInfo = c.tipo === 'credito' ? `
-            <div style="margin-top: 0.8rem; padding-top: 0.8rem; border-top: 1px solid rgba(255,255,255,0.07);">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 0.4rem;">
-                    <span style="font-size:0.68rem; color:var(--color-text-muted);">Uso do Limite</span>
-                    <span style="font-size:0.68rem; font-weight:700; color:${usageColor};">${usagePercent.toFixed(0)}%</span>
-                </div>
-                <div style="width: 100%; height: 6px; background: rgba(255,255,255,0.05); border-radius: 10px; overflow: hidden; margin-bottom: 0.8rem;">
-                    <div style="width: ${usagePercent}%; height: 100%; background: ${usageColor}; border-radius: 10px; transition: width 0.5s ease;"></div>
-                </div>
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <span style="font-size:0.68rem; color:var(--color-text-muted);">Fatura Atual</span>
-                    <span style="font-size:0.75rem; font-weight:700; color:var(--color-danger);">${formatar(totalSpent)}</span>
-                </div>
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:0.3rem;">
-                    <span style="font-size:0.68rem; color:var(--color-text-muted);">Limite Disp.</span>
-                    <span style="font-size:0.75rem; font-weight:600; color:var(--color-success);">${formatar(availableLimit)}</span>
-                </div>
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:0.3rem;">
-                    <span style="font-size:0.68rem; color:var(--color-text-muted);">Vencimento</span>
-                    <span style="font-size:0.75rem; font-weight:600; color:var(--color-warning);">Dia ${c.dia_vencimento || '—'}</span>
-                </div>
-            </div>
-        ` : '';
-
-        return `
-            <div style="
-                background: var(--color-surface);
-                border: 1px solid var(--color-border);
-                border-radius: 16px;
-                overflow: hidden;
-                display: flex;
-                flex-direction: column;
-                box-shadow: var(--shadow-md);
-                transition: transform 0.2s ease, box-shadow 0.2s ease;
-            " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 30px rgba(0,0,0,0.4)'"
-               onmouseout="this.style.transform=''; this.style.boxShadow='var(--shadow-md)'">
-
-                <!-- Card Header -->
-                <div style="
-                    background: ${color}18;
-                    border-bottom: 1px solid ${color}30;
-                    padding: 1rem 1.25rem;
-                    display: flex;
-                    align-items: center;
-                    justify-content: space-between;
-                ">
-                    <div style="display:flex; align-items:center; gap:0.65rem;">
-                        <div style="
-                            width: 36px; height: 36px;
-                            background: ${color}25;
-                            border-radius: 10px;
-                            display: flex; align-items: center; justify-content: center;
-                            border: 1px solid ${color}40;
-                        ">
-                            <i class="${getAccountIcon(c.tipo)}" style="color:${color}; font-size:0.9rem;"></i>
-                        </div>
+        if (c.tipo === 'credito') {
+            const limit = parseFloat(c.limite) || 0;
+            const totalSpent = Math.abs(Math.min(0, saldoFinal));
+            const availableLimit = Math.max(0, limit - totalSpent);
+            const usagePercent = limit > 0 ? Math.min((totalSpent / limit) * 100, 100) : 0;
+            
+            return `
+                <div class="account-card type-credito" style="--card-color: ${color}">
+                    <div class="card-chip"></div>
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                         <div>
-                            <div style="font-size:0.85rem; font-weight:700; color:var(--color-text-main); line-height:1.2;">${escapeHTML(c.nome)}</div>
-                            <div style="font-size:0.65rem; color:var(--color-text-muted); margin-top:0.1rem;">${typeLabel}</div>
+                            <h4 style="color: white; margin: 0; font-size: 1rem;">${escapeHTML(c.nome)}</h4>
+                            <span style="font-size: 0.7rem; color: rgba(255,255,255,0.5);">${typeLabel}</span>
+                        </div>
+                        <i class="fas ${c.icone || 'fa-credit-card'}" style="color: ${color}; font-size: 1.2rem;"></i>
+                    </div>
+                    
+                    <div style="margin: 1rem 0;">
+                        <span style="font-size: 0.7rem; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 1px;">Fatura Atual</span>
+                        <div style="font-size: 1.5rem; font-weight: 800; color: white; margin-top: 2px;" class="privacy-blur">${formatar(totalSpent)}</div>
+                    </div>
+
+                    <div class="limit-bar-container">
+                        <div class="limit-info">
+                            <span>Limite Disponível</span>
+                            <span class="privacy-blur">${formatar(availableLimit)}</span>
+                        </div>
+                        <div class="limit-bar-bg">
+                            <div class="limit-bar-fill" style="width: ${usagePercent}%;"></div>
                         </div>
                     </div>
-                    <div style="display:flex; gap:0.35rem;">
-                        <button onclick="handleEditAccount('${c.id}')" title="Editar" style="background:transparent; border:none; color:var(--color-text-muted); cursor:pointer; padding:0.3rem; border-radius:6px; transition:color 0.2s;"
-                            onmouseover="this.style.color='var(--color-primary)'" onmouseout="this.style.color='var(--color-text-muted)'">
-                            <i class="fas fa-pen" style="font-size:0.75rem;"></i>
+
+                    <div class="card-footer-info">
+                        <div>
+                            <span style="display: block; font-size: 0.6rem; color: rgba(255,255,255,0.4); text-transform: uppercase;">Fechamento</span>
+                            <span style="font-size: 0.8rem; font-weight: 700; color: white;">Dia ${c.dia_fechamento || '—'}</span>
+                        </div>
+                        <div style="text-align: right;">
+                            <span style="display: block; font-size: 0.6rem; color: rgba(255,255,255,0.4); text-transform: uppercase;">Vencimento</span>
+                            <span style="font-size: 0.8rem; font-weight: 700; color: var(--color-warning);">Dia ${c.dia_vencimento || '—'}</span>
+                        </div>
+                    </div>
+                    
+                    <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
+                        <button class="btn-ghost-small" style="flex: 1; border-color: rgba(255,255,255,0.1); color: white;" onclick="handleEditAccount('${c.id}')">
+                            <i class="fas fa-edit"></i> Editar
                         </button>
-                        <button onclick="handleDeleteAccount('${c.id}')" title="Excluir" style="background:transparent; border:none; color:var(--color-text-muted); cursor:pointer; padding:0.3rem; border-radius:6px; transition:color 0.2s;"
-                            onmouseover="this.style.color='var(--color-danger)'" onmouseout="this.style.color='var(--color-text-muted)'">
-                            <i class="fas fa-trash" style="font-size:0.75rem;"></i>
+                        <button class="btn-ghost-small" style="flex: 1; border-color: ${color}; background: ${color}20; color: white;" onclick="handleOpenFaturas('${c.id}')">
+                            <i class="fas fa-file-invoice-dollar"></i> Detalhes
                         </button>
                     </div>
                 </div>
+            `;
+        } else {
+            // Conta Normal
+            return `
+                <div class="account-card" style="--card-color: ${color}">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                        <div style="width: 40px; height: 40px; border-radius: 12px; background: ${color}20; color: ${color}; display: flex; align-items: center; justify-content: center;">
+                            <i class="fas ${c.icone || 'fa-wallet'}"></i>
+                        </div>
+                        <div style="text-align: right;">
+                            <h4 style="margin: 0; font-size: 0.9rem;">${escapeHTML(c.nome)}</h4>
+                            <span style="font-size: 0.7rem; color: var(--color-text-muted);">${typeLabel}</span>
+                        </div>
+                    </div>
 
-                <!-- Card Body -->
-                <div style="padding: 1rem 1.25rem; flex:1;">
-                    <div style="font-size:0.65rem; color:var(--color-text-muted); text-transform:uppercase; letter-spacing:0.06em; margin-bottom:0.3rem;">Saldo Atual</div>
-                    <div class="privacy-blur" style="
-                        font-size: 1.45rem;
-                        font-weight: 800;
-                        color: ${isNegative ? 'var(--color-danger)' : 'var(--color-text-main)'};
-                        letter-spacing: -0.02em;
-                        line-height: 1;
-                    ">${formatar(saldoFinal)}</div>
-                    ${creditInfo}
+                    <div style="margin: 1.5rem 0;">
+                        <span style="font-size: 0.7rem; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 1px;">Saldo Disponível</span>
+                        <div style="font-size: 1.5rem; font-weight: 800; color: ${saldoFinal >= 0 ? 'var(--color-success)' : 'var(--color-danger)'};" class="privacy-blur">${formatar(saldoFinal)}</div>
+                    </div>
+
+                    <div style="margin-top: auto; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--color-border); padding-top: 0.75rem;">
+                        <button class="btn-icon-plain" onclick="handleEditAccount('${c.id}')">
+                            <i class="fas fa-cog"></i>
+                        </button>
+                        <span style="font-size: 0.7rem; color: var(--color-text-muted);">Patrimônio: 100%</span>
+                    </div>
                 </div>
-            </div>
-        `;
+            `;
+        }
     }).join("");
+
+    if (grid) grid.innerHTML = cardsHTML;
+    if (dashList) dashList.innerHTML = cardsHTML;
+    if (typeof checkInvoiceDueDates === 'function') checkInvoiceDueDates();
 }
 
 function getAccountIcon(tipo) {
@@ -829,8 +828,9 @@ function triggerConfetti() {
  */
 function filterAndRenderData(transactions = _allTransactions) {
     try {
-        // 1. Renderizar Tabela de Transações
+        // 1. Renderizar Tabela de Transações e Contas
         renderTransactions(transactions);
+        if (typeof renderContas === 'function') renderContas();
 
         // 2. Calcular Resumos (Saldo, Receitas, Despesas)
         if (typeof calculateSummary === 'function') {
@@ -885,4 +885,365 @@ function filterAndRenderData(transactions = _allTransactions) {
     } catch (error) {
         console.error('C.A.S.H. Unit: Falha durante a renderização:', error);
     }
+}
+
+/**
+ * Handlers para Cartão de Crédito (Carousel)
+ */
+let _currentInvoiceAccountId = null;
+let _currentInvoiceMonth = new Date().getMonth();
+let _currentInvoiceYear = new Date().getFullYear();
+
+async function handleOpenFaturas(contaId) {
+    const account = _contas.find(c => c.id === contaId);
+    if (!account || account.tipo !== 'credito') return;
+
+    _currentInvoiceAccountId = contaId;
+    const now = new Date();
+    _currentInvoiceMonth = now.getMonth();
+    _currentInvoiceYear = now.getFullYear();
+
+    // Atualizar UI básica do modal
+    const modalTitle = document.getElementById('invoice-modal-title');
+    const iconBg = document.getElementById('invoice-card-icon-bg');
+    const icon = document.getElementById('invoice-card-icon');
+    
+    if (modalTitle) modalTitle.textContent = `Fatura: ${account.nome}`;
+    if (iconBg) iconBg.style.background = `${account.cor || 'var(--color-primary)'}20`;
+    if (icon) icon.style.color = account.cor || 'var(--color-primary)';
+    
+    renderInvoiceTabs(account);
+    renderInvoiceTransactions(contaId, _currentInvoiceMonth, _currentInvoiceYear);
+    
+    if (typeof openModal === 'function') openModal('modal-faturas');
+    else if (document.getElementById('modal-faturas')) document.getElementById('modal-faturas').classList.add('active');
+}
+
+function renderInvoiceTabs(account) {
+    const tabsContainer = document.getElementById('invoice-months-tabs');
+    if (!tabsContainer) return;
+
+    const months = [];
+    const now = new Date();
+    
+    // Gerar últimos 3 meses e próximos 3 meses
+    for (let i = -3; i <= 2; i++) {
+        const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
+        months.push({
+            month: d.getMonth(),
+            year: d.getFullYear(),
+            label: d.toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' }).replace('.', '')
+        });
+    }
+
+    tabsContainer.innerHTML = months.map(m => {
+        const isActive = m.month === _currentInvoiceMonth && m.year === _currentInvoiceYear;
+        return `
+            <div class="invoice-tab ${isActive ? 'active' : ''}" 
+                 onclick="changeInvoiceTab('${account.id}', ${m.month}, ${m.year})">
+                ${m.label}
+            </div>
+        `;
+    }).join('');
+}
+
+window.changeInvoiceTab = function(contaId, month, year) {
+    _currentInvoiceMonth = month;
+    _currentInvoiceYear = year;
+    
+    const account = _contas.find(c => c.id === contaId);
+    if (account) {
+        renderInvoiceTabs(account);
+        renderInvoiceTransactions(contaId, month, year);
+    }
+};
+
+function renderInvoiceTransactions(contaId, month, year) {
+    const listContainer = document.getElementById('invoice-transactions-list');
+    const totalDisplay = document.getElementById('invoice-total-amount');
+    const statusBadge = document.getElementById('invoice-status-badge');
+    const dueDateDisplay = document.getElementById('invoice-due-date');
+    
+    if (!listContainer) return;
+
+    const account = _contas.find(c => c.id === contaId);
+    if (!account) return;
+
+    const transactions = (typeof _allTransactions !== 'undefined') ? _allTransactions : [];
+    
+    // Filtrar transações que CAEM nesta fatura (mês/ano)
+    const invoiceTransactions = transactions.filter(t => {
+        if (t.conta_id !== contaId) return false;
+        
+        const purchaseDate = new Date(t.data + 'T00:00:00');
+        // getInvoiceMonth retorna a data da fatura em que a compra cairá
+        const invoiceDate = (typeof getInvoiceMonth === 'function') ? getInvoiceMonth(purchaseDate, account) : purchaseDate;
+        
+        return invoiceDate.getMonth() === month && invoiceDate.getFullYear() === year;
+    });
+
+    const total = invoiceTransactions.reduce((acc, t) => acc + (t.tipo === 'entrada' ? -parseFloat(t.valor) : parseFloat(t.valor)), 0);
+    
+    if (totalDisplay) totalDisplay.textContent = formatar(total);
+    
+    // Status simplificado
+    const now = new Date();
+    const currentViewDate = new Date(year, month);
+    const todayDate = new Date(now.getFullYear(), now.getMonth());
+    
+    if (statusBadge) {
+        if (currentViewDate < todayDate) {
+            statusBadge.textContent = 'Fechada';
+            statusBadge.className = 'badge-status closed';
+        } else if (currentViewDate > todayDate) {
+            statusBadge.textContent = 'Prevista';
+            statusBadge.className = 'badge-status closed';
+        } else {
+            statusBadge.textContent = 'Aberta';
+            statusBadge.className = 'badge-status open';
+        }
+    }
+
+    if (dueDateDisplay) dueDateDisplay.textContent = `Vence dia ${account.dia_vencimento || '--'}`;
+
+    // Atualizar barra de limite no modal
+    const limit = parseFloat(account.limite) || 0;
+    const usagePercent = limit > 0 ? Math.min((total / limit) * 100, 100) : 0;
+    
+    const usageLabel = document.getElementById('invoice-limit-usage-percent');
+    const barFill = document.getElementById('invoice-limit-bar-fill');
+    
+    if (usageLabel) usageLabel.textContent = `${usagePercent.toFixed(0)}%`;
+    if (barFill) {
+        barFill.style.width = `${usagePercent}%`;
+        barFill.style.background = usagePercent > 90 ? 'var(--color-danger)' : (usagePercent > 70 ? 'var(--color-warning)' : 'var(--color-primary)');
+    }
+
+    if (invoiceTransactions.length === 0) {
+        listContainer.innerHTML = `
+            <div class="empty-state" style="padding: 3rem 1rem; text-align: center;">
+                <i class="fas fa-receipt" style="font-size: 2rem; color: var(--color-text-muted); opacity: 0.2; margin-bottom: 1rem; display: block;"></i>
+                <p style="color: var(--color-text-muted); font-size: 0.85rem;">Nenhum lançamento encontrado para este período.</p>
+            </div>
+        `;
+        return;
+    }
+
+    // Renderizar gráfico de evolução
+    if (typeof renderInvoiceEvolutionChart === 'function') {
+        renderInvoiceEvolutionChart(invoiceTransactions);
+    }
+
+
+    listContainer.innerHTML = invoiceTransactions.map(t => `
+        <div class="invoice-transaction-item">
+            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                <div style="width: 36px; height: 36px; border-radius: 10px; background: rgba(255,255,255,0.03); display: flex; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,0.05);">
+                    <i class="fas ${t.tipo === 'entrada' ? 'fa-arrow-down' : 'fa-arrow-up'}" style="font-size: 0.8rem; color: ${t.tipo === 'entrada' ? 'var(--color-success)' : 'var(--color-danger)'};"></i>
+                </div>
+                <div>
+                    <div style="font-size: 0.85rem; font-weight: 700; color: var(--color-text-main); line-height: 1.2;">${escapeHTML(t.descricao)}</div>
+                    <div style="font-size: 0.65rem; color: var(--color-text-muted); margin-top: 0.1rem;">${new Date(t.data + 'T00:00:00').toLocaleDateString('pt-BR')}</div>
+                </div>
+            </div>
+            <div style="text-align: right;">
+                <div style="font-size: 0.95rem; font-weight: 800; color: ${t.tipo === 'entrada' ? 'var(--color-success)' : 'var(--color-text-main)'};">
+                    ${t.tipo === 'entrada' ? '+' : ''}${formatar(t.valor)}
+                </div>
+                ${t.parcelas_total > 1 ? `<span style="font-size: 0.6rem; color: var(--color-primary); font-weight: 800; text-transform: uppercase;">Parc. ${t.parcela_atual}/${t.parcelas_total}</span>` : ''}
+            </div>
+        </div>
+    `).join('');
+}
+
+async function handlePagarFatura(contaId) {
+    const account = _contas.find(c => c.id === contaId);
+    if (!account) return;
+    
+    const transactions = (typeof _allTransactions !== 'undefined') ? _allTransactions : [];
+    const totalSpent = transactions
+        .filter(t => t.conta_id === contaId)
+        .reduce((acc, t) => acc + (t.tipo === "entrada" ? parseFloat(t.valor) : -parseFloat(t.valor)), 0);
+    
+    const valorFatura = Math.abs(Math.min(0, totalSpent - parseFloat(account.saldo_inicial || 0)));
+    
+    if (valorFatura <= 0) {
+        showToast('Não há saldo devedor nesta fatura.', 'info');
+        return;
+    }
+
+    if (confirm(`Deseja realizar o pagamento total da fatura no valor de ${formatar(valorFatura)}?`)) {
+        showToast('Funcionalidade de pagamento em desenvolvimento.', 'alert');
+    }
+}
+
+window.handlePagarFaturaNoModal = function() {
+    if (_currentInvoiceAccountId) {
+        handlePagarFatura(_currentInvoiceAccountId);
+    }
+};
+
+window.handleOpenFaturas = handleOpenFaturas;
+window.handlePagarFatura = handlePagarFatura;
+/**
+ * Fluxo de Pagamento de Fatura (Double-Entry)
+ */
+window.initiatePaymentFlow = function() {
+    const selector = document.getElementById('payment-source-selector');
+    const payBtn = document.getElementById('btn-pay-invoice');
+    const actionsConfirm = document.getElementById('payment-actions-confirm');
+    const selectOrigem = document.getElementById('select-pagamento-origem');
+
+    if (!selector || !payBtn || !actionsConfirm || !selectOrigem) return;
+
+    // Filtrar contas que não sejam de crédito para pagamento
+    const contasOrigem = _contas.filter(c => c.tipo !== 'credito');
+    
+    if (contasOrigem.length === 0) {
+        showToast('Você não possui contas de saldo (Corrente/Dinheiro) para realizar o pagamento.', 'alert');
+        return;
+    }
+
+    selectOrigem.innerHTML = contasOrigem.map(c => `
+        <option value="${c.id}">${escapeHTML(c.nome)} (${formatar(c.saldo_inicial || 0)})</option>
+    `).join('');
+
+    selector.style.display = 'block';
+    payBtn.style.display = 'none';
+    actionsConfirm.style.display = 'flex';
+};
+
+window.cancelPaymentFlow = function() {
+    const selector = document.getElementById('payment-source-selector');
+    const payBtn = document.getElementById('btn-pay-invoice');
+    const actionsConfirm = document.getElementById('payment-actions-confirm');
+    
+    if (selector) selector.style.display = 'none';
+    if (payBtn) payBtn.style.display = 'block';
+    if (actionsConfirm) actionsConfirm.style.display = 'none';
+};
+
+window.handleConfirmarPagamento = async function() {
+    if (!_currentInvoiceAccountId) return;
+
+    const contaOrigemId = document.getElementById('select-pagamento-origem').value;
+    const accountCredito = _contas.find(c => c.id === _currentInvoiceAccountId);
+    const accountOrigem = _contas.find(c => c.id === contaOrigemId);
+    
+    if (!accountCredito || !accountOrigem) return;
+
+    // Calcular valor total da fatura filtrada (mês selecionado no modal)
+    const transactions = (typeof _allTransactions !== 'undefined') ? _allTransactions : [];
+    const invoiceTransactions = transactions.filter(t => {
+        if (t.conta_id !== _currentInvoiceAccountId) return false;
+        const purchaseDate = new Date(t.data + 'T00:00:00');
+        const invoiceDate = (typeof getInvoiceMonth === 'function') ? getInvoiceMonth(purchaseDate, accountCredito) : purchaseDate;
+        return invoiceDate.getMonth() === _currentInvoiceMonth && invoiceDate.getFullYear() === _currentInvoiceYear;
+    });
+
+    const valorFatura = invoiceTransactions.reduce((acc, t) => acc + (t.tipo === 'entrada' ? -parseFloat(t.valor) : parseFloat(t.valor)), 0);
+
+    if (valorFatura <= 0) {
+        showToast('Não há saldo devedor para pagar neste período.', 'info');
+        cancelPaymentFlow();
+        return;
+    }
+
+    const confirmMsg = `Confirmar pagamento de ${formatar(valorFatura)}?\n\nOrigem: ${accountOrigem.nome}\nDestino: ${accountCredito.nome}`;
+    if (!confirm(confirmMsg)) return;
+
+    try {
+        const user = await getCurrentUser();
+        const today = new Date().toISOString().split('T')[0];
+
+        // 1. Criar Saída na Conta de Origem
+        const { error: errorSaida } = await supabase.from('transacoes').insert([{
+            user_id: user.id,
+            descricao: `Pagamento Fatura: ${accountCredito.nome}`,
+            valor: valorFatura,
+            tipo: 'saida',
+            conta_id: contaOrigemId,
+            data: today,
+            categoria_id: (await getCategoriaPagamentoId(user.id))
+        }]);
+
+        if (errorSaida) throw errorSaida;
+
+        // 2. Criar Entrada (Ajuste) no Cartão de Crédito
+        const { error: errorEntrada } = await supabase.from('transacoes').insert([{
+            user_id: user.id,
+            descricao: `Pagamento Recebido: ${accountOrigem.nome}`,
+            valor: valorFatura,
+            tipo: 'entrada',
+            conta_id: _currentInvoiceAccountId,
+            data: today,
+            categoria_id: (await getCategoriaPagamentoId(user.id))
+        }]);
+
+        if (errorEntrada) throw errorEntrada;
+
+        showToast('Pagamento realizado com sucesso! 🚀', 'success');
+        cancelPaymentFlow();
+        
+        if (typeof closeModal === 'function') closeModal('modal-faturas');
+        else if (document.getElementById('modal-faturas')) document.getElementById('modal-faturas').classList.remove('active');
+        
+        // Recarregar dados para atualizar a dashboard e os saldos
+        if (typeof loadContas === 'function') await loadContas(user.id);
+        if (typeof loadTransactions === 'function') await loadTransactions(user.id);
+        
+    } catch (err) {
+        console.error('C.A.S.H. Unit Error:', err);
+        showToast('Erro ao processar pagamento.', 'error');
+    }
+};
+
+async function getCategoriaPagamentoId(userId) {
+    // Tentar achar uma categoria "Pagamento" ou "Ajuste"
+    try {
+        const { data } = await supabase.from('categorias').select('id').eq('user_id', userId).ilike('nome', '%Pagamento%').limit(1);
+        if (data && data.length > 0) return data[0].id;
+        
+        // Se não achar, tenta a primeira disponível
+        const { data: fallback } = await supabase.from('categorias').select('id').eq('user_id', userId).limit(1);
+        return fallback && fallback.length > 0 ? fallback[0].id : null;
+    } catch (e) {
+        return null;
+    }
+}
+
+/**
+ * Notificações de Vencimento de Fatura
+ */
+function checkInvoiceDueDates() {
+    const container = document.getElementById('invoice-alerts-container');
+    if (!container) return;
+
+    const creditCards = _contas.filter(c => c.tipo === 'credito' && c.dia_vencimento);
+    const now = new Date();
+    const today = now.getDate();
+    
+    let alertsHtml = '';
+
+    creditCards.forEach(card => {
+        const diff = card.dia_vencimento - today;
+        
+        if (diff >= 0 && diff <= 5) {
+            const isToday = diff === 0;
+            alertsHtml += `
+                <div class="alert-premium" style="margin-bottom: 0.75rem; display: flex; align-items: center; gap: 1rem; padding: 1rem; border-radius: 12px; background: ${isToday ? 'rgba(239, 68, 68, 0.08)' : 'rgba(245, 158, 11, 0.08)'}; border: 1px solid ${isToday ? 'rgba(239, 68, 68, 0.15)' : 'rgba(245, 158, 11, 0.15)'}; animation: slideIn 0.3s ease-out;">
+                    <div style="width: 42px; height: 42px; border-radius: 10px; background: ${isToday ? '#EF4444' : '#F59E0B'}; display: flex; align-items: center; justify-content: center; color: white; flex-shrink: 0;">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <div style="flex: 1;">
+                        <div style="font-size: 0.85rem; font-weight: 800; color: var(--color-text-main);">${isToday ? 'Vence Hoje!' : 'Fatura Próxima'}</div>
+                        <div style="font-size: 0.75rem; color: var(--color-text-muted); line-height: 1.2;">Cartão <b>${escapeHTML(card.nome)}</b> vence dia ${card.dia_vencimento}.</div>
+                    </div>
+                    <button class="btn-primary-action" onclick="handleOpenFaturas('${card.id}')" style="margin: 0; padding: 0.5rem 1rem; font-size: 0.7rem; background: ${isToday ? '#EF4444' : '#F59E0B'}; border: none;">PAGAR</button>
+                </div>
+            `;
+        }
+    });
+
+    container.innerHTML = alertsHtml;
 }

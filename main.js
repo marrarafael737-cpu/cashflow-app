@@ -302,6 +302,20 @@ function setupEventListeners(userId) {
                 e.preventDefault();
                 modal.style.display = 'flex';
                 setTimeout(() => modal.classList.add('active'), 10);
+                
+                // Resetar modal de conta para novo cadastro se for o caso
+                if (map.modal === 'modal-account' && map.btn.includes('open')) {
+                    const form = document.getElementById('account-form');
+                    if (form) form.reset();
+                    document.getElementById('edit-account-id').value = '';
+                    const deleteBtn = document.getElementById('btn-delete-account');
+                    if (deleteBtn) deleteBtn.style.display = 'none';
+                    const submitBtn = document.getElementById('btn-account-submit');
+                    if (submitBtn) submitBtn.textContent = 'Criar Conta';
+                    const modalTitle = modal.querySelector('h2');
+                    if (modalTitle) modalTitle.innerHTML = '<i class="fas fa-wallet"></i> Nova Conta';
+                }
+
                 if (map.onOpen) map.onOpen();
             });
         }
@@ -1009,8 +1023,26 @@ async function handleMagicInput(userId) {
         categoria_id = fallbackCat ? fallbackCat.id : null;
     }
 
-    // Conta padrão (primeira disponível)
-    const conta_id = _contas.length > 0 ? _contas[0].id : null;
+    // Tentar encontrar conta mencionada
+    let conta_id = _contas.length > 0 ? _contas[0].id : null;
+    let forma_pagamento = 'dinheiro';
+
+    const accountMentioned = _contas.find(c => text.includes(c.nome.toLowerCase()));
+    if (accountMentioned) {
+        conta_id = accountMentioned.id;
+        if (accountMentioned.tipo === 'credito') {
+            forma_pagamento = 'credito';
+        }
+    } else {
+        // Se não mencionou conta, mas mencionou "crédito" ou "cartão"
+        if (text.includes('crédito') || text.includes('cartão')) {
+            const firstCard = _contas.find(c => c.tipo === 'credito');
+            if (firstCard) {
+                conta_id = firstCard.id;
+                forma_pagamento = 'credito';
+            }
+        }
+    }
 
     if (!categoria_id || !conta_id) {
         showToast('Configure categorias e contas antes de usar o Magic Input.', 'error');
@@ -1024,13 +1056,15 @@ async function handleMagicInput(userId) {
         tipo: tipo,
         categoria_id: categoria_id,
         conta_id: conta_id,
-        data: new Date().toISOString().split('T')[0] // Coluna correta é 'data'
+        forma_pagamento: forma_pagamento,
+        data: new Date().toISOString().split('T')[0]
     }]);
 
     if (!error) {
         showToast('Lançado com sucesso!', 'success');
         input.value = '';
         await loadTransactions(userId);
+        if (typeof filterAndRenderData === 'function') filterAndRenderData();
     } else {
         showToast('Erro ao processar Magic Input.', 'error');
     }
