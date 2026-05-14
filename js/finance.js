@@ -8,6 +8,9 @@ function formatCurrency(value) {
 }
 
 function escapeHTML(str) {
+    if (typeof App !== 'undefined' && App.Utils && App.Utils.sanitize) {
+        return App.Utils.sanitize(str);
+    }
     if (!str) return '';
     const div = document.createElement('div');
     div.textContent = str;
@@ -48,7 +51,8 @@ function calculateGlobalBalance() {
     if (typeof _allTransactions !== 'undefined' && _allTransactions) {
         _allTransactions.forEach(t => {
             if (t.tipo === 'entrada') income += parseFloat(t.valor || 0);
-            else expenses += parseFloat(t.valor || 0);
+            else if (t.tipo === 'saida') expenses += parseFloat(t.valor || 0);
+            // Transferências são ignoradas no balanço global pois o dinheiro não sai do sistema
         });
     }
     return initialSum + income - expenses;
@@ -87,18 +91,17 @@ function calculateSummary(transactions) {
             if (conta && conta.tipo !== 'credito') {
                 liquidBalance += val;
             } else if (conta && conta.tipo === 'credito') {
-                // Pagamento de fatura ou estorno no cartão reduz a dívida
                 creditDebt -= val;
             }
-        } else {
+        } else if (t.tipo === 'saida') {
             despesas += val;
             if (conta && conta.tipo !== 'credito') {
                 liquidBalance -= val;
             } else if (conta && conta.tipo === 'credito') {
-                // Gasto no cartão aumenta a dívida
                 creditDebt += val;
             }
         }
+        // Nota: t.tipo === 'transferencia' não altera o resumo global de Receitas/Despesas
     });
 
     const saldoTotal = liquidBalance - creditDebt;
@@ -670,3 +673,65 @@ function processPiggyBank(transactionValue) {
 
     return (diferenca > 0 && diferenca < 1) ? diferenca : 0;
 }
+
+/**
+ * Gera alertas proativos baseados no estado financeiro (Phase 3)
+ */
+function getProactiveAlerts() {
+    const alerts = [];
+    const summary = typeof calculateSummary === 'function' ? calculateSummary() : { transactions: [] };
+    const now = new Date();
+    const today = now.getDate();
+
+    // 1. Alerta de Saldo Baixo
+    if (typeof _contas !== 'undefined') {
+        _contas.forEach(c => {
+            const currentBalance = parseFloat(c.saldo_inicial || 0);
+            if (c.tipo !== 'credito' && currentBalance < 100) {
+                alerts.push({
+                    type: 'warning',
+                    title: 'Saldo Crítico',
+                    message: `A conta <b>${c.nome}</b> está com menos de R$ 100,00.`,
+                    icon: 'fa-exclamation-triangle'
+                });
+            }
+        });
+    }
+
+    // 2. Alerta de Fatura Próxima
+    if (typeof _contas !== 'undefined') {
+        _contas.forEach(c => {
+            if (c.tipo === 'credito' && c.dia_vencimento) {
+                const diff = c.dia_vencimento - today;
+                if (diff >= 0 && diff <= 3) {
+                    alerts.push({
+                        type: 'danger',
+                        title: 'Fatura Vencendo',
+                        message: `O cartão <b>${c.nome}</b> vence em ${diff === 0 ? 'HOJE' : diff + ' dias'}.`,
+                        icon: 'fa-credit-card'
+                    });
+                }
+            }
+        });
+    }
+
+    // 3. Alerta de Orçamento Estourado
+    if (typeof _budgets !== 'undefined') {
+        _budgets.forEach(b => {
+            const expense = typeof calculateCategoryExpense === 'function' ? calculateCategoryExpense(b.categoria_id, summary.transactions) : 0;
+            if (expense > b.limite) {
+                const catName = b.categorias?.nome || 'Categoria';
+                alerts.push({
+                    type: 'warning',
+                    title: 'Orçamento Excedido',
+                    message: `Você ultrapassou o limite de <b>${catName}</b>.`,
+                    icon: 'fa-chart-pie'
+                });
+            }
+        });
+    }
+
+    return alerts;
+}
+
+window.getProactiveAlerts = getProactiveAlerts;

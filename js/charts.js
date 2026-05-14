@@ -205,6 +205,11 @@ function renderEvolutionChart(transactions) {
     if (!ctx) return;
 
     if (_chartEvolucao) _chartEvolucao.destroy();
+    
+    // Phase 3: Dynamic Colors
+    const healthScore = typeof window._currentHealthScore !== 'undefined' ? window._currentHealthScore : 70;
+    const accentColor = healthScore >= 80 ? '#10B981' : (healthScore >= 50 ? '#FF7A00' : '#EF4444');
+
     _chartEvolucao = new Chart(ctx, {
         type: 'bar',
         data: {
@@ -218,7 +223,22 @@ function renderEvolutionChart(transactions) {
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            plugins: { legend: { display: false } },
+            plugins: { 
+                legend: { display: false },
+                annotation: {
+                    annotations: {
+                        line1: {
+                            type: 'line',
+                            yMin: totalReceitas,
+                            yMax: totalReceitas,
+                            borderColor: 'rgba(255, 255, 255, 0.1)',
+                            borderWidth: 1,
+                            borderDash: [5, 5],
+                            label: { content: 'Teto de Receita', display: true }
+                        }
+                    }
+                }
+            },
             scales: {
                 y: { grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { color: '#A1A1AA' } },
                 x: { grid: { display: false }, ticks: { color: '#A1A1AA' } }
@@ -279,15 +299,20 @@ function renderTrendChart(transactions) {
     for (let i = 29; i >= 0; i--) {
         const d = new Date();
         d.setDate(now.getDate() - i);
-        const dateStr = d.toISOString().split('T')[0];
+        const dateStr = d.toLocaleDateString('en-CA');
         
         // Saldo até aquele dia
         const balanceAtDay = _contas.reduce((acc, c) => acc + parseFloat(c.saldo_inicial || 0), 0) + 
             transactions.filter(t => t.data <= dateStr).reduce((acc, t) => acc + (t.tipo === 'entrada' ? parseFloat(t.valor) : -parseFloat(t.valor)), 0);
         
         dailyBalances.push(balanceAtDay);
+        days.push(d.toLocaleDateString('en-CA'));
         labels.push(d.getDate());
     }
+
+    // Phase 3: Dynamic Colors
+    const healthScore = typeof window._currentHealthScore !== 'undefined' ? window._currentHealthScore : 70;
+    const accentColor = healthScore >= 80 ? '#10B981' : (healthScore >= 50 ? '#FF7A00' : '#EF4444');
 
     _chartTendencia = new Chart(ctx, {
         type: 'line',
@@ -296,8 +321,8 @@ function renderTrendChart(transactions) {
             datasets: [{
                 label: 'Saldo',
                 data: dailyBalances,
-                borderColor: '#FF7A00',
-                backgroundColor: 'rgba(255, 122, 0, 0.1)',
+                borderColor: accentColor,
+                backgroundColor: `${accentColor}10`,
                 fill: true,
                 tension: 0.4,
                 pointRadius: 0

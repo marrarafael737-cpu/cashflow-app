@@ -176,7 +176,7 @@ function openMascotBriefing() {
     `;
 
     // 2. Gastos de Hoje
-    const today = now.toISOString().split('T')[0];
+    const today = now.toLocaleDateString('en-CA');
     const todayTransactions = (typeof _allTransactions !== 'undefined') ? _allTransactions.filter(t => t.data === today && t.tipo === 'saida') : [];
     const todayTotal = todayTransactions.reduce((acc, t) => acc + parseFloat(t.valor), 0);
     

@@ -18,6 +18,11 @@ function showToast(message, type = 'info') {
     const container = document.getElementById('toast-container');
     if (!container) return;
 
+    // Haptic feedback for critical notifications
+    if (type === 'error' || type === 'alert') {
+        if (typeof App !== 'undefined' && App.Utils.triggerHaptic) App.Utils.triggerHaptic(50);
+    }
+
     const toast = document.createElement('div');
     toast.className = `toast toast-${type}`;
     
@@ -299,8 +304,10 @@ function switchView(target) {
 
     console.log('C.A.S.H. Unit: Navegando para', target);
 
-    // Feedback Háptico
-    if (typeof triggerHaptic === 'function') triggerHaptic(30);
+    // Feedback Háptico (Phase 2)
+    if (typeof App !== 'undefined' && App.Utils.triggerHaptic) {
+        App.Utils.triggerHaptic(30);
+    }
 
     const performSwitch = () => {
         // Atualizar atributo data-view no mainContent
@@ -338,6 +345,7 @@ function switchView(target) {
         if (target === 'wallets' && typeof renderContas === 'function') renderContas();
         if (target === 'calendar' && typeof renderCalendar === 'function') renderCalendar();
         if (target === 'goals' && typeof renderMetas === 'function') renderMetas();
+        if (target === 'subscriptions' && typeof renderRecurring === 'function') renderRecurring();
         if (target === 'dashboard' && typeof filterAndRenderData === 'function') {
             filterAndRenderData();
         }
@@ -588,15 +596,34 @@ function renderCalendar() {
 }
 
 function renderRecurring() {
-    const list = document.getElementById("recurring-list");
+    const list = document.getElementById("subscriptions-list") || document.getElementById("recurring-list");
     if (!list) return;
 
-    // Verificar se as variáveis globais existem e são arrays
     const recorrencias = (typeof _recorrencias !== 'undefined') ? _recorrencias : [];
     const categorias = (typeof _categories !== 'undefined') ? _categories : [];
 
+    // Calcular Resumo
+    let totalMensal = 0;
+    let proximoVencimento = null;
+    const today = new Date().getDate();
+
+    recorrencias.forEach(r => {
+        if (r.tipo === 'saida') totalMensal += r.valor;
+        
+        const venc = parseInt(r.dia_vencimento);
+        if (!proximoVencimento || (venc >= today && (venc < proximoVencimento || proximoVencimento < today))) {
+            if (venc >= today) proximoVencimento = venc;
+        }
+    });
+
+    const totalEl = document.getElementById('sub-total-mensal');
+    if (totalEl) totalEl.textContent = formatar(totalMensal);
+    
+    const proxEl = document.getElementById('sub-proximo-vencimento');
+    if (proxEl) proxEl.textContent = proximoVencimento ? `Dia ${proximoVencimento}` : '--';
+
     if (!recorrencias || recorrencias.length === 0) {
-        list.innerHTML = "<p style=\"text-align: center; color: var(--color-text-muted); font-size: 0.8rem; padding: 1rem;\">Nenhuma recorrência ou assinatura ativa.</p>";
+        list.innerHTML = "<p style=\"text-align: center; grid-column: 1/-1; color: var(--color-text-muted); font-size: 0.8rem; padding: 2rem;\">Nenhuma recorrência ou assinatura ativa.</p>";
         return;
     }
 
@@ -605,31 +632,48 @@ function renderRecurring() {
             const cat = categorias.find(c => c.id === r.categoria_id);
             const catName = cat ? cat.nome : 'Geral';
             const vencimento = r.dia_vencimento || '--';
-            const statusLabel = r.dia_vencimento ? 'Ativo' : 'Pendente (Ação SQL)';
-            
             const config = getCategoryConfig(catName);
-            const escapedDesc = escapeHTML(r.descricao);
-            const escapedCatName = escapeHTML(catName);
             
+            // Verificar se já foi pago este mês
+            const now = new Date();
+            const lastPaid = r.ultimo_pagamento ? new Date(r.ultimo_pagamento + 'T00:00:00') : null;
+            const isPaidThisMonth = lastPaid && (lastPaid.getMonth()) === now.getMonth() && lastPaid.getFullYear() === now.getFullYear();
+
             return `
-            <div class="recurring-item card-glass" style="display: flex; justify-content: space-between; align-items: center; padding: 1rem; margin-bottom: 0.75rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); border-left: 4px solid ${config.color};">
-                <div style="display: flex; align-items: center; gap: 1rem;">
-                    <div style="width: 40px; height: 40px; border-radius: 10px; background: ${config.color}20; color: ${config.color}; display: flex; align-items: center; justify-content: center; font-size: 1.1rem;">
-                        <i class="fas ${config.icon}"></i>
+            <div class="subscription-card card-glass ${isPaidThisMonth ? 'paid' : ''}" style="position: relative; overflow: hidden; border-top: 4px solid ${config.color};">
+                ${isPaidThisMonth ? '<div class="paid-badge" style="position: absolute; top: 10px; right: -30px; background: #10B981; color: white; padding: 5px 35px; transform: rotate(45deg); font-size: 0.6rem; font-weight: 800; text-transform: uppercase;">Pago</div>' : ''}
+                <div class="card-body" style="padding: 1.5rem;">
+                    <div style="display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 1.5rem;">
+                        <div style="width: 48px; height: 48px; border-radius: 12px; background: ${config.color}15; color: ${config.color}; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
+                            <i class="fas ${config.icon}"></i>
+                        </div>
+                        <div style="text-align: right;">
+                            <span style="display: block; font-size: 0.7rem; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 0.05em;">Valor Mensal</span>
+                            <span class="privacy-blur" style="font-size: 1.25rem; font-weight: 800; color: var(--color-text-primary);">${formatar(r.valor)}</span>
+                        </div>
                     </div>
-                    <div class="recurring-info">
-                        <h4 style="margin: 0; font-size: 0.95rem; color: var(--color-text-primary); font-weight: 700;">${escapedDesc} <span style="font-size: 0.65rem; color: ${config.color}; font-weight: 800; background: ${config.color}15; padding: 2px 8px; border-radius: 4px; margin-left: 5px; text-transform: uppercase;">${escapedCatName}</span></h4>
-                        <p style="margin: 0.35rem 0 0; font-size: 0.8rem; color: var(--color-text-muted);">Vencimento dia ${vencimento} • <span class="privacy-blur" style="color: var(--color-primary); font-weight: 700;">${formatar(r.valor)}</span></p>
+                    
+                    <h3 style="margin: 0 0 0.5rem; font-size: 1.1rem;">${escapeHTML(r.descricao)}</h3>
+                    <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1.5rem;">
+                        <span style="font-size: 0.7rem; background: ${config.color}15; color: ${config.color}; padding: 2px 8px; border-radius: 4px; font-weight: 700;">${escapeHTML(catName)}</span>
+                        <span style="font-size: 0.7rem; color: var(--color-text-muted);">Vence todo dia ${vencimento}</span>
                     </div>
-                </div>
-                <div style="display: flex; align-items: center; gap: 0.75rem;">
-                    <span class="status-badge" style="background: rgba(255, 122, 0, 0.1); color: var(--color-primary); border: 1px solid rgba(255, 122, 0, 0.2); font-size: 0.65rem; padding: 2px 8px; border-radius: 20px; font-weight: 800;">${statusLabel}</span>
-                    <button class="btn-icon-plain" onclick="handleDeleteRecurrence('${r.id}')" style="color: rgba(255,255,255,0.2); transition: all 0.2s;" onmouseover="this.style.color='var(--color-danger)'" onmouseout="this.style.color='rgba(255,255,255,0.2)'">
-                        <i class="fas fa-trash-alt" style="font-size: 0.9rem;"></i>
-                    </button>
+
+                    <div class="card-actions" style="display: flex; gap: 0.75rem; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 1rem;">
+                        <button class="btn-secondary" onclick="handleDeleteRecurrence('${r.id}')" style="flex: 1; padding: 0.6rem; font-size: 0.8rem; color: var(--color-danger); border-color: rgba(255, 59, 48, 0.2);">
+                            <i class="fas fa-trash-alt"></i> Remover
+                        </button>
+                        ${!isPaidThisMonth ? `
+                        <button class="btn-primary-action" onclick="handlePayRecurrenceEarly('${r.id}')" style="flex: 2; padding: 0.6rem; font-size: 0.8rem;">
+                            <i class="fas fa-check"></i> Pagar Agora
+                        </button>` : `
+                        <button class="btn-secondary" disabled style="flex: 2; padding: 0.6rem; font-size: 0.8rem; opacity: 0.5;">
+                            <i class="fas fa-check-circle"></i> Liquidado
+                        </button>
+                        `}
+                    </div>
                 </div>
             </div>`;
-
         }).join("");
     } catch (err) {
         console.error('Erro ao renderizar recorrências:', err);
@@ -880,6 +924,11 @@ function filterAndRenderData(transactions = _allTransactions) {
                 totalDespesa: despesas,
                 saldoMes: initialSum + receitas - despesas
             });
+        }
+
+        // 8. Alertas Proativos (Phase 3)
+        if (typeof renderProactiveAlerts === 'function') {
+            renderProactiveAlerts();
         }
 
     } catch (error) {
@@ -1154,7 +1203,7 @@ window.handleConfirmarPagamento = async function() {
 
     try {
         const user = await getCurrentUser();
-        const today = new Date().toISOString().split('T')[0];
+        const today = new Date().toLocaleDateString('en-CA');
 
         // 1. Criar Saída na Conta de Origem
         const { error: errorSaida } = await supabase.from('transacoes').insert([{
@@ -1247,3 +1296,67 @@ function checkInvoiceDueDates() {
 
     container.innerHTML = alertsHtml;
 }
+
+/**
+ * Controla a exibição de esqueletos de carregamento (Phase 2)
+ */
+function showSkeletons(active) {
+    const targets = [
+        'total-balance', 'liquid-balance', 'credit-debt', 
+        'projected-balance-hero', 'chart-mini-forecast',
+        'accounts-list', 'insights-list', 'budgets-list'
+    ];
+
+    targets.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            if (active) {
+                el.classList.add('skeleton');
+            } else {
+                el.classList.remove('skeleton');
+            }
+        }
+    });
+
+    // Especial para grids de transações
+    const transList = document.getElementById('recent-transactions-list');
+    if (transList && active) {
+        transList.innerHTML = Array(5).fill(0).map(() => `
+            <div class="skeleton" style="height: 60px; margin-bottom: 0.5rem; border-radius: 12px;"></div>
+        `).join('');
+    }
+}
+
+window.showSkeletons = showSkeletons;
+function renderProactiveAlerts() {
+    const container = document.getElementById('proactive-alerts-container');
+    if (!container) return;
+
+    if (typeof getProactiveAlerts !== 'function') return;
+    const alerts = getProactiveAlerts();
+
+    if (alerts.length === 0) {
+        container.innerHTML = '';
+        container.style.display = 'none';
+        return;
+    }
+
+    container.style.display = 'grid';
+    container.innerHTML = alerts.map(alert => `
+        <div class="alert-premium-card card-glass alert-${alert.type}" style="display: flex; gap: 1rem; align-items: center; padding: 1.25rem; margin-bottom: 1rem; border-left: 4px solid var(--color-${alert.type}); animation: slideInRight 0.5s ease;">
+            <div class="alert-icon" style="width: 40px; height: 40px; border-radius: 50%; background: var(--color-${alert.type})20; color: var(--color-${alert.type}); display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">
+                <i class="fas ${alert.icon}"></i>
+            </div>
+            <div class="alert-content">
+                <h4 style="margin: 0; font-size: 0.9rem; font-weight: 800;">${alert.title}</h4>
+                <p style="margin: 0.2rem 0 0; font-size: 0.8rem; color: var(--color-text-muted);">${alert.message}</p>
+            </div>
+            <button class="btn-icon-plain" style="margin-left: auto; opacity: 0.5;" onclick="this.parentElement.remove()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    `).join('');
+}
+
+// Tornar global
+window.renderProactiveAlerts = renderProactiveAlerts;

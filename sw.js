@@ -26,6 +26,8 @@ const ASSETS_TO_CACHE = [
   './js/pwa-analytics.js',
   './js/offline-db.js',
   './js/sync-engine.js',
+  './js/offline-sync.js',
+  './js/smart-parser.js',
   './assets/mascot.svg'
 ];
 

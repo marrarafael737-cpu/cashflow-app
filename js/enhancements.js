@@ -63,7 +63,7 @@ function renderHeatmap(transactions) {
     for (let i = 34; i >= 0; i--) {
         const d = new Date(today);
         d.setDate(today.getDate() - i);
-        days.push(d.toISOString().split('T')[0]);
+        days.push(d.toLocaleDateString('en-CA'));
     }
 
     // Calcular gastos por dia

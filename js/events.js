@@ -8,6 +8,7 @@ function setupCategoryFormEvents(userId) {
             if (typeof triggerHaptic === 'function') triggerHaptic(50);
             
             const btn = form.querySelector('button[type="submit"]');
+            if (btn && (btn.disabled || btn.classList.contains('loading'))) return;
             if (btn) { btn.classList.add('loading'); btn.disabled = true; }
             
             const nome = document.getElementById('cat-nome').value;
@@ -59,8 +60,11 @@ async function renderCategories() {
 }
 
 async function handleDeleteCategory(id) {
-    if (!confirm('Excluir esta categoria? Transações vinculadas poderão ficar sem categoria.')) return;
+    if (!confirm('Excluir esta categoria? Transações vinculadas serão preservadas (ficarão sem categoria).')) return;
     try {
+        const { error: moveError } = await supabase.from('transacoes').update({ categoria_id: null }).eq('categoria_id', id);
+        if (moveError) console.warn('Falha ao desvincular transações, mas prosseguindo...', moveError);
+
         const { error } = await supabase.from('categorias').delete().eq('id', id);
         if (!error) {
             showToast('Categoria excluída.', 'info');
@@ -99,6 +103,7 @@ function setupAccountFormEvents(userId) {
             }
 
             const btn = form.querySelector('button[type="submit"]');
+            if (btn && (btn.disabled || btn.classList.contains('loading'))) return;
             if (btn) { btn.classList.add('loading'); btn.disabled = true; }
 
             let result;
@@ -241,6 +246,7 @@ function setupGoalsLogic(userId) {
             }
 
             const btn = form.querySelector('button[type="submit"]');
+            if (btn && (btn.disabled || btn.classList.contains('loading'))) return;
             if (btn) { btn.classList.add('loading'); btn.disabled = true; }
 
             const { error } = await supabase.from('metas').insert([{
@@ -283,9 +289,15 @@ function initBudgetEvents(userId) {
                 return;
             }
 
+            const btn = form.querySelector('button[type="submit"]');
+            if (btn && (btn.disabled || btn.classList.contains('loading'))) return;
+            if (btn) { btn.classList.add('loading'); btn.disabled = true; }
+
             const { error } = await supabase.from('orcamentos').insert([{
                 categoria_id: catId, valor_limite: valor, mes: now.getMonth() + 1, ano: now.getFullYear(), user_id: userId
             }]);
+
+            if (btn) { btn.classList.remove('loading'); btn.disabled = false; }
 
             if (!error) {
                 showToast('Orçamento salvo!', 'success');
@@ -419,6 +431,9 @@ function setupRecurringEvents(userId) {
             console.log('Formulário de recorrência enviado!');
             if (typeof triggerHaptic === 'function') triggerHaptic(50);
             
+            const btn = form.querySelector('button[type="submit"]');
+            if (btn && (btn.disabled || btn.classList.contains('loading'))) return;
+
             if (userId) {
                 if (typeof handleAddRecurrence === 'function') {
                     await handleAddRecurrence(userId);
@@ -508,6 +523,8 @@ function setupParserEvents(userId) {
     });
 
     btnConfirm.addEventListener('click', async () => {
+        if (btnConfirm.disabled || btnConfirm.classList.contains('loading')) return;
+
         const text = textarea.value.trim();
         const parsed = SmartParser.parse(text);
         if (!parsed || !parsed.valor) {
@@ -517,6 +534,7 @@ function setupParserEvents(userId) {
 
         btnConfirm.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Lançando...';
         btnConfirm.disabled = true;
+        btnConfirm.classList.add('loading');
 
         // Usar a conta selecionada pelo usuário no dropdown (ou a detectada)
         const accSelect = document.getElementById('parser-account-select');
@@ -530,6 +548,33 @@ function setupParserEvents(userId) {
         // Detectar se é crédito para setar forma_pagamento
         const selectedAcc = (typeof _contas !== 'undefined') ? _contas.find(c => c.id === final_conta_id) : null;
         if (selectedAcc && selectedAcc.tipo === 'credito') isCredit = true;
+
+        // --- PHASE 4: OFFLINE SYNC ENGINE ---
+        if (typeof OfflineSync !== 'undefined' && !OfflineSync.isOnline()) {
+            const transactionData = {
+                descricao: parsed.descricao,
+                valor: parsed.valor,
+                tipo: parsed.tipo,
+                categoria_id: parsed.categoria_id,
+                conta_id: final_conta_id,
+                data: parsed.data,
+                forma_pagamento: isCredit ? 'credito' : 'dinheiro',
+                user_id: userId
+            };
+
+            OfflineSync.addToQueue(transactionData);
+            
+            showToast('Lançamento via Oráculo em fila offline! 🧠', 'info');
+            textarea.value = '';
+            preview.style.display = 'none';
+            modal.classList.remove('active');
+            setTimeout(() => modal.style.display = 'none', 300);
+
+            btnConfirm.innerHTML = 'Confirmar Lançamento';
+            btnConfirm.disabled = false;
+            btnConfirm.classList.remove('loading');
+            return;
+        }
 
         const { error } = await supabase.from('transacoes').insert([{
             user_id: userId,
@@ -557,6 +602,7 @@ function setupParserEvents(userId) {
         
         btnConfirm.innerHTML = 'Confirmar Lançamento';
         btnConfirm.disabled = false;
+        btnConfirm.classList.remove('loading');
     });
 }
 
@@ -570,3 +616,50 @@ window.handleDeleteOrcamento = handleDeleteOrcamento;
 window.handleDeleteTransaction = handleDeleteTransaction;
 window.setupRecurringEvents = setupRecurringEvents;
 window.setupParserEvents = setupParserEvents;
+
+async function handlePayRecurrenceEarly(id) {
+    const r = _recorrencias.find(item => item.id === id);
+    if (!r) return;
+
+    if (!confirm(`Deseja registrar o pagamento de "${r.descricao}" para este mês agora?`)) return;
+
+    try {
+        const todayStr = new Date().toLocaleDateString('en-CA');
+        
+        // 1. Criar a transação
+        const { error: transError } = await supabase.from('transacoes').insert([{
+            user_id: r.user_id,
+            descricao: `[MANUAL] ${r.descricao}`,
+            valor: r.valor,
+            tipo: r.tipo,
+            categoria_id: r.categoria_id,
+            conta_id: r.conta_id,
+            data: todayStr,
+            is_recurring_origin: true
+        }]);
+
+        if (transError) throw transError;
+
+        // 2. Atualizar data do último pagamento
+        const { error: updateError } = await supabase.from('recorrencias')
+            .update({ ultimo_pagamento: todayStr })
+            .eq('id', id);
+
+        if (updateError) throw updateError;
+
+        showToast(`Pagamento de ${r.descricao} registrado!`, 'success');
+        
+        const user = await getCurrentUser();
+        if (user) {
+            await loadRecorrencias(user.id);
+            await loadTransactions(user.id);
+            if (typeof renderRecurring === 'function') renderRecurring();
+            if (typeof filterAndRenderData === 'function') filterAndRenderData();
+        }
+    } catch (err) {
+        console.error(err);
+        showToast('Erro ao processar pagamento antecipado.', 'error');
+    }
+}
+
+window.handlePayRecurrenceEarly = handlePayRecurrenceEarly;

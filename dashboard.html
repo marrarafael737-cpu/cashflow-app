@@ -148,6 +148,10 @@
                 <i class="fas fa-bullseye"></i>
                 <span>Metas</span>
             </a>
+            <a href="#" class="nav-item" data-target="subscriptions">
+                <i class="fas fa-sync"></i>
+                <span>Assinaturas</span>
+            </a>
 
             <div class="nav-section-label">Análises</div>
             <a href="#" class="nav-item" data-target="transactions">
@@ -477,6 +481,9 @@
                                     </div>
                                 </div>
                             </div>
+
+                            <!-- Proactive Alerts (Phase 3) -->
+                            <div id="proactive-alerts-container" class="proactive-alerts-grid" style="margin-top: 2rem;"></div>
 
                             <!-- Insights do Cashy -->
                             <section class="insights-section" style="margin-top: 2rem;">
@@ -881,6 +888,34 @@
                                 </button>
                             </div>
                         </div>
+                    </div>
+                </div>
+
+                <!-- 7. VIEW: SUBSCRIPTIONS (ASSINATURAS) -->
+                <div id="view-subscriptions" class="view-section view-subscriptions">
+                    <div class="section-header-row" style="margin-bottom: 2rem;">
+                        <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                            <h2 class="section-title" style="margin: 0;">Recorrências e Assinaturas</h2>
+                            <p style="font-size: 0.8rem; color: var(--color-text-muted);">Gerencie seus pagamentos fixos e assinaturas mensais.</p>
+                        </div>
+                        <button id="btn-open-subscriptions-modal-top" class="btn-primary-action" onclick="document.getElementById('modal-recorrencia').style.display='flex'; setTimeout(()=>document.getElementById('modal-recorrencia').classList.add('active'), 10)">
+                            <i class="fas fa-plus"></i> Nova Assinatura
+                        </button>
+                    </div>
+                    
+                    <div class="subscriptions-summary-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+                        <div class="card-glass" style="padding: 1.5rem; display: flex; flex-direction: column; gap: 0.5rem; border-left: 4px solid var(--color-primary);">
+                            <span style="font-size: 0.75rem; color: var(--color-text-muted); text-transform: uppercase;">Total Mensal Estimado</span>
+                            <h2 id="sub-total-mensal" class="privacy-blur" style="margin: 0; font-size: 1.8rem; font-weight: 800;">R$ 0,00</h2>
+                        </div>
+                        <div class="card-glass" style="padding: 1.5rem; display: flex; flex-direction: column; gap: 0.5rem; border-left: 4px solid #10B981;">
+                            <span style="font-size: 0.75rem; color: var(--color-text-muted); text-transform: uppercase;">Próximo Vencimento</span>
+                            <h2 id="sub-proximo-vencimento" style="margin: 0; font-size: 1.8rem; font-weight: 800;">--</h2>
+                        </div>
+                    </div>
+
+                    <div id="subscriptions-list" class="subscriptions-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
+                        <!-- Preenchido via JS -->
                     </div>
                 </div>
 
@@ -1317,37 +1352,61 @@
     <div id="toast-container"></div>
     <div id="onboarding-overlay" class="onboarding-overlay"></div>
 
-    <!-- Modal PIN (Fort Knox) -->
+    <!-- Modal PIN (Fort Knox Security Layer) -->
     <div id="modal-pin" class="modal-pin hidden">
-        <div class="pin-container">
-            <div class="mascot-icon" style="width: 80px; margin: 0 auto 1.5rem;">
-                <img src="assets/mascot.svg" alt="Cashy" style="width: 100%;">
-            </div>
-            <h2 id="pin-title" style="font-size: 1.25rem; margin-bottom: 0.5rem;">Segurança CashFlow</h2>
-            <p id="pin-msg" style="color: var(--color-text-muted); font-size: 0.9rem;">Insira seu PIN de 4 dígitos</p>
+        <div class="pin-overlay-blur"></div>
+        <div class="pin-container-wrapper">
+            <div class="pin-container card-glass animate-up">
+                <div class="pin-header">
+                    <div class="pin-mascot-wrapper">
+                        <div class="pin-mascot-aura"></div>
+                        <img src="assets/mascot.svg" alt="Cashy" class="pin-mascot-img">
+                    </div>
+                    <h2 id="pin-title">Segurança Máxima</h2>
+                    <p id="pin-msg">Proteja seus dados financeiros</p>
+                </div>
 
-            <div class="pin-dots">
-                <div class="pin-dot"></div>
-                <div class="pin-dot"></div>
-                <div class="pin-dot"></div>
-                <div class="pin-dot"></div>
-            </div>
+                <div class="pin-display">
+                    <div class="pin-dots">
+                        <div class="pin-dot" data-index="0"></div>
+                        <div class="pin-dot" data-index="1"></div>
+                        <div class="pin-dot" data-index="2"></div>
+                        <div class="pin-dot" data-index="3"></div>
+                    </div>
+                </div>
 
-            <div class="pin-keyboard">
-                <button class="pin-key" onclick="handlePinInput('1')">1</button>
-                <button class="pin-key" onclick="handlePinInput('2')">2</button>
-                <button class="pin-key" onclick="handlePinInput('3')">3</button>
-                <button class="pin-key" onclick="handlePinInput('4')">4</button>
-                <button class="pin-key" onclick="handlePinInput('5')">5</button>
-                <button class="pin-key" onclick="handlePinInput('6')">6</button>
-                <button class="pin-key" onclick="handlePinInput('7')">7</button>
-                <button class="pin-key" onclick="handlePinInput('8')">8</button>
-                <button class="pin-key" onclick="handlePinInput('9')">9</button>
-                <button class="pin-key" style="visibility: hidden;"></button>
-                <button class="pin-key" onclick="handlePinInput('0')">0</button>
-                <button class="pin-key backspace" onclick="handlePinInput('DEL')">
-                    <i class="fas fa-backspace"></i>
-                </button>
+                <div class="pin-keyboard">
+                    <div class="pin-row">
+                        <button class="pin-key" onclick="handlePinInput('1')"><span>1</span><small></small></button>
+                        <button class="pin-key" onclick="handlePinInput('2')"><span>2</span><small>ABC</small></button>
+                        <button class="pin-key" onclick="handlePinInput('3')"><span>3</span><small>DEF</small></button>
+                    </div>
+                    <div class="pin-row">
+                        <button class="pin-key" onclick="handlePinInput('4')"><span>4</span><small>GHI</small></button>
+                        <button class="pin-key" onclick="handlePinInput('5')"><span>5</span><small>JKL</small></button>
+                        <button class="pin-key" onclick="handlePinInput('6')"><span>6</span><small>MNO</small></button>
+                    </div>
+                    <div class="pin-row">
+                        <button class="pin-key" onclick="handlePinInput('7')"><span>7</span><small>PQRS</small></button>
+                        <button class="pin-key" onclick="handlePinInput('8')"><span>8</span><small>TUV</small></button>
+                        <button class="pin-key" onclick="handlePinInput('9')"><span>9</span><small>WXYZ</small></button>
+                    </div>
+                    <div class="pin-row">
+                        <button class="pin-key secondary-key" id="btn-biometry" onclick="handleBiometry()">
+                            <i class="fas fa-fingerprint"></i>
+                        </button>
+                        <button class="pin-key" onclick="handlePinInput('0')"><span>0</span><small></small></button>
+                        <button class="pin-key secondary-key" onclick="handlePinInput('DEL')">
+                            <i class="fas fa-backspace"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="pin-footer">
+                    <button class="btn-logout-pin" onclick="handleLogout()">
+                        <i class="fas fa-sign-out-alt"></i> Sair da Conta
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -1546,11 +1605,37 @@
         </div>
     </div>
 
+    <!-- Navegação Mobile Bottom (Premium) -->
+    <nav class="bottom-nav-mobile mobile-only">
+        <a href="#" class="mobile-nav-item active" data-target="dashboard">
+            <i class="fas fa-home"></i>
+            <span>Início</span>
+        </a>
+        <a href="#" class="mobile-nav-item" data-target="wallets">
+            <i class="fas fa-wallet"></i>
+            <span>Contas</span>
+        </a>
+        <div class="mobile-nav-center">
+            <button id="btn-quick-add-mobile" class="btn-primary-action" style="border-radius: 50%; width: 56px; height: 56px; margin-top: -28px; box-shadow: 0 10px 25px var(--color-primary-glow);">
+                <i class="fas fa-plus"></i>
+            </button>
+        </div>
+        <a href="#" class="mobile-nav-item" data-target="subscriptions">
+            <i class="fas fa-sync"></i>
+            <span>Assinaturas</span>
+        </a>
+        <a href="#" class="mobile-nav-item" onclick="openSidebar()">
+            <i class="fas fa-bars"></i>
+            <span>Menu</span>
+        </a>
+    </nav>
+
     <script src="js/charts.js?v=9" defer></script>
     <script src="js/events.js?v=9" defer></script>
     <script src="js/enhancements.js?v=9" defer></script>
     <script src="js/pwa-analytics.js" defer></script>
     <script src="js/smart-parser.js?v=9" defer></script>
+    <script src="js/offline-sync.js?v=9" defer></script>
     <script src="main.js?v=9" defer></script>
 </body>
 

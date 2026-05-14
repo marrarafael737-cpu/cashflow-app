@@ -4,6 +4,9 @@
  */
 
 const SmartParser = {
+    // Dynamic Learning Cache (Phase 3)
+    vendorCache: {}, // Stores { 'mcdonalds': 'Alimentação', ... }
+
     // Keywords for detection
     keywords: {
         expense: [
@@ -121,10 +124,21 @@ const SmartParser = {
         let bestCategory = 'Geral';
         let highestScore = 0;
 
-        for (const [catName, data] of Object.entries(this.categoryMappings)) {
-            let score = 0;
-            
-            // Check direct keywords (High weight)
+        // Check Learning Cache (Phase 3)
+        for (const [vendor, category] of Object.entries(this.vendorCache)) {
+            if (descricao.toLowerCase().includes(vendor.toLowerCase())) {
+                console.log(`C.A.S.H. Unit: Pattern recognized! Vendor: ${vendor} -> ${category}`);
+                bestCategory = category;
+                highestScore = 100; // Force top confidence
+                break;
+            }
+        }
+
+        if (highestScore < 100) {
+            for (const [catName, data] of Object.entries(this.categoryMappings)) {
+                let score = 0;
+                
+                // Check direct keywords (High weight)
             data.keywords.forEach(k => {
                 if (cleanText.includes(k)) score += 10;
             });
@@ -178,23 +192,17 @@ const SmartParser = {
 
         // 6. Detect Date (Zero-Click)
         const d = new Date();
-        const toLocalDateString = (dateObj) => {
-            const year = dateObj.getFullYear();
-            const month = String(dateObj.getMonth() + 1).padStart(2, '0');
-            const day = String(dateObj.getDate()).padStart(2, '0');
-            return `${year}-${month}-${day}`;
-        };
+        let transDate = d.toLocaleDateString('en-CA');
 
-        let transDate = toLocalDateString(d);
         if (cleanText.includes('ontem')) {
             const yesterday = new Date();
             yesterday.setDate(yesterday.getDate() - 1);
-            transDate = toLocalDateString(yesterday);
+            transDate = yesterday.toLocaleDateString('en-CA');
             highestScore += 10;
         } else if (cleanText.includes('amanhã')) {
             const tomorrow = new Date();
             tomorrow.setDate(tomorrow.getDate() + 1);
-            transDate = toLocalDateString(tomorrow);
+            transDate = tomorrow.toLocaleDateString('en-CA');
             highestScore += 10;
         }
 
@@ -221,6 +229,61 @@ const SmartParser = {
             data: transDate,
             confidence: highestScore 
         };
+    },
+
+    /**
+     * Analyzes history to learn vendor patterns (Phase 3)
+     */
+    learnFromHistory(transactions) {
+        if (!transactions || !Array.isArray(transactions)) return;
+        
+        const frequencyMap = {};
+
+        transactions.forEach(t => {
+            if (!t.descricao || !t.categoria_nome) return;
+            
+            // Clean description to find the vendor (first 2 words usually)
+            const vendor = t.descricao.split(' ').slice(0, 2).join(' ').toLowerCase();
+            if (vendor.length < 3) return;
+
+            if (!frequencyMap[vendor]) frequencyMap[vendor] = {};
+            frequencyMap[vendor][t.categoria_nome] = (frequencyMap[vendor][t.categoria_nome] || 0) + 1;
+        });
+
+        // Pick the most frequent category for each vendor
+        for (const [vendor, categories] of Object.entries(frequencyMap)) {
+            let topCat = null;
+            let topCount = 0;
+            for (const [cat, count] of Object.entries(categories)) {
+                if (count > topCount) {
+                    topCount = count;
+                    topCat = cat;
+                }
+            }
+            if (topCat && topCount >= 1) {
+                this.vendorCache[vendor] = topCat;
+            }
+        }
+        
+        console.log(`C.A.S.H. Unit: Learning complete. ${Object.keys(this.vendorCache).length} vendor patterns stored.`);
+        
+        // Persistir aprendizado
+        localStorage.setItem('cashflow_vendor_cache', JSON.stringify(this.vendorCache));
+    },
+
+    /**
+     * Initializes parser from local storage
+     */
+    init() {
+        const saved = localStorage.getItem('cashflow_vendor_cache');
+        if (saved) {
+            try {
+                this.vendorCache = JSON.parse(saved);
+                console.log(`C.A.S.H. Unit: ${Object.keys(this.vendorCache).length} vendor patterns loaded from cache.`);
+            } catch (e) {
+                console.error('Erro ao carregar cache do parser:', e);
+            }
+        }
     },
 
     capitalize(str) {

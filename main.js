@@ -1,13 +1,59 @@
 /* main.js - Orchestrator & Global State */
 
-// Global State
-let _allTransactions = [];
-let _categories = [];
-let _subcategories = [];
-let _contas = [];
-let _budgets = [];
-let _metas = [];
-let _recorrencias = [];
+// Centralized Application State & Utilities
+const App = {
+    State: {
+        allTransactions: [],
+        cacheFiles: [
+            './js/offline-db.js',
+            './js/sync-engine.js',
+            './js/offline-sync.js',
+            './js/smart-parser.js',
+            './assets/mascot.svg'
+        ],
+        categories: [],
+        subcategories: [],
+        contas: [],
+        budgets: [],
+        metas: [],
+        recorrencias: [],
+        isLoading: true,
+        user: null
+    },
+    Utils: {
+        /**
+         * Sanitizes strings to prevent XSS.
+         */
+        sanitize: (str) => {
+            if (!str) return '';
+            const temp = document.createElement('div');
+            temp.textContent = str;
+            return temp.innerHTML;
+        },
+        /**
+         * Triggers haptic feedback if available.
+         */
+        triggerHaptic: (intensity = 10) => {
+            if (window.navigator && window.navigator.vibrate) {
+                window.navigator.vibrate(intensity);
+            }
+        },
+        /**
+         * Normalizes date to UTC to avoid timezone shifts.
+         */
+        formatToDateInput: (date) => {
+            const d = new Date(date);
+            return d.toISOString().split('T')[0];
+        }
+    }
+};
+
+// Legacy global pointer for compatibility with older modules
+window._allTransactions = App.State.allTransactions;
+window._categories = App.State.categories;
+window._contas = App.State.contas;
+window._budgets = App.State.budgets;
+window._recorrencias = App.State.recorrencias;
 const CATEGORY_MAP = {
     // Despesas (Saídas)
     'Alimentação': { icon: 'fa-utensils', color: '#FF4D4D' },
@@ -134,6 +180,7 @@ async function initDashboard() {
         try { setupMobileInteractions(); } catch (e) { console.error('Erro MobileInteractions:', e); }
         try { setupDynamicDropdowns(); } catch (e) { console.error('Erro Dropdowns:', e); }
         try { setupSecurity(user.id); } catch (e) { console.error('Erro Security:', e); }
+        try { setupNavigation(); } catch (e) { console.error('Erro Navigation:', e); }
         try { setupEventListeners(user.id); } catch (e) { console.error('Erro EventListeners:', e); }
 
         // 2. Inicializar Mascote (Visual)
@@ -142,7 +189,14 @@ async function initDashboard() {
         initMascotGSAP();
         
         // 3. Carregar Dados (Em segundo plano, sem travar a UI)
-        showSkeletons(true);
+        if (typeof showSkeletons === 'function') showSkeletons(true);
+        
+        // Haptic feedback initialization for nav items
+        document.querySelectorAll('.nav-item, .nav-item-mobile, .mobile-nav-item').forEach(el => {
+            el.addEventListener('click', () => {
+                if (typeof App !== 'undefined' && App.Utils.triggerHaptic) App.Utils.triggerHaptic(15);
+            });
+        });
         
         try {
             await Promise.all([
@@ -152,6 +206,15 @@ async function initDashboard() {
 
             // Transações e Render Imediato
             await loadTransactions(user.id).catch(e => console.error('Erro Trans:', e));
+            
+            // Phase 3: Learn from history
+            if (typeof SmartParser !== 'undefined') {
+                if (typeof SmartParser.init === 'function') SmartParser.init();
+                if (typeof SmartParser.learnFromHistory === 'function') {
+                    SmartParser.learnFromHistory(_allTransactions);
+                }
+            }
+
             if (typeof filterAndRenderData === 'function') filterAndRenderData();
 
             // --- CONFIGURAÇÃO DE UI ---
@@ -191,6 +254,9 @@ async function initDashboard() {
                 loader.style.opacity = '0';
                 setTimeout(() => {
                     loader.remove();
+                    // Finalizar Skeletons (Phase 2)
+                    if (typeof showSkeletons === 'function') showSkeletons(false);
+                    if (typeof App !== 'undefined') App.State.isLoading = false;
                     console.log('C.A.S.H. Unit: Interface Liberada.');
                 }, 500);
             }
@@ -345,6 +411,7 @@ function setupEventListeners(userId) {
             const newName = document.getElementById('edit-full-name').value.trim();
             const btn = profileForm.querySelector('button[type="submit"]');
             if (!btn) return;
+            if (btn.disabled || btn.classList.contains('loading')) return;
             const originalText = btn.innerHTML;
             
             btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
@@ -768,6 +835,10 @@ function setupInactivityManager(userId) {
 
 function showPinModal(userId) {
     const modal = document.getElementById('modal-pin');
+    const title = document.getElementById('pin-title');
+    const msg = document.getElementById('pin-msg');
+    const btnBio = document.getElementById('btn-biometry');
+    
     if (!modal) return;
 
     modal.classList.remove('hidden');
@@ -775,12 +846,15 @@ function showPinModal(userId) {
     updatePinDots();
 
     const pinSet = localStorage.getItem(`user_pin_${userId}`);
+    
     if (!pinSet) {
-        document.getElementById('pin-title').textContent = 'Defina seu PIN';
-        document.getElementById('pin-msg').textContent = 'Crie um código de 4 dígitos para segurança';
+        title.textContent = 'Proteger Conta';
+        msg.textContent = 'Defina um PIN de 4 dígitos para bloqueio automático';
+        if (btnBio) btnBio.style.display = 'none';
     } else {
-        document.getElementById('pin-title').textContent = 'Segurança CashFlow';
-        document.getElementById('pin-msg').textContent = 'Insira seu PIN de 4 dígitos';
+        title.textContent = 'Bem-vindo de volta';
+        msg.textContent = 'Insira seu código de acesso para continuar';
+        if (btnBio) btnBio.style.display = 'flex';
     }
 }
 
@@ -795,6 +869,9 @@ window.handlePinInput = function(value) {
         return;
     }
     
+    // Feedback tátil visual
+    if (typeof triggerHaptic === 'function') triggerHaptic(10);
+
     if (value === 'DEL') {
         _currentPinInput = _currentPinInput.slice(0, -1);
     } else if (_currentPinInput.length < 4) {
@@ -804,15 +881,43 @@ window.handlePinInput = function(value) {
     updatePinDots();
 
     if (_currentPinInput.length === 4) {
-        validatePin();
+        // Pequeno delay para o usuário ver o último ponto preenchido
+        setTimeout(validatePin, 150);
+    }
+};
+
+window.handleBiometry = async function() {
+    if (typeof SecurityVault !== 'undefined' && SecurityVault.isBiometryAvailable) {
+        showToast('Aguardando biometria...', 'info');
+        const success = await SecurityVault.authenticate();
+        if (success) {
+            document.getElementById('modal-pin').classList.add('hidden');
+            showToast('Acesso liberado via biometria.', 'success');
+            _failedPinAttempts = 0;
+            _currentPinInput = '';
+        } else {
+            showToast('Falha na biometria.', 'error');
+        }
+    } else {
+        showToast('Biometria não disponível neste dispositivo.', 'warning');
+    }
+};
+
+window.handleLogout = async function() {
+    if (confirm('Deseja realmente sair da sua conta?')) {
+        const { error } = await supabase.auth.signOut();
+        if (!error) window.location.href = 'login.html';
     }
 };
 
 function updatePinDots() {
     const dots = document.querySelectorAll('.pin-dot');
     dots.forEach((dot, i) => {
-        if (i < _currentPinInput.length) dot.classList.add('active');
-        else dot.classList.remove('active');
+        if (i < _currentPinInput.length) {
+            dot.classList.add('active');
+        } else {
+            dot.classList.remove('active');
+        }
     });
 }
 
@@ -821,11 +926,12 @@ async function validatePin() {
     if (!user) return;
 
     const storedPin = localStorage.getItem(`user_pin_${user.id}`);
+    const container = document.querySelector('.pin-container');
     
     if (!storedPin) {
         // Primeiro uso: definir PIN
         localStorage.setItem(`user_pin_${user.id}`, _currentPinInput);
-        showToast('PIN definido com sucesso!', 'success');
+        showToast('PIN de segurança configurado!', 'success');
         document.getElementById('modal-pin').classList.add('hidden');
         _failedPinAttempts = 0;
     } else if (_currentPinInput === storedPin) {
@@ -838,20 +944,20 @@ async function validatePin() {
         // PIN Errado
         _failedPinAttempts++;
         _currentPinInput = '';
+        
+        // Efeito de erro visual
+        if (container) {
+            container.classList.add('pin-error-shake');
+            setTimeout(() => container.classList.remove('pin-error-shake'), 500);
+        }
+        
         updatePinDots();
         
         if (_failedPinAttempts >= 3) {
-            _lockoutUntil = Date.now() + (30 * 1000); // 30 segundos de bloqueio
+            _lockoutUntil = Date.now() + (30 * 1000); 
             showToast('Muitas tentativas. Bloqueado por 30s.', 'error');
         } else {
             showToast(`PIN incorreto. Tentativas: ${_failedPinAttempts}/3`, 'error');
-        }
-        
-        // Feedback visual de erro
-        const container = document.querySelector('.pin-container');
-        if (container) {
-            container.style.animation = 'shake 0.4s ease-in-out';
-            setTimeout(() => container.style.animation = '', 400);
         }
     }
 }
@@ -986,62 +1092,28 @@ async function handleMagicInput(userId) {
     triggerHaptic();
     showToast('Processando comando mágico...', 'info');
 
-    // NLP Básico (Regex/Keywords)
-    const amountMatch = text.match(/(\d+([.,]\d{1,2})?)/);
-    if (!amountMatch) {
-        showToast('Não entendi o valor. Tente algo como "Gastei 50 no café"', 'warning');
+    // Usar o novo SmartParser (Phase 4)
+    if (typeof SmartParser === 'undefined') {
+        showToast('Erro: Motor de processamento não carregado.', 'error');
         return;
     }
 
-    const valor = parseFloat(amountMatch[0].replace(',', '.'));
-    let tipo = 'saida';
-    if (text.includes('ganhei') || text.includes('recebi') || text.includes('vendi')) {
-        tipo = 'entrada';
+    const parsed = SmartParser.parse(text);
+    if (!parsed || !parsed.valor) {
+        showToast('Não entendi o comando. Tente algo como "Gastei 50 no café"', 'warning');
+        return;
     }
 
-    // Inferência de categoria
-    let categoria_id = null;
-    const catMappings = {
-        'alimentação': ['comi', 'almoço', 'jantar', 'café', 'restaurante', 'ifood', 'lanche'],
-        'transporte': ['uber', 'gasolina', 'combustível', 'ônibus', 'metrô'],
-        'lazer': ['cinema', 'show', 'festa', 'viagem'],
-        'saúde': ['farmácia', 'médico', 'remédio']
-    };
-
-    // Tentar encontrar categoria id real baseada no nome
-    for (const [catName, keywords] of Object.entries(catMappings)) {
-        if (keywords.some(k => text.includes(k))) {
-            const cat = _categories.find(c => c.nome.toLowerCase().includes(catName));
-            if (cat) categoria_id = cat.id;
-            break;
-        }
-    }
-
-    // Se não encontrou, usa a primeira categoria do tipo
-    if (!categoria_id) {
-        const fallbackCat = _categories.find(c => c.tipo === tipo);
-        categoria_id = fallbackCat ? fallbackCat.id : null;
-    }
-
-    // Tentar encontrar conta mencionada
-    let conta_id = _contas.length > 0 ? _contas[0].id : null;
+    const valor = parsed.valor;
+    const tipo = parsed.tipo;
+    const categoria_id = parsed.categoria_id;
+    let conta_id = parsed.conta_id || (_contas.length > 0 ? _contas[0].id : null);
     let forma_pagamento = 'dinheiro';
 
-    const accountMentioned = _contas.find(c => text.includes(c.nome.toLowerCase()));
-    if (accountMentioned) {
-        conta_id = accountMentioned.id;
-        if (accountMentioned.tipo === 'credito') {
-            forma_pagamento = 'credito';
-        }
-    } else {
-        // Se não mencionou conta, mas mencionou "crédito" ou "cartão"
-        if (text.includes('crédito') || text.includes('cartão')) {
-            const firstCard = _contas.find(c => c.tipo === 'credito');
-            if (firstCard) {
-                conta_id = firstCard.id;
-                forma_pagamento = 'credito';
-            }
-        }
+    // Ajustar forma de pagamento se a conta for crédito
+    const account = _contas.find(c => c.id === conta_id);
+    if (account && account.tipo === 'credito') {
+        forma_pagamento = 'credito';
     }
 
     if (!categoria_id || !conta_id) {
@@ -1049,18 +1121,36 @@ async function handleMagicInput(userId) {
         return;
     }
 
-    const { error } = await supabase.from('transacoes').insert([{
-        user_id: userId,
-        descricao: text.charAt(0).toUpperCase() + text.slice(1),
+    const transactionData = {
+        descricao: parsed.descricao,
         valor: valor,
         tipo: tipo,
         categoria_id: categoria_id,
         conta_id: conta_id,
         forma_pagamento: forma_pagamento,
-        data: new Date().toISOString().split('T')[0]
-    }]);
+        data: parsed.data || new Date().toLocaleDateString('en-CA'),
+        user_id: userId
+    };
+
+    // --- PHASE 4: OFFLINE SYNC ENGINE ---
+    if (typeof OfflineSync !== 'undefined' && !OfflineSync.isOnline()) {
+        OfflineSync.addToQueue(transactionData);
+        showToast('Comando Mágico em fila offline! 🪄', 'info');
+        input.value = '';
+        return;
+    }
+
+    const { error } = await supabase.from('transacoes').insert([transactionData]);
 
     if (!error) {
+        showToast('Mágica realizada com sucesso! ✨', 'success');
+        input.value = '';
+        await loadTransactions(userId);
+        if (typeof addXP === 'function') addXP(15);
+    } else {
+        console.error('Erro no Magic Input:', error);
+        showToast('Erro ao processar comando.', 'error');
+    }
         showToast('Lançado com sucesso!', 'success');
         input.value = '';
         await loadTransactions(userId);

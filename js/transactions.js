@@ -159,7 +159,9 @@ async function processRecurringTransactions(userId) {
     const today = now.getDate();
     const currentMonth = now.getMonth() + 1;
     const currentYear = now.getFullYear();
-    const todayStr = now.toISOString().split('T')[0];
+    
+    // Phase 4 Bugfix: Force Local Timezone instead of UTC to avoid midnight shift
+    const todayStr = now.toLocaleDateString('en-CA'); 
 
     let processedCount = 0;
 
@@ -212,14 +214,37 @@ async function processRecurringTransactions(userId) {
 
 async function loadTransactions(userId) {
     try {
-        const { data, error } = await supabase.from('transacoes').select('*').eq('user_id', userId).order('data', { ascending: false });
+        const { data, error } = await supabase.from('transacoes')
+            .select('*')
+            .eq('user_id', userId)
+            .order('data', { ascending: false });
+        
         if (error) throw error;
-        _allTransactions = data.map(t => {
+
+        // Phase 4: Integrar transações offline pendentes
+        const offlineQueue = (typeof OfflineSync !== 'undefined') ? OfflineSync.getQueue() : [];
+        const offlineTxs = offlineQueue.map(item => {
+            const tx = Array.isArray(item.data) ? item.data[0] : item.data;
+            return {
+                ...tx,
+                id: item.id,
+                is_pending: true,
+                created_at: item.timestamp
+            };
+        });
+
+        const combined = [...offlineTxs, ...data];
+
+        _allTransactions = combined.map(t => {
             const cat = _categories.find(c => c.id === t.categoria_id);
             return { ...t, categoria_nome: cat ? cat.nome : 'Geral' };
         });
+
         filterAndRenderData();
-    } catch (err) { console.error(err); }
+        if (typeof updateSummary === 'function') updateSummary();
+    } catch (err) { 
+        console.error('Erro ao carregar transações:', err); 
+    }
 }
 
 async function handleAddTransaction(userId) {
@@ -242,6 +267,9 @@ async function handleAddTransaction(userId) {
     }
 
     const btn = document.querySelector('#transaction-form button[type="submit"]');
+    
+    // Phase 4 Bugfix: Prevent duplicate clicks immediately
+    if (btn && (btn.disabled || btn.classList.contains('loading'))) return;
     if (btn) { btn.classList.add('loading'); btn.disabled = true; }
 
     const transactionsToInsert = [];
@@ -251,6 +279,7 @@ async function handleAddTransaction(userId) {
         const contaDestinoId = prompt("Selecione a conta de destino (ID ou Nome):"); // Simplificado para o exemplo, ideal seria um select dinâmico
         if (!contaDestinoId) {
             showToast('Transferência cancelada: Conta de destino necessária.', 'alert');
+            if (btn) { btn.classList.remove('loading'); btn.disabled = false; }
             return;
         }
 
@@ -297,7 +326,7 @@ async function handleAddTransaction(userId) {
                 tipo,
                 categoria_id: catId,
                 conta_id: contaId,
-                data: dataParcela.toISOString().split('T')[0],
+                data: dataParcela.toLocaleDateString('en-CA'),
                 forma_pagamento: formaPagamento,
                 parcelas_total: parcelasTotal,
                 parcela_atual: i,
@@ -344,40 +373,34 @@ async function handleAddTransaction(userId) {
         }
     }
 
-    // --- OFFLINE CHECK (IndexedDB) ---
-    if (!navigator.onLine) {
-        try {
-            await saveOfflineTransaction(transactionsToInsert);
-            if (btn) { btn.classList.remove('loading'); btn.disabled = false; }
-            document.getElementById('transaction-form').reset();
-            if (document.getElementById('field-parcelas')) document.getElementById('field-parcelas').style.display = 'none';
-            
-            // Atualizar UI localmente
-            _allTransactions = [...(Array.isArray(transactionsToInsert) ? transactionsToInsert : [transactionsToInsert]), ..._allTransactions];
-            if (typeof filterAndRenderData === 'function') filterAndRenderData();
-            
-            showToast('Você está offline. O lançamento foi salvo localmente e será sincronizado depois! 📥', 'info');
-            if (typeof addXP === 'function') addXP(10);
-            return;
-        } catch (err) {
-            console.error('Erro ao salvar offline:', err);
-        }
+    // --- PHASE 4: OFFLINE SYNC ENGINE ---
+    if (typeof OfflineSync !== 'undefined' && !OfflineSync.isOnline()) {
+        OfflineSync.addToQueue(transactionsToInsert.length > 1 ? transactionsToInsert : transactionsToInsert[0]);
+        
+        if (btn) { btn.classList.remove('loading'); btn.disabled = false; }
+        document.getElementById('transaction-form').reset();
+        const fp = document.getElementById('field-parcelas');
+        if (fp) fp.style.display = 'none';
+        
+        if (typeof addXP === 'function') addXP(5); // XP reduzido para offline (ganha o resto no sync)
+        return;
     }
 
+    // --- ONLINE FLOW ---
     const { error } = await supabase.from('transacoes').insert(transactionsToInsert);
 
     if (btn) { btn.classList.remove('loading'); btn.disabled = false; }
 
     if (!error) {
-        showToast(transactionsToInsert.length > 1 ? 'Transações geradas com sucesso!' : 'Transação salva!', 'success');
+        showToast(transactionsToInsert.length > 1 ? 'Lançamentos sincronizados!' : 'Transação salva com sucesso!', 'success');
         document.getElementById('transaction-form').reset();
         const fp = document.getElementById('field-parcelas');
         if (fp) fp.style.display = 'none';
+        
         await loadTransactions(userId);
         if (typeof addXP === 'function') addXP(10 * transactionsToInsert.length);
-
     } else {
         console.error('Erro ao inserir:', error);
-        showToast('Erro ao salvar transação.', 'error');
+        showToast('Falha ao sincronizar com a nuvem.', 'error');
     }
 }
