@@ -14,6 +14,84 @@ function escapeHTML(str) {
     return div.innerHTML;
 }
 
+/**
+ * Premium Confirmation Dialog Replacement
+ * Returns a Promise that resolves to true (Confirm) or false (Cancel)
+ */
+function confirmPremium(message, options = {}) {
+    return new Promise((resolve) => {
+        const modal = document.getElementById('modal-confirm');
+        if (!modal) {
+            // Fallback to native confirm if modal doesn't exist
+            resolve(confirm(message));
+            return;
+        }
+
+        const titleEl = document.getElementById('confirm-title');
+        const messageEl = document.getElementById('confirm-message');
+        const iconContainer = document.getElementById('confirm-icon');
+        const btnYes = document.getElementById('btn-confirm-yes');
+        const btnNo = document.getElementById('btn-confirm-no');
+
+        // Set content
+        if (titleEl) titleEl.textContent = options.title || 'Confirmar Ação';
+        if (messageEl) messageEl.textContent = message;
+        
+        // Icon and Style handling
+        if (iconContainer) {
+            iconContainer.className = `confirm-icon ${options.type || 'warning'}`;
+            const iconMap = {
+                warning: 'fa-exclamation-triangle',
+                danger: 'fa-trash-alt',
+                info: 'fa-info-circle'
+            };
+            const iconClass = iconMap[options.type] || iconMap.warning;
+            iconContainer.innerHTML = `<i class="fas ${iconClass}"></i>`;
+        }
+
+        if (btnYes) {
+            btnYes.textContent = options.confirmText || 'Confirmar';
+            // Adjust button style for danger
+            if (options.type === 'danger') {
+                btnYes.style.background = 'var(--color-danger)';
+            } else {
+                btnYes.style.background = ''; // Revert to CSS default
+            }
+        }
+        if (btnNo) btnNo.textContent = options.cancelText || 'Cancelar';
+
+        // Show modal
+        modal.style.display = 'flex';
+        setTimeout(() => modal.classList.add('active'), 10);
+        if (typeof App !== 'undefined' && App.Utils.triggerHaptic) App.Utils.triggerHaptic(15);
+
+        // Cleanup and resolve
+        const cleanup = (value) => {
+            modal.classList.remove('active');
+            setTimeout(() => { modal.style.display = 'none'; }, 300);
+            btnYes.removeEventListener('click', onYes);
+            btnNo.removeEventListener('click', onNo);
+            resolve(value);
+        };
+
+        const onYes = () => cleanup(true);
+        const onNo = () => cleanup(false);
+
+        btnYes.addEventListener('click', onYes);
+        btnNo.addEventListener('click', onNo);
+        
+        // Close on clicking outside
+        const onOutsideClick = (e) => {
+            if (e.target === modal) {
+                modal.removeEventListener('click', onOutsideClick);
+                onNo();
+            }
+        };
+        modal.addEventListener('click', onOutsideClick);
+    });
+}
+window.confirmPremium = confirmPremium;
+
 function showToast(message, type = 'info') {
     const container = document.getElementById('toast-container');
     if (!container) return;
@@ -35,7 +113,7 @@ function showToast(message, type = 'info') {
 
     toast.innerHTML = `
         <span class="toast-icon">${icons[type] || '🔔'}</span>
-        <span class="toast-message">${message}</span>
+        <span class="toast-message">${escapeHTML(message)}</span>
     `;
 
     container.appendChild(toast);
@@ -290,8 +368,8 @@ function renderCategoriesView() {
                     </div>
                     ${escapedNome}
                 </span>
-                <button class="btn-icon-plain" onclick="handleDeleteCategory('${c.id}')">
-                    <i class="fas fa-trash"></i>
+                <button class="btn-icon-danger" onclick="handleDeleteCategory('${c.id}')">
+                    <i class="fas fa-trash-alt"></i>
                 </button>
             </div>
         `;
@@ -346,6 +424,7 @@ function switchView(target) {
         if (target === 'calendar' && typeof renderCalendar === 'function') renderCalendar();
         if (target === 'goals' && typeof renderMetas === 'function') renderMetas();
         if (target === 'subscriptions' && typeof renderRecurring === 'function') renderRecurring();
+        if (target === 'investments' && typeof renderInvestments === 'function') renderInvestments();
         if (target === 'dashboard' && typeof filterAndRenderData === 'function') {
             filterAndRenderData();
         }
@@ -511,7 +590,7 @@ function renderContas() {
                     </div>
 
                     <div style="margin-top: auto; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--color-border); padding-top: 0.75rem;">
-                        <button class="btn-icon-plain" onclick="handleEditAccount('${c.id}')">
+                        <button class="btn-icon-premium" onclick="handleEditAccount('${c.id}')">
                             <i class="fas fa-cog"></i>
                         </button>
                         <span style="font-size: 0.7rem; color: var(--color-text-muted);">Patrimônio: 100%</span>
@@ -769,8 +848,8 @@ function renderTransactions(transactions) {
                     <strong>${symbol} ${formatar(t.valor)}</strong>
                 </td>
                 <td class="text-right">
-                    <button class="btn-icon-plain" onclick="handleDeleteTransaction('${t.id}')">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                    <button class="btn-icon-danger" onclick="handleDeleteTransaction('${t.id}')">
+                        <i class="fas fa-trash-alt"></i>
                     </button>
                 </td>
             </tr>
@@ -821,27 +900,44 @@ function renderMetas() {
                 <div class="goal-header">
                     <div style="display:flex; align-items:center;">
                         <h4>${escapedNome}</h4>
-                        <span class="goal-status-pill ${statusClass}">${insights.status === 'on-track' ? 'No Ritmo' : (insights.status === 'behind' ? 'Lento' : 'Check')}</span>
+                        <span class="goal-status-pill status-${insights.status}">
+                            ${insights.status === 'on-track' ? 'No Ritmo' : (insights.status === 'behind' ? 'Lento' : 'Meta Batida')}
+                        </span>
                     </div>
                     <button class="btn-icon-premium-mini" onclick="handleDeleteMeta('${m.id}')" title="Excluir Meta">
                         <i class="fas fa-trash-alt"></i>
                     </button>
                 </div>
-                <div class="goal-stats">
-                    <span class="amount privacy-blur">${formatar(m.valor_atual)}</span>
-                    <span style="opacity:0.5;" class="amount privacy-blur">de ${formatar(m.valor_objetivo)}</span>
+
+                <div class="goal-stats-premium">
+                    <div class="goal-current-amount amount privacy-blur">${formatar(m.valor_atual)}</div>
+                    <div class="goal-target-amount amount privacy-blur">objetivo: ${formatar(m.valor_objetivo)}</div>
                 </div>
-                <div class="goal-bar-bg">
-                    <div class="goal-bar-fill" style="width: ${percent}%; background: ${percent === 100 ? 'var(--color-success)' : 'var(--color-primary)'}"></div>
+
+                <div class="goal-progress-wrapper">
+                    <div class="goal-percent-badge">${percent.toFixed(0)}%</div>
+                    <div class="goal-progress-bar-bg">
+                        <div class="goal-progress-bar-fill" style="width: ${percent}%; background: ${percent === 100 ? '#10B981' : ''}"></div>
+                    </div>
                 </div>
-                <div class="goal-eta">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                    ${insights.text}
+
+                <div class="goal-footer-info">
+                    <div class="goal-eta-premium">
+                        <i class="fas fa-calendar-alt"></i>
+                        <span>${insights.text}</span>
+                    </div>
+                    
+                    <div class="goal-oracle-suggestion">
+                        <i class="fas fa-robot"></i>
+                        <div>${insights.suggestion.replace('💡 Oráculo:', '').replace('⚠️ Oráculo:', '').trim()}</div>
+                    </div>
                 </div>
-                <div class="goal-suggestion">
-                    💡 ${insights.suggestion}
-                </div>
-                ${percent === 100 ? '<div style="margin-top:10px; font-weight:800; color:var(--color-success); font-size:0.7rem;">⭐ META CONQUISTADA!</div>' : ''}
+
+                ${percent === 100 ? `
+                <div class="goal-conquistada-badge">
+                    <i class="fas fa-trophy"></i>
+                    <span>Meta Conquistada!</span>
+                </div>` : ''}
             </div>
         `;
     }).join('');
@@ -1121,7 +1217,12 @@ async function handlePagarFatura(contaId) {
         return;
     }
 
-    if (confirm(`Deseja realizar o pagamento total da fatura no valor de ${formatar(valorFatura)}?`)) {
+    const confirmed = await confirmPremium(`Deseja realizar o pagamento total da fatura no valor de ${formatar(valorFatura)}?`, {
+        title: 'Pagamento de Fatura',
+        type: 'info',
+        confirmText: 'Pagar Agora'
+    });
+    if (confirmed) {
         showToast('Funcionalidade de pagamento em desenvolvimento.', 'alert');
     }
 }
@@ -1199,7 +1300,11 @@ window.handleConfirmarPagamento = async function() {
     }
 
     const confirmMsg = `Confirmar pagamento de ${formatar(valorFatura)}?\n\nOrigem: ${accountOrigem.nome}\nDestino: ${accountCredito.nome}`;
-    if (!confirm(confirmMsg)) return;
+    const confirmed = await confirmPremium(confirmMsg, {
+        title: 'Confirmar Transferência',
+        type: 'warning'
+    });
+    if (!confirmed) return;
 
     try {
         const user = await getCurrentUser();
@@ -1351,7 +1456,7 @@ function renderProactiveAlerts() {
                 <h4 style="margin: 0; font-size: 0.9rem; font-weight: 800;">${alert.title}</h4>
                 <p style="margin: 0.2rem 0 0; font-size: 0.8rem; color: var(--color-text-muted);">${alert.message}</p>
             </div>
-            <button class="btn-icon-plain" style="margin-left: auto; opacity: 0.5;" onclick="this.parentElement.remove()">
+            <button class="btn-icon-premium" style="margin-left: auto; opacity: 0.5;" onclick="this.parentElement.remove()">
                 <i class="fas fa-times"></i>
             </button>
         </div>

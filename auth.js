@@ -1,31 +1,39 @@
 /* auth.js - Supabase Authentication Logic */
 
-const SUPABASE_URL = window.CONFIG?.SUPABASE_URL || '';
-const SUPABASE_ANON_KEY = window.CONFIG?.SUPABASE_ANON_KEY || '';
+// Initialize Supabase client lazily
+let supabaseClientInstance = null;
 
-// Initialize Supabase client
-let supabaseClientInstance;
-try {
-    const clientCreator = window.supabase?.createClient || window.createClient;
-    if (clientCreator) {
-        supabaseClientInstance = clientCreator(SUPABASE_URL, SUPABASE_ANON_KEY);
-        // Expor como 'supabase' global para compatibilidade com os outros scripts
-        window.supabase = supabaseClientInstance;
-    } else {
-        console.error('Supabase library not found. Please check the CDN link.');
+function getSupabaseClient() {
+    if (supabaseClientInstance) return supabaseClientInstance;
+    
+    const SUPABASE_URL = window.CONFIG?.SUPABASE_URL || '';
+    const SUPABASE_ANON_KEY = window.CONFIG?.SUPABASE_ANON_KEY || '';
+
+    if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+        console.error('C.A.S.H. Unit: Supabase configuration missing in window.CONFIG');
+        return null;
     }
-} catch (e) {
-    console.error('Error initializing Supabase:', e);
+
+    try {
+        const clientCreator = window.supabase?.createClient || window.createClient;
+        if (clientCreator) {
+            supabaseClientInstance = clientCreator(SUPABASE_URL, SUPABASE_ANON_KEY);
+            window.supabase = supabaseClientInstance;
+            return supabaseClientInstance;
+        } else {
+            console.error('C.A.S.H. Unit: Supabase library not found.');
+            return null;
+        }
+    } catch (e) {
+        console.error('C.A.S.H. Unit: Error initializing Supabase:', e);
+        return null;
+    }
 }
-
-window.supabaseClient = supabaseClientInstance; // Exposição adicional
-
 
 // Helper to show messages - Integrated with Premium Toast System
 function showToast(message, type = 'info') {
     const container = document.getElementById('toast-container');
     if (!container) {
-        // Se o container não existir, cria um dinamicamente
         const newContainer = document.createElement('div');
         newContainer.id = 'toast-container';
         document.body.appendChild(newContainer);
@@ -37,19 +45,18 @@ function showToast(message, type = 'info') {
     const icon = type === 'success' ? 'fa-check-circle' : 
                  type === 'error' ? 'fa-exclamation-triangle' : 'fa-info-circle';
     
+    const escapedMessage = window.escapeHTML ? window.escapeHTML(message) : message;
     toast.innerHTML = `
-        <div class="toast-content">
+        <div class="toast-content" style="display: flex; align-items: center; gap: 0.75rem;">
             <i class="fas ${icon}"></i>
-            <span>${message}</span>
+            <span>${escapedMessage}</span>
         </div>
     `;
     
     document.getElementById('toast-container').appendChild(toast);
     
-    // Animate in
     setTimeout(() => toast.classList.add('active'), 10);
     
-    // Auto remove
     setTimeout(() => {
         toast.classList.remove('active');
         setTimeout(() => toast.remove(), 400);
@@ -76,28 +83,34 @@ function setLoading(buttonId, isLoading) {
 
 // Signup Logic
 async function handleSignUp(email, password) {
+    const client = getSupabaseClient();
+    if (!client) {
+        showMessage('error', 'Erro de configuração do sistema.');
+        return;
+    }
+
     setLoading('btn-submit', true);
     try {
-        const { data, error } = await supabaseClientInstance.auth.signUp({
+        const { data, error } = await client.auth.signUp({
             email: email,
             password: password,
         });
         
         if (error) throw error;
         
-        // Se a conta já existe, o Supabase (para evitar enumeração de emails)
-        // retorna sucesso, mas com o array de 'identities' vazio.
         if (data && data.user && data.user.identities && data.user.identities.length === 0) {
-            throw new Error('Este e-mail já está cadastrado. Por favor, faça login.');
+            throw new Error('Este e-mail já está cadastrado.');
         }
         
-        showMessage('success', 'Cadastro realizado! Verifique seu e-mail para confirmar (se necessário) ou faça login.');
+        showMessage('success', 'Cadastro realizado! Redirecionando...');
         
-        // Auto redirect after short delay if session is active
         if (data?.session) {
             setTimeout(() => {
                 window.location.href = 'dashboard.html';
             }, 1500);
+        } else {
+            setLoading('btn-submit', false);
+            showMessage('success', 'Verifique seu e-mail para confirmar a conta.');
         }
     } catch (error) {
         showMessage('error', error.message || 'Erro ao cadastrar.');
@@ -107,76 +120,86 @@ async function handleSignUp(email, password) {
 
 // Login Logic
 async function handleLogin(email, password) {
+    const client = getSupabaseClient();
+    if (!client) {
+        showMessage('error', 'Erro de configuração. Tente recarregar a página.');
+        return;
+    }
+
     setLoading('btn-submit', true);
     try {
-        const { data, error } = await supabaseClientInstance.auth.signInWithPassword({
+        console.log('C.A.S.H. Unit: Tentando autenticação...');
+        const { data, error } = await client.auth.signInWithPassword({
             email: email,
             password: password,
         });
         
         if (error) throw error;
         
-        // Registrar acesso na nova tabela
+        // Log access in background - DON'T AWAIT THIS
         if (data.user) {
-            await recordAccessHistory(data.user.id);
+            recordAccessHistory(data.user.id).catch(e => console.warn('Access log failed:', e));
         }
         
-        showMessage('success', 'Login realizado com sucesso! Redirecionando...');
+        showMessage('success', 'Bem-vindo de volta! Sincronizando núcleo...');
         
+        // Redirect faster but keep loading state
         setTimeout(() => {
             window.location.href = 'dashboard.html';
-        }, 1000);
+        }, 800);
+
     } catch (error) {
-        showMessage('error', error.message || 'Erro ao fazer login.');
+        console.error('C.A.S.H. Unit: Erro no login:', error.message);
+        showMessage('error', error.message || 'Credenciais inválidas.');
         setLoading('btn-submit', false);
     }
 }
 
 // Logout Logic
 async function handleLogout() {
+    const client = getSupabaseClient();
+    if (!client) return;
     try {
-        const { error } = await supabaseClientInstance.auth.signOut();
-        if (error) throw error;
+        await client.auth.signOut();
         window.location.href = 'login.html';
     } catch (error) {
         console.error('Erro ao fazer logout:', error.message);
     }
 }
 
-// Record Access History in Supabase
+// Record Access History - Now fully decoupled and non-blocking
 async function recordAccessHistory(userId) {
+    const client = getSupabaseClient();
+    if (!client) return;
+    
     try {
-        const userAgent = navigator.userAgent;
-        const { error } = await supabaseClientInstance
+        const { error } = await client
             .from('historico_acesso')
             .insert({
                 user_id: userId,
-                user_agent: userAgent,
+                user_agent: navigator.userAgent,
                 ip_origem: 'Browser Client',
-                localizacao: 'Acesso via Web App'
+                localizacao: 'Web App'
             });
-        if (error) console.warn('C.A.S.H. Unit: Erro ao gravar histórico de acesso:', error);
+        if (error) console.warn('C.A.S.H. Unit: Log de acesso não gravado (RLS ou Tabela ausente).');
     } catch (e) {
-        console.error('Falha ao registrar acesso:', e);
+        // Silently fail as this is not critical for the user login flow
     }
 }
 
 // Get Current User
 async function getCurrentUser() {
-    if (!supabaseClientInstance || !supabaseClientInstance.auth) {
-        console.error('Supabase client not initialized properly.');
-        return null;
-    }
+    const client = getSupabaseClient();
+    if (!client) return null;
     try {
-        const { data: { user } } = await supabaseClientInstance.auth.getUser();
+        const { data: { user } } = await client.auth.getUser();
         return user;
     } catch (e) {
-        console.error('Error fetching user:', e);
         return null;
     }
 }
 
-// Expose functions to window
+// Expose functions
 window.handleSignUp = handleSignUp;
 window.handleLogin = handleLogin;
 window.handleLogout = handleLogout;
@@ -187,42 +210,42 @@ function initMascotAuthInteractions() {
     const msgEl = document.getElementById('auth-mascot-msg');
     const emailInput = document.getElementById('email');
     const passInput = document.getElementById('password');
-    const confirmPassInput = document.getElementById('confirm-password');
 
     if (!msgEl) return;
 
     const messages = {
-        email: "Interessante... Esse e-mail parece válido.",
+        idle: "Identifique-se para acessar o núcleo.",
+        email: "Estou verificando seu registro...",
         password: "Não se preocupe, sua senha está encriptada.",
-        confirm: "Quase lá! As senhas precisam coincidir.",
-        success: "Acesso concedido! Bem-vindo de volta.",
-        error: "Ocorreu uma falha na autenticação. Tente novamente."
+        typing: "Excelente! Senha forte detectada."
     };
 
-    emailInput?.addEventListener('focus', () => msgEl.textContent = "Estou verificando seu registro...");
-    passInput?.addEventListener('focus', () => msgEl.textContent = messages.password);
-    confirmPassInput?.addEventListener('focus', () => msgEl.textContent = messages.confirm);
+    emailInput?.addEventListener('focus', () => {
+        msgEl.textContent = messages.email;
+        gsap.to(".auth-mascot-svg", { scale: 1.05, duration: 0.3 });
+    });
+    
+    passInput?.addEventListener('focus', () => {
+        msgEl.textContent = messages.password;
+        gsap.to(".auth-mascot-svg", { scale: 1.05, duration: 0.3 });
+    });
 
-    passInput?.addEventListener('input', (e) => {
-        if (e.target.value.length > 0 && e.target.value.length < 6) {
-            msgEl.textContent = "Essa senha parece curta demais...";
-        } else if (e.target.value.length >= 6) {
-            msgEl.textContent = "Excelente! Senha forte detectada.";
-        }
+    [emailInput, passInput].forEach(input => {
+        input?.addEventListener('blur', () => {
+            msgEl.textContent = messages.idle;
+            gsap.to(".auth-mascot-svg", { scale: 1, duration: 0.3 });
+        });
     });
 }
 
 // Auth UI Listeners
 function setupAuthUI() {
-    console.log('C.A.S.H. Unit: Inicializando ouvintes de autenticação...');
     const loginForm = document.getElementById('login-form');
     const signupForm = document.getElementById('cadastro-form');
 
     if (loginForm) {
-        console.log('C.A.S.H. Unit: Formulário de login detectado.');
         loginForm.addEventListener('submit', (e) => {
             e.preventDefault();
-            console.log('C.A.S.H. Unit: Tentativa de login iniciada.');
             const email = document.getElementById('email').value;
             const pass = document.getElementById('password').value;
             handleLogin(email, pass);
@@ -230,10 +253,8 @@ function setupAuthUI() {
     }
 
     if (signupForm) {
-        console.log('C.A.S.H. Unit: Formulário de cadastro detectado.');
         signupForm.addEventListener('submit', (e) => {
             e.preventDefault();
-            console.log('C.A.S.H. Unit: Tentativa de cadastro iniciada.');
             const email = document.getElementById('email').value;
             const pass = document.getElementById('password').value;
             const confirm = document.getElementById('confirm-password').value;
@@ -246,9 +267,6 @@ function setupAuthUI() {
         });
     }
 }
-
-// Expose to window
-window.setupAuthUI = setupAuthUI;
 
 document.addEventListener('DOMContentLoaded', () => {
     initMascotAuthInteractions();

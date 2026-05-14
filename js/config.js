@@ -18,3 +18,11 @@ const CONFIG = {
 // Congelar o objeto para evitar modificações acidentais em runtime
 window.CONFIG = Object.freeze(CONFIG);
 
+// Utilitário Global para Prevenção de XSS
+window.escapeHTML = function(str) {
+    if (!str) return '';
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+};
+

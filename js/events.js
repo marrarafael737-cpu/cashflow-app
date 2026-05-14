@@ -6,11 +6,11 @@ function setupCategoryFormEvents(userId) {
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
             if (typeof triggerHaptic === 'function') triggerHaptic(50);
-            
+
             const btn = form.querySelector('button[type="submit"]');
             if (btn && (btn.disabled || btn.classList.contains('loading'))) return;
             if (btn) { btn.classList.add('loading'); btn.disabled = true; }
-            
+
             const nome = document.getElementById('cat-nome').value;
             const tipo = document.getElementById('cat-tipo').value;
 
@@ -51,8 +51,8 @@ async function renderCategories() {
                     </div>
                     ${escapeHTML(c.nome)}
                 </span>
-                <button class="btn-icon-plain" onclick="handleDeleteCategory('${c.id}')">
-                    <i class="fas fa-trash" style="font-size: 0.8rem;"></i>
+                <button class="btn-icon-danger" onclick="handleDeleteCategory('${c.id}')">
+                    <i class="fas fa-trash-alt"></i>
                 </button>
             </div>
         `;
@@ -60,7 +60,11 @@ async function renderCategories() {
 }
 
 async function handleDeleteCategory(id) {
-    if (!confirm('Excluir esta categoria? Transações vinculadas serão preservadas (ficarão sem categoria).')) return;
+    const confirmed = await confirmPremium('Excluir esta categoria? Transações vinculadas serão preservadas (ficarão sem categoria).', {
+        title: 'Excluir Categoria',
+        type: 'danger'
+    });
+    if (!confirmed) return;
     try {
         const { error: moveError } = await supabase.from('transacoes').update({ categoria_id: null }).eq('categoria_id', id);
         if (moveError) console.warn('Falha ao desvincular transações, mas prosseguindo...', moveError);
@@ -87,7 +91,7 @@ function setupAccountFormEvents(userId) {
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
             if (typeof triggerHaptic === 'function') triggerHaptic(50);
-            
+
             const editId = document.getElementById('edit-account-id').value;
             const nome = document.getElementById('account-nome').value;
             const saldo_inicial = parseFloat(document.getElementById('account-saldo').value.replace(',', '.')) || 0;
@@ -96,6 +100,7 @@ function setupAccountFormEvents(userId) {
             const limite = limiteRaw ? parseFloat(limiteRaw) : null;
             const dia_vencimento = parseInt(document.getElementById('account-vencimento').value) || null;
             const dia_fechamento = parseInt(document.getElementById('account-fechamento').value) || null;
+            const is_reserva_emergencia = document.getElementById('account-is-reserva').checked;
 
             if (!nome) {
                 showToast('O nome da conta é obrigatório.', 'alert');
@@ -110,13 +115,13 @@ function setupAccountFormEvents(userId) {
             if (editId) {
                 // Atualizar conta existente
                 result = await supabase.from('contas').update({
-                    nome, saldo_inicial, tipo, limite, dia_vencimento, dia_fechamento
+                    nome, saldo_inicial, tipo, limite, dia_vencimento, dia_fechamento, is_reserva_emergencia
                 }).eq('id', editId);
             } else {
                 // Criar nova conta
-                const cor = '#' + Math.floor(Math.random()*16777215).toString(16);
+                const cor = '#' + Math.floor(Math.random() * 16777215).toString(16);
                 result = await supabase.from('contas').insert([{
-                    nome, saldo_inicial, tipo, cor, user_id: userId, limite, dia_vencimento, dia_fechamento
+                    nome, saldo_inicial, tipo, cor, user_id: userId, limite, dia_vencimento, dia_fechamento, is_reserva_emergencia
                 }]);
             }
 
@@ -148,22 +153,23 @@ async function handleEditAccount(id) {
     if (modal) {
         modal.style.display = 'flex';
         setTimeout(() => modal.classList.add('active'), 10);
-        
+
         // Preencher formulário
         document.getElementById('edit-account-id').value = account.id;
         document.getElementById('account-nome').value = account.nome;
         document.getElementById('account-saldo').value = account.saldo_inicial;
         document.getElementById('account-tipo').value = account.tipo;
-        
+
         document.getElementById('account-limite').value = account.limite || '';
         document.getElementById('account-vencimento').value = account.dia_vencimento || '';
         document.getElementById('account-fechamento').value = account.dia_fechamento || '';
+        document.getElementById('account-is-reserva').checked = account.is_reserva_emergencia || false;
         document.getElementById('credit-card-settings').style.display = account.tipo === 'credito' ? 'block' : 'none';
-        
+
         // Configurar botões do modal
         const deleteBtn = document.getElementById('btn-delete-account');
         if (deleteBtn) deleteBtn.style.display = 'block';
-        
+
         const submitBtn = document.getElementById('btn-account-submit');
         if (submitBtn) submitBtn.textContent = 'Salvar Alterações';
 
@@ -182,7 +188,11 @@ async function handleDeleteAccount() {
     const account = _contas.find(c => c.id === id);
     if (!account) return;
 
-    if (!confirm(`Deseja realmente excluir a conta "${account.nome}"? Esta ação não excluirá as transações vinculadas, mas elas ficarão sem conta associada.`)) {
+    const confirmed = await confirmPremium(`Deseja realmente excluir a conta "${account.nome}"? Esta ação não excluirá as transações vinculadas, mas elas ficarão sem conta associada.`, {
+        title: 'Excluir Conta',
+        type: 'danger'
+    });
+    if (!confirmed) {
         return;
     }
 
@@ -201,7 +211,7 @@ async function handleDeleteAccount() {
             setTimeout(() => {
                 document.getElementById('modal-account').style.display = 'none';
             }, 300);
-            
+
             const user = await getCurrentUser();
             if (user && typeof loadContas === 'function') {
                 await loadContas(user.id);
@@ -233,7 +243,7 @@ function setupGoalsLogic(userId) {
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
             if (typeof triggerHaptic === 'function') triggerHaptic(50);
-            
+
             const nome = document.getElementById('goal-name').value;
             const valor_objetivo = parseFloat(document.getElementById('goal-target').value.replace(',', '.')) || 0;
             const valor_atual = parseFloat(document.getElementById('goal-current').value.replace(',', '.')) || 0;
@@ -250,9 +260,9 @@ function setupGoalsLogic(userId) {
             if (btn) { btn.classList.add('loading'); btn.disabled = true; }
 
             const { error } = await supabase.from('metas').insert([{
-                nome, 
-                valor_objetivo, 
-                valor_atual, 
+                nome,
+                valor_objetivo,
+                valor_atual,
                 prazo,
                 user_id: userId
             }]);
@@ -312,8 +322,12 @@ function initBudgetEvents(userId) {
 // Funções de Exclusão (Handlers Globais)
 async function handleDeleteAccount(id, name) {
     const displayName = name || 'esta conta';
-    if (!confirm(`ATENÇÃO: Deseja realmente excluir "${displayName}"? Todas as transações vinculadas a esta conta também serão excluídas.`)) return;
-    
+    const confirmed = await confirmPremium(`ATENÇÃO: Deseja realmente excluir "${displayName}"? Todas as transações vinculadas a esta conta também serão excluídas.`, {
+        title: 'Excluir Conta Permanentemente',
+        type: 'danger'
+    });
+    if (!confirmed) return;
+
     try {
         const { error } = await supabase.from('contas').delete().eq('id', id);
         if (!error) {
@@ -333,7 +347,8 @@ async function handleDeleteAccount(id, name) {
 }
 
 async function handleDeleteMeta(id) {
-    if (!confirm('Excluir esta meta?')) return;
+    const confirmed = await confirmPremium('Excluir esta meta?', { type: 'danger', title: 'Excluir Meta' });
+    if (!confirmed) return;
     const { error } = await supabase.from('metas').delete().eq('id', id);
     if (!error) {
         showToast('Meta removida.', 'info');
@@ -343,7 +358,8 @@ async function handleDeleteMeta(id) {
 }
 
 async function handleDeleteOrcamento(id) {
-    if (!confirm('Excluir este orçamento?')) return;
+    const confirmed = await confirmPremium('Excluir este orçamento?', { type: 'danger', title: 'Excluir Orçamento' });
+    if (!confirmed) return;
     const { error } = await supabase.from('orcamentos').delete().eq('id', id);
     if (!error) {
         showToast('Orçamento excluído.', 'info');
@@ -353,9 +369,10 @@ async function handleDeleteOrcamento(id) {
 }
 
 async function handleDeleteTransaction(id) {
-    if (!confirm('Deseja realmente excluir esta transação?')) return;
+    const confirmed = await confirmPremium('Deseja realmente excluir esta transação?', { type: 'danger', title: 'Excluir Transação' });
+    if (!confirmed) return;
     if (typeof triggerHaptic === 'function') triggerHaptic([30, 50, 30]); // Pattern de erro/exclusão
-    
+
     const { error } = await supabase.from('transacoes').delete().eq('id', id);
     if (!error) {
         showToast('Transação excluída com sucesso.', 'success');
@@ -406,8 +423,9 @@ function setupEnhancementListeners(userId) {
 }
 
 async function handleDeleteRecurrence(id) {
-    if (!confirm('Deseja realmente cancelar esta recorrência?')) return;
-    
+    const confirmed = await confirmPremium('Deseja realmente cancelar esta recorrência?', { type: 'danger', title: 'Cancelar Recorrência' });
+    if (!confirmed) return;
+
     try {
         const { error } = await supabase.from('recorrencias').delete().eq('id', id);
         if (!error) {
@@ -430,7 +448,7 @@ function setupRecurringEvents(userId) {
             e.preventDefault();
             console.log('Formulário de recorrência enviado!');
             if (typeof triggerHaptic === 'function') triggerHaptic(50);
-            
+
             const btn = form.querySelector('button[type="submit"]');
             if (btn && (btn.disabled || btn.classList.contains('loading'))) return;
 
@@ -471,7 +489,7 @@ function setupParserEvents(userId) {
             if (parsed && parsed.valor > 0) {
                 document.getElementById('parser-preview-desc').textContent = parsed.descricao;
                 document.getElementById('parser-preview-valor').textContent = formatCurrency(parsed.valor);
-                
+
                 // Colorir valor conforme o tipo
                 const valorEl = document.getElementById('parser-preview-valor');
                 if (parsed.tipo === 'entrada') {
@@ -483,13 +501,13 @@ function setupParserEvents(userId) {
                 }
 
                 document.getElementById('parser-preview-cat').textContent = 'Categoria: ' + (parsed.categoria_nome || 'Geral');
-                
+
                 // Atualizar o seletor de contas no preview
                 const accSelect = document.getElementById('parser-account-select');
                 if (accSelect && typeof _contas !== 'undefined') {
                     accSelect.innerHTML = _contas.map(c => `<option value="${c.id}" ${c.id === parsed.conta_id ? 'selected' : ''}>${c.nome}</option>`).join('');
                 }
-                
+
                 // Update Confidence UI
                 const confTag = document.getElementById('parser-confidence-tag');
                 const confVal = document.getElementById('parser-confidence-value');
@@ -509,7 +527,7 @@ function setupParserEvents(userId) {
                         confTag.style.color = '#EF4444';
                     }
                 }
-                
+
                 preview.style.display = 'block';
                 btnConfirm.disabled = false;
             } else {
@@ -563,7 +581,7 @@ function setupParserEvents(userId) {
             };
 
             OfflineSync.addToQueue(transactionData);
-            
+
             showToast('Lançamento via Oráculo em fila offline! 🧠', 'info');
             textarea.value = '';
             preview.style.display = 'none';
@@ -593,13 +611,13 @@ function setupParserEvents(userId) {
             preview.style.display = 'none';
             modal.classList.remove('active');
             setTimeout(() => modal.style.display = 'none', 300);
-            
+
             if (typeof loadTransactions === 'function') await loadTransactions(userId);
             if (typeof filterAndRenderData === 'function') filterAndRenderData();
         } else {
             showToast('Erro ao lançar: ' + error.message, 'error');
         }
-        
+
         btnConfirm.innerHTML = 'Confirmar Lançamento';
         btnConfirm.disabled = false;
         btnConfirm.classList.remove('loading');
@@ -621,11 +639,16 @@ async function handlePayRecurrenceEarly(id) {
     const r = _recorrencias.find(item => item.id === id);
     if (!r) return;
 
-    if (!confirm(`Deseja registrar o pagamento de "${r.descricao}" para este mês agora?`)) return;
+    const confirmed = await confirmPremium(`Deseja registrar o pagamento de "${r.descricao}" para este mês agora?`, {
+        title: 'Pagamento Antecipado',
+        type: 'info',
+        confirmText: 'Registrar Agora'
+    });
+    if (!confirmed) return;
 
     try {
         const todayStr = new Date().toLocaleDateString('en-CA');
-        
+
         // 1. Criar a transação
         const { error: transError } = await supabase.from('transacoes').insert([{
             user_id: r.user_id,
@@ -648,7 +671,7 @@ async function handlePayRecurrenceEarly(id) {
         if (updateError) throw updateError;
 
         showToast(`Pagamento de ${r.descricao} registrado!`, 'success');
-        
+
         const user = await getCurrentUser();
         if (user) {
             await loadRecorrencias(user.id);

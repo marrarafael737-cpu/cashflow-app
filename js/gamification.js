@@ -175,7 +175,7 @@ function showSnapshotModal() {
         <div class="snapshot-card card-glass animate-pop" style="max-width: 400px; padding: 2rem; text-align: center; border: 2px solid var(--color-primary);">
             <div style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 2px; color: var(--color-primary); margin-bottom: 1rem;">Progresso Semanal</div>
             <div class="mascot-snapshot" style="font-size: 4rem; margin-bottom: 1.5rem;">🤖</div>
-            <h2 style="margin: 0; font-size: 1.5rem;">${name}</h2>
+            <h2 style="margin: 0; font-size: 1.5rem;">${window.escapeHTML ? window.escapeHTML(name) : name}</h2>
             <div style="font-size: 0.9rem; color: var(--color-text-muted); margin-bottom: 2rem;">Nível ${_userLevel} • ${_userXP} XP</div>
             
             <div class="snapshot-stat" style="background: rgba(255,255,255,0.05); padding: 1rem; border-radius: 12px; margin-bottom: 1rem;">
@@ -225,16 +225,17 @@ function setupPredictor(userId) {
         let type = "info";
         let mood = "neutral";
 
+        const escapedItem = window.escapeHTML ? window.escapeHTML(item) : item;
         if (remaining < 0) {
-            message = `Análise crítica: Comprar <strong>${item}</strong> destruirá sua reserva e te deixará com saldo NEGATIVO de ${formatar(Math.abs(remaining))}. Não recomendo.`;
+            message = `Análise crítica: Comprar <strong>${escapedItem}</strong> destruirá sua reserva e te deixará com saldo NEGATIVO de ${formatar(Math.abs(remaining))}. Não recomendo.`;
             type = "danger";
             mood = "angry";
         } else if (value > (balance * 0.3)) {
-            message = `Cuidado, humano. <strong>${item}</strong> consome mais de 30% da sua projeção mensal. Isso pode comprometer suas metas futuras.`;
+            message = `Cuidado, humano. <strong>${escapedItem}</strong> consome mais de 30% da sua projeção mensal. Isso pode comprometer suas metas futuras.`;
             type = "warning";
             mood = "alert";
         } else {
-            message = `Compra de <strong>${item}</strong> aprovada. Seu saldo projetado continuará saudável em ${formatar(remaining)}.`;
+            message = `Compra de <strong>${escapedItem}</strong> aprovada. Seu saldo projetado continuará saudável em ${formatar(remaining)}.`;
             type = "success";
             mood = "happy";
             addXP(10); // XP por simular compras seguras

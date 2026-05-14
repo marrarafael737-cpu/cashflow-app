@@ -8,7 +8,13 @@
     <meta name="description"
         content="Controle seus gastos, defina metas e alcance sua liberdade financeira com o CashFlow. O gestor financeiro inteligente com gamificação.">
     <meta name="keywords"
-        content="finanças, controle financeiro, economia, investimentos, dinheiro, dashboard financeiro">
+        content="finanças, controle financeiro, economy, investimentos, dinheiro, dashboard financeiro">
+
+    <!-- Security Headers -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://us.i.posthog.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; img-src 'self' data: https://*; connect-src 'self' https://wecvchpyutwjqxoeilgq.supabase.co https://us.i.posthog.com wss://wecvchpyutwjqxoeilgq.supabase.co; frame-ancestors 'none';">
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <meta http-equiv="X-Frame-Options" content="DENY">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
 
     <!-- Performance Hints -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -52,18 +58,18 @@
     <link rel="stylesheet" href="css/views.css">
     <link rel="stylesheet" href="css/mascot.css">
     <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha384-iw3OoTErCYJJB9mCa8LNS2hbsQ7M3C0EpIsO/H5+EGAkPGc6rk+V8i04oW/K5xq0" crossorigin="anonymous">
     <!-- Google Fonts -->
     <link
         href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;500;600;700;800&display=swap"
         rel="stylesheet">
     <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js" integrity="sha384-e6cc9LaIG7xZ3XD5B+jtr1NhTWPQGQdRCh6xiZ+ZFUtWCpg4ycv3Sh+SkZoopvUY" crossorigin="anonymous"></script>
     <!-- Supabase JS -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.43.2/dist/umd/supabase.min.js" integrity="sha384-3wUKeH0DH4hNxURtHPXhI66xVWrl+tDWOz20ylXdf6ph1BV3ylCCElOLZ83PH/kM" crossorigin="anonymous"></script>
     <!-- GSAP & Draggable -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/Draggable.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js" integrity="sha384-d+vyQ0dYcymoP8ndq2hW7FGC50nqGdXUEgoOUGxbbkAJwZqL7h+jKN0GGgn9hFDS" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/Draggable.min.js" crossorigin="anonymous"></script>
     <link rel="icon" type="image/svg+xml" href="assets/mascot.svg">
 
     <!-- PWA Setup -->
@@ -75,9 +81,9 @@
     <link rel="apple-touch-icon" href="assets/mascot.svg">
 
     <!-- Reports Libs -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" integrity="sha384-JcnsjUPPylna1s1fvi1u12X5qjY5OL56iySh75FdtrwhO/SWXgMjoVqcKyIIWOLk" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js" integrity="sha384-GbQVk5KsTZEMJtvSbtmGpderuiERKpKVVFucxROOKnIXvtg03h3pORjyyGlPD6UO" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" integrity="sha384-vtjasyidUo0kW94K5MXDXntzOJpQgBKXmE7e2Ga4LG0skTTLeBi97eFAXsqewJjw" crossorigin="anonymous"></script>
     <script src="js/search.js"></script>
 </head>
 
@@ -158,8 +164,12 @@
                 <i class="fas fa-history"></i>
                 <span>Histórico</span>
             </a>
-            <a href="#" class="nav-item" data-target="reports">
+            <a href="#" class="nav-item" data-target="investments">
                 <i class="fas fa-chart-line"></i>
+                <span>Patrimônio</span>
+            </a>
+            <a href="#" class="nav-item" data-target="reports">
+                <i class="fas fa-file-invoice-dollar"></i>
                 <span>Relatórios</span>
             </a>
             <a href="#" class="nav-item" data-target="calendar">
@@ -319,7 +329,8 @@
                         <div class="vision-main-info">
                             <label>Projeção de Saldo Final</label>
                             <h2 id="projected-balance-hero" class="amount-hero privacy-blur">R$ 0,00</h2>
-                            <p id="projection-insight-hero" class="insight-hero">Analisando seus padrões de consumo...</p>
+                            <p id="projection-insight-hero" class="insight-hero">Analisando seus padrões de consumo...
+                            </p>
                         </div>
                         <div class="vision-chart-mini">
                             <canvas id="chart-mini-forecast" height="80"></canvas>
@@ -327,7 +338,8 @@
                         <div class="vision-quick-stats">
                             <div class="q-stat">
                                 <label>Próxima Fatura</label>
-                                <span id="credit-invoice-hero" class="val-neg privacy-blur" style="color: #FF4D4D;">R$ 0,00</span>
+                                <span id="credit-invoice-hero" class="val-neg privacy-blur" style="color: #FF4D4D;">R$
+                                    0,00</span>
                             </div>
                             <div class="q-stat">
                                 <label>Saídas Previstas</label>
@@ -349,15 +361,19 @@
                 <div id="view-dashboard" class="view-section active view-dashboard">
                     <!-- Dashboard Charts Section -->
                     <div class="charts-row">
-                        <div class="chart-container-card card-glass">
+                        <div class="chart-container-card card-glass" style="min-height: 350px; display: flex; flex-direction: column;">
                             <h3 class="section-title" style="font-size: 0.9rem; margin-bottom: 1rem;">Gastos por
                                 Categoria</h3>
-                            <canvas id="chart-categorias" class="privacy-blur"></canvas>
+                            <div style="flex: 1; min-height: 0;">
+                                <canvas id="chart-categorias" class="privacy-blur"></canvas>
+                            </div>
                         </div>
-                        <div class="chart-container-card card-glass">
+                        <div class="chart-container-card card-glass" style="min-height: 350px; display: flex; flex-direction: column;">
                             <h3 class="section-title" style="font-size: 0.9rem; margin-bottom: 1rem;">Receitas vs
                                 Despesas</h3>
-                            <canvas id="chart-evolucao" class="privacy-blur"></canvas>
+                            <div style="flex: 1; min-height: 0;">
+                                <canvas id="chart-evolucao" class="privacy-blur"></canvas>
+                            </div>
                         </div>
                     </div>
 
@@ -369,21 +385,21 @@
                                 <h3 class="section-title" style="font-size: 0.9rem; margin: 0;">Perfil Financeiro</h3>
                                 <div id="health-score-badge" class="score-badge">--</div>
                             </div>
-                            <div class="oracle-chart-wrapper">
+                            <div class="oracle-chart-wrapper" style="min-height: 280px; display: flex; align-items: center; justify-content: center;">
                                 <canvas id="chart-radar" class="privacy-blur"></canvas>
                             </div>
                         </div>
                         <div class="oracle-card card-glass">
                             <h3 class="section-title" style="font-size: 0.9rem; margin-bottom: 1rem;">Tendência de Saldo
                                 (30 Dias)</h3>
-                            <div class="oracle-chart-wrapper">
+                            <div class="oracle-chart-wrapper" style="min-height: 200px;">
                                 <canvas id="chart-tendencia" class="privacy-blur"></canvas>
                             </div>
                         </div>
                         <div class="oracle-card card-glass">
                             <h3 class="section-title" style="font-size: 0.9rem; margin-bottom: 1rem;">Projeção de Fluxo
                                 (Próximos 30 Dias)</h3>
-                            <div class="oracle-chart-wrapper">
+                            <div class="oracle-chart-wrapper" style="min-height: 200px;">
                                 <canvas id="chart-forecast" class="privacy-blur"></canvas>
                             </div>
                         </div>
@@ -425,7 +441,7 @@
                         <div class="data-column">
                             <!-- Magic Input -->
                             <div class="magic-input-card card-glass"
-                                style="margin-bottom: 2rem; padding: 1.5rem; border-radius: 16px; background: var(--color-surface); border: 1px solid var(--color-border);">
+                                style="margin-bottom: 2rem; padding: 1.5rem;">
                                 <div
                                     style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
                                     <h3 style="margin: 0; font-size: 1rem;"><i class="fas fa-wand-magic-sparkles"
@@ -483,7 +499,8 @@
                             </div>
 
                             <!-- Proactive Alerts (Phase 3) -->
-                            <div id="proactive-alerts-container" class="proactive-alerts-grid" style="margin-top: 2rem;"></div>
+                            <div id="proactive-alerts-container" class="proactive-alerts-grid"
+                                style="margin-top: 2rem;"></div>
 
                             <!-- Insights do Cashy -->
                             <section class="insights-section" style="margin-top: 2rem;">
@@ -526,8 +543,8 @@
                                                 style="padding: 0.5rem;">
                                         </div>
                                     </div>
-                                    <div class="sim-result"
-                                        style="background: rgba(255, 122, 0, 0.05); border-radius: 12px; padding: 1.5rem; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; border: 1px solid rgba(255, 122, 0, 0.1);">
+                                    <div class="sim-result card-glass"
+                                        style="padding: 1.5rem; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;">
                                         <span
                                             style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--color-primary);">Faltam
                                             aproximadamente</span>
@@ -896,26 +913,106 @@
                     <div class="section-header-row" style="margin-bottom: 2rem;">
                         <div style="display: flex; flex-direction: column; gap: 0.5rem;">
                             <h2 class="section-title" style="margin: 0;">Recorrências e Assinaturas</h2>
-                            <p style="font-size: 0.8rem; color: var(--color-text-muted);">Gerencie seus pagamentos fixos e assinaturas mensais.</p>
+                            <p style="font-size: 0.8rem; color: var(--color-text-muted);">Gerencie seus pagamentos fixos
+                                e assinaturas mensais.</p>
                         </div>
-                        <button id="btn-open-subscriptions-modal-top" class="btn-primary-action" onclick="document.getElementById('modal-recorrencia').style.display='flex'; setTimeout(()=>document.getElementById('modal-recorrencia').classList.add('active'), 10)">
+                        <button id="btn-open-subscriptions-modal-top" class="btn-primary-action"
+                            onclick="document.getElementById('modal-recorrencia').style.display='flex'; setTimeout(()=>document.getElementById('modal-recorrencia').classList.add('active'), 10)">
                             <i class="fas fa-plus"></i> Nova Assinatura
                         </button>
                     </div>
-                    
-                    <div class="subscriptions-summary-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
-                        <div class="card-glass" style="padding: 1.5rem; display: flex; flex-direction: column; gap: 0.5rem; border-left: 4px solid var(--color-primary);">
-                            <span style="font-size: 0.75rem; color: var(--color-text-muted); text-transform: uppercase;">Total Mensal Estimado</span>
-                            <h2 id="sub-total-mensal" class="privacy-blur" style="margin: 0; font-size: 1.8rem; font-weight: 800;">R$ 0,00</h2>
+
+                    <div class="subscriptions-summary-grid"
+                        style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+                        <div class="card-glass"
+                            style="padding: 1.5rem; display: flex; flex-direction: column; gap: 0.5rem; border-left: 4px solid var(--color-primary);">
+                            <span
+                                style="font-size: 0.75rem; color: var(--color-text-muted); text-transform: uppercase;">Total
+                                Mensal Estimado</span>
+                            <h2 id="sub-total-mensal" class="privacy-blur"
+                                style="margin: 0; font-size: 1.8rem; font-weight: 800;">R$ 0,00</h2>
                         </div>
-                        <div class="card-glass" style="padding: 1.5rem; display: flex; flex-direction: column; gap: 0.5rem; border-left: 4px solid #10B981;">
-                            <span style="font-size: 0.75rem; color: var(--color-text-muted); text-transform: uppercase;">Próximo Vencimento</span>
-                            <h2 id="sub-proximo-vencimento" style="margin: 0; font-size: 1.8rem; font-weight: 800;">--</h2>
+                        <div class="card-glass"
+                            style="padding: 1.5rem; display: flex; flex-direction: column; gap: 0.5rem; border-left: 4px solid #10B981;">
+                            <span
+                                style="font-size: 0.75rem; color: var(--color-text-muted); text-transform: uppercase;">Próximo
+                                Vencimento</span>
+                            <h2 id="sub-proximo-vencimento" style="margin: 0; font-size: 1.8rem; font-weight: 800;">--
+                            </h2>
                         </div>
                     </div>
 
-                    <div id="subscriptions-list" class="subscriptions-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
+                    <div id="subscriptions-list" class="subscriptions-grid"
+                        style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
                         <!-- Preenchido via JS -->
+                    </div>
+                </div>
+
+                <!-- 8. VIEW: INVESTMENTS (PATRIMÔNIO & INVESTIMENTOS) -->
+                <div id="view-investments" class="view-section view-investments">
+                    <div class="section-header-row" style="margin-bottom: 2rem;">
+                        <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                            <h2 class="section-title" style="margin: 0;">Gestão de Patrimônio</h2>
+                            <p style="font-size: 0.8rem; color: var(--color-text-muted);">Acompanhe seus ativos e evolução da reserva de emergência.</p>
+                        </div>
+                        <div style="display: flex; gap: 0.75rem;">
+                            <button id="btn-open-modal-asset" class="btn-primary-action">
+                                <i class="fas fa-plus"></i> Novo Ativo
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="investments-summary-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; margin-bottom: 2.5rem;">
+                        <!-- Card: Patrimônio Total -->
+                        <div class="card-glass premium-border-blue" style="padding: 1.5rem; position: relative; overflow: hidden; border: 1px solid rgba(0, 210, 255, 0.2);">
+                            <div style="position: absolute; top: -10px; right: -10px; font-size: 5rem; opacity: 0.03; color: #00D2FF;">
+                                <i class="fas fa-vault"></i>
+                            </div>
+                            <span style="font-size: 0.75rem; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 0.05em;">Patrimônio Acumulado</span>
+                            <h2 id="total-investments-value" class="privacy-blur" style="margin: 0.5rem 0; font-size: 2.2rem; font-weight: 850; background: linear-gradient(to right, #fff, #00D2FF); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">R$ 0,00</h2>
+                            <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem;">
+                                <span class="badge-success" id="investments-delta" style="padding: 2px 8px; border-radius: 4px; background: rgba(16, 185, 129, 0.1); color: #10B981;">+0.0%</span>
+                                <span style="color: var(--color-text-muted);">em relação ao mês anterior</span>
+                            </div>
+                        </div>
+
+                        <!-- Card: Reserva de Emergência -->
+                        <div class="card-glass" style="padding: 1.5rem; border-left: 4px solid #00D2FF;">
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
+                                <div>
+                                    <span style="font-size: 0.75rem; color: var(--color-text-muted); text-transform: uppercase;">Reserva de Emergência</span>
+                                    <h3 id="emergency-fund-value" class="privacy-blur" style="margin: 0.25rem 0; font-size: 1.5rem; font-weight: 700;">R$ 0,00</h3>
+                                </div>
+                                <div id="emergency-fund-percent" style="font-size: 1.25rem; font-weight: 800; color: #00D2FF;">0%</div>
+                            </div>
+                            <div class="progress-container-premium" style="height: 8px; background: rgba(255,255,255,0.05); border-radius: 4px; overflow: hidden; margin-bottom: 0.5rem;">
+                                <div id="emergency-fund-bar" style="height: 100%; width: 0%; background: linear-gradient(90deg, #00D2FF, #007AFF); border-radius: 4px; transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);"></div>
+                            </div>
+                            <small id="emergency-fund-target" style="font-size: 0.7rem; color: var(--color-text-muted);">Meta: R$ 0,00 (6 meses de gastos)</small>
+                        </div>
+                    </div>
+
+                    <div class="investments-main-grid" style="display: flex; flex-direction: row; flex-wrap: wrap; gap: 1.5rem;">
+                        <!-- Meus Ativos (Principal) -->
+                        <div class="assets-list-container card-glass" style="padding: 1.5rem; flex: 1; min-width: 320px;">
+                            <div class="section-header-inline" style="margin-bottom: 1.5rem;">
+                                <h3 style="font-size: 1.1rem; margin: 0;"><i class="fas fa-shapes"></i> Meus Ativos</h3>
+                            </div>
+                            <div id="assets-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1rem;">
+                                <!-- Preenchido via JS -->
+                            </div>
+                        </div>
+
+                        <!-- Alocação (Lateral/Fixo) -->
+                        <div class="allocation-container card-glass" style="padding: 1.5rem; width: 350px; min-width: 300px; flex-shrink: 0;">
+                            <h3 style="font-size: 1.1rem; margin-bottom: 1.5rem;"><i class="fas fa-chart-pie"></i> Alocação</h3>
+                            <div style="height: 250px; position: relative; margin-bottom: 1rem;">
+                                <canvas id="chart-allocation"></canvas>
+                            </div>
+                            <div id="allocation-legend" style="margin-top: 1.5rem; display: flex; flex-direction: column; gap: 0.6rem;">
+                                <!-- Preenchido via JS -->
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -1092,6 +1189,20 @@
                             </select>
                         </div>
                     </div>
+                    
+                    <div class="form-field" style="margin: 1rem 0;">
+                        <div style="display: flex; align-items: center; gap: 0.75rem; background: rgba(0, 210, 255, 0.03); padding: 0.75rem; border-radius: 10px; border: 1px solid rgba(0, 210, 255, 0.1);">
+                            <label class="switch">
+                                <input type="checkbox" id="account-is-reserva">
+                                <span class="slider round"></span>
+                            </label>
+                            <div style="display: flex; flex-direction: column;">
+                                <label style="margin: 0; cursor: pointer; font-weight: 600; font-size: 0.85rem;" for="account-is-reserva">Reserva de Emergência</label>
+                                <small style="color: var(--color-text-muted); font-size: 0.7rem;">Contabilizar saldo como reserva de segurança.</small>
+                            </div>
+                        </div>
+                    </div>
+
                     <div id="credit-card-settings"
                         style="display: none; border-top: 1px dashed var(--color-border); padding-top: 1rem; margin-top: 1rem;">
                         <div class="form-row">
@@ -1110,8 +1221,11 @@
                         </div>
                     </div>
                     <div style="display: flex; gap: 1rem; margin-top: 1rem;">
-                        <button type="submit" id="btn-account-submit" class="btn-primary-action" style="flex: 2;">Criar Conta</button>
-                        <button type="button" id="btn-delete-account" class="btn-secondary" style="flex: 1; display: none; background: rgba(239, 68, 68, 0.1); color: #EF4444; border: 1px solid rgba(239, 68, 68, 0.2);" onclick="handleDeleteAccount()">Excluir</button>
+                        <button type="submit" id="btn-account-submit" class="btn-primary-action" style="flex: 2;">Criar
+                            Conta</button>
+                        <button type="button" id="btn-delete-account" class="btn-secondary"
+                            style="flex: 1; display: none; background: rgba(239, 68, 68, 0.1); color: #EF4444; border: 1px solid rgba(239, 68, 68, 0.2);"
+                            onclick="handleDeleteAccount()">Excluir</button>
                     </div>
                 </form>
             </div>
@@ -1181,7 +1295,7 @@
             <div id="mascot-speech-actions" style="display: none; margin-top: 0.5rem; gap: 0.5rem;">
                 <button id="btn-mascot-next" class="btn-mascot-action">Próximo</button>
             </div>
-            <div class="tip-close">&times;</div>
+            <div class="tip-close"><i class="fas fa-times"></i></div>
         </div>
         <div class="cashy-v4-svg-wrapper">
             <div class="cashy-aura"></div>
@@ -1212,8 +1326,8 @@
                         <p>Assinatura ou Gasto Fixo</p>
                     </div>
                 </div>
-                <button class="btn-close-modal"
-                    onclick="this.closest('.modal-premium').classList.remove('active')">&times;</button>
+                <button class="btn-close-premium"
+                    onclick="this.closest('.modal-premium').classList.remove('active')"><i class="fas fa-times"></i></button>
             </div>
             <div class="modal-body">
                 <form id="recurring-form" class="modern-form">
@@ -1306,8 +1420,10 @@
                     <h2>Briefing do Cashy</h2>
                     <p id="briefing-date">Resumo de Hoje</p>
                 </div>
-                <button class="btn-close-briefing"
-                    style="position: absolute; top: 1.5rem; right: 1.5rem; background: none; border: none; color: var(--color-text-muted); font-size: 1.5rem; cursor: pointer;">&times;</button>
+                <button class="btn-close-premium btn-close-briefing"
+                    style="position: absolute; top: 1.5rem; right: 1.5rem;">
+                    <i class="fas fa-times"></i>
+                </button>
             </div>
             <div class="modal-body" style="padding: 2rem; overflow-y: auto;">
                 <div id="briefing-content" class="briefing-list"
@@ -1441,28 +1557,34 @@
                     placeholder="Ex: Compra aprovada no seu cartão final 1234: R$ 45,90 em PADARIA SAO JOSE em 11/05..."
                     style="width: 100%; height: 150px; padding: 1rem; border-radius: 12px; background: var(--color-surface-secondary); border: 1px solid var(--color-border); color: white; font-family: inherit; margin-bottom: 1.5rem; resize: none;"></textarea>
 
-                    <div id="parser-preview" class="card-glass"
-                        style="display: none; padding: 1rem; margin-bottom: 1.5rem; background: rgba(255,255,255,0.05);">
-                        <div style="display: flex; flex-direction: column; gap: 0.2rem;">
-                            <span style="font-size: 0.7rem; text-transform: uppercase; color: var(--color-primary); font-weight: 700;">Identificado:</span>
-                            <div id="parser-confidence-tag" style="display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.6rem; font-weight: 800; background: rgba(16, 185, 129, 0.1); color: #10B981; padding: 2px 8px; border-radius: 100px; text-transform: uppercase; width: fit-content;">
-                                <i class="fas fa-brain"></i>
-                                <span id="parser-confidence-value">Confiança Alta</span>
-                            </div>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.5rem;">
-                            <h4 id="parser-preview-desc" style="margin:0;">--</h4>
-                            <h3 id="parser-preview-valor" style="margin:0; color: var(--color-danger);">R$ 0,00</h3>
-                        </div>
-                        
-                        <div style="margin-top: 1rem; padding-top: 0.8rem; border-top: 1px solid rgba(255,255,255,0.05);">
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-                                <span style="font-size: 0.75rem; color: var(--color-text-muted);">Conta de Destino:</span>
-                                <select id="parser-account-select" style="background: var(--color-surface); border: 1px solid var(--color-border); color: white; border-radius: 6px; font-size: 0.75rem; padding: 2px 8px;"></select>
-                            </div>
-                            <p id="parser-preview-cat" style="font-size: 0.75rem; color: var(--color-text-muted); margin: 0;">Categoria: --</p>
+                <div id="parser-preview" class="card-glass"
+                    style="display: none; padding: 1rem; margin-bottom: 1.5rem; background: rgba(255,255,255,0.05);">
+                    <div style="display: flex; flex-direction: column; gap: 0.2rem;">
+                        <span
+                            style="font-size: 0.7rem; text-transform: uppercase; color: var(--color-primary); font-weight: 700;">Identificado:</span>
+                        <div id="parser-confidence-tag"
+                            style="display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.6rem; font-weight: 800; background: rgba(16, 185, 129, 0.1); color: #10B981; padding: 2px 8px; border-radius: 100px; text-transform: uppercase; width: fit-content;">
+                            <i class="fas fa-brain"></i>
+                            <span id="parser-confidence-value">Confiança Alta</span>
                         </div>
                     </div>
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.5rem;">
+                        <h4 id="parser-preview-desc" style="margin:0;">--</h4>
+                        <h3 id="parser-preview-valor" style="margin:0; color: var(--color-danger);">R$ 0,00</h3>
+                    </div>
+
+                    <div style="margin-top: 1rem; padding-top: 0.8rem; border-top: 1px solid rgba(255,255,255,0.05);">
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                            <span style="font-size: 0.75rem; color: var(--color-text-muted);">Conta de Destino:</span>
+                            <select id="parser-account-select"
+                                style="background: var(--color-surface); border: 1px solid var(--color-border); color: white; border-radius: 6px; font-size: 0.75rem; padding: 2px 8px;"></select>
+                        </div>
+                        <p id="parser-preview-cat"
+                            style="font-size: 0.75rem; color: var(--color-text-muted); margin: 0;">Categoria: --</p>
+                    </div>
+                </div>
 
                 <button id="btn-parser-confirm" class="btn-primary-action" style="width: 100%;" disabled>Confirmar
                     Lançamento</button>
@@ -1471,31 +1593,7 @@
     </div>
 
 
-    <!-- Mobile Bottom Navigation (Fase 14) -->
-    <nav class="mobile-nav-bar">
-        <a href="#" class="mobile-nav-item active" data-target="dashboard">
-            <i class="fas fa-th-large"></i>
-            <span>Início</span>
-        </a>
-        <a href="#" class="mobile-nav-item" data-target="wallets">
-            <i class="fas fa-wallet"></i>
-            <span>Contas</span>
-        </a>
-        <div style="display: flex; justify-content: center;">
-            <button id="btn-fab-add" class="mobile-fab-add"
-                onclick="document.getElementById('btn-new-transaction').click()">
-                <i class="fas fa-plus"></i>
-            </button>
-        </div>
-        <a href="#" class="mobile-nav-item" data-target="goals">
-            <i class="fas fa-bullseye"></i>
-            <span>Metas</span>
-        </a>
-        <a href="#" class="mobile-nav-item" data-target="profile">
-            <i class="fas fa-user-circle"></i>
-            <span>Perfil</span>
-        </a>
-    </nav>
+
 
     <footer class="view-footer"
         style="margin-top: 4rem; padding-bottom: 8rem; text-align: center; border-top: 1px solid var(--color-border); padding-top: 2rem;">
@@ -1525,49 +1623,68 @@
         <div class="modal-content modal-content-large" style="max-width: 600px;">
             <div class="modal-header">
                 <div style="display: flex; align-items: center; gap: 1rem;">
-                    <div class="modal-icon-wrapper" id="invoice-card-icon-bg" style="background: var(--color-primary)20; color: var(--color-primary); width: 42px; height: 42px; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                    <div class="modal-icon-wrapper" id="invoice-card-icon-bg"
+                        style="background: var(--color-primary)20; color: var(--color-primary); width: 42px; height: 42px; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
                         <i class="fas fa-credit-card" id="invoice-card-icon" style="font-size: 1.2rem;"></i>
                     </div>
                     <div>
                         <h3 id="invoice-modal-title" style="margin:0;">Detalhes da Fatura</h3>
-                        <p id="invoice-modal-subtitle" style="margin:0; font-size:0.75rem; color:var(--color-text-muted);">Controle de ciclos de fechamento</p>
+                        <p id="invoice-modal-subtitle"
+                            style="margin:0; font-size:0.75rem; color:var(--color-text-muted);">Controle de ciclos de
+                            fechamento</p>
                     </div>
                 </div>
                 <button class="btn-close-premium" onclick="closeModal('modal-faturas')">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
-            
+
             <div class="modal-body" style="padding: 0;">
                 <!-- Header de Status da Fatura -->
-                <div class="invoice-status-header" style="padding: 1.5rem; background: var(--color-surface-brighter); border-bottom: 1px solid var(--color-border);">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <div class="invoice-status-header"
+                    style="padding: 1.5rem; background: var(--color-surface-brighter); border-bottom: 1px solid var(--color-border);">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
                         <div>
-                            <span style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; color: var(--color-text-muted);">Saldo da Fatura</span>
-                            <div id="invoice-total-amount" style="font-size: 2rem; font-weight: 800; color: var(--color-danger);">R$ 0,00</div>
+                            <span
+                                style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; color: var(--color-text-muted);">Saldo
+                                da Fatura</span>
+                            <div id="invoice-total-amount"
+                                style="font-size: 2rem; font-weight: 800; color: var(--color-danger);">R$ 0,00</div>
                         </div>
                         <div style="text-align: right;">
                             <span id="invoice-status-badge" class="badge-status open">Aberta</span>
-                            <div id="invoice-due-date" style="font-size: 0.8rem; margin-top: 0.3rem; color: var(--color-text-muted);">Vence em --/--</div>
+                            <div id="invoice-due-date"
+                                style="font-size: 0.8rem; margin-top: 0.3rem; color: var(--color-text-muted);">Vence em
+                                --/--</div>
                         </div>
                     </div>
-                    
+
                     <div class="limit-usage-compact">
-                        <div style="display: flex; justify-content: space-between; font-size: 0.7rem; margin-bottom: 0.4rem;">
+                        <div
+                            style="display: flex; justify-content: space-between; font-size: 0.7rem; margin-bottom: 0.4rem;">
                             <span>Limite Utilizado</span>
                             <span id="invoice-limit-usage-percent">0%</span>
                         </div>
-                        <div class="progress-bar-bg" style="height: 6px; background: rgba(255,255,255,0.1); border-radius: 10px; overflow: hidden;">
-                            <div id="invoice-limit-bar-fill" class="progress-bar-fill" style="width: 0%; height: 100%; background: var(--color-primary); transition: width 0.5s ease;"></div>
+                        <div class="progress-bar-bg"
+                            style="height: 6px; background: rgba(255,255,255,0.1); border-radius: 10px; overflow: hidden;">
+                            <div id="invoice-limit-bar-fill" class="progress-bar-fill"
+                                style="width: 0%; height: 100%; background: var(--color-primary); transition: width 0.5s ease;">
+                            </div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Gráfico de Evolução de Gastos -->
-                <div class="invoice-chart-container" style="padding: 1.5rem; border-bottom: 1px solid var(--color-border); background: rgba(0,0,0,0.1);">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-                        <span style="font-size: 0.65rem; text-transform: uppercase; letter-spacing: 1px; color: var(--color-text-muted);">Evolução de Gastos</span>
-                        <span id="chart-total-label" style="font-size: 0.65rem; color: var(--color-primary); font-weight: 700;">Acumulado</span>
+                <div class="invoice-chart-container"
+                    style="padding: 1.5rem; border-bottom: 1px solid var(--color-border); background: rgba(0,0,0,0.1);">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                        <span
+                            style="font-size: 0.65rem; text-transform: uppercase; letter-spacing: 1px; color: var(--color-text-muted);">Evolução
+                            de Gastos</span>
+                        <span id="chart-total-label"
+                            style="font-size: 0.65rem; color: var(--color-primary); font-weight: 700;">Acumulado</span>
                     </div>
                     <div style="height: 120px;">
                         <canvas id="chart-invoice-evolution"></canvas>
@@ -1575,7 +1692,8 @@
                 </div>
 
                 <!-- Tabs de Meses/Ciclos -->
-                <div class="invoice-tabs" id="invoice-months-tabs" style="display: flex; gap: 0.5rem; padding: 1rem; overflow-x: auto; border-bottom: 1px solid var(--color-border); background: var(--color-surface);">
+                <div class="invoice-tabs" id="invoice-months-tabs"
+                    style="display: flex; gap: 0.5rem; padding: 1rem; overflow-x: auto; border-bottom: 1px solid var(--color-border); background: var(--color-surface);">
                     <!-- Gerado via JS -->
                 </div>
 
@@ -1586,20 +1704,27 @@
                     </div>
                 </div>
             </div>
-            
-            <div class="modal-footer" style="padding: 1.5rem; background: var(--color-surface-brighter); border-top: 1px solid var(--color-border); display: flex; flex-direction: column; gap: 1rem;">
+
+            <div class="modal-footer"
+                style="padding: 1.5rem; background: var(--color-surface-brighter); border-top: 1px solid var(--color-border); display: flex; flex-direction: column; gap: 1rem;">
                 <div id="payment-source-selector" style="display: none;">
-                    <label style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; color: var(--color-text-muted); margin-bottom: 0.5rem; display: block;">Pagar usando a conta:</label>
+                    <label
+                        style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; color: var(--color-text-muted); margin-bottom: 0.5rem; display: block;">Pagar
+                        usando a conta:</label>
                     <select id="select-pagamento-origem" class="modern-input" style="width: 100%;">
                         <!-- Populado via JS -->
                     </select>
                 </div>
-                <button id="btn-pay-invoice" class="btn-primary-action" style="width: 100%;" onclick="initiatePaymentFlow()">
+                <button id="btn-pay-invoice" class="btn-primary-action" style="width: 100%;"
+                    onclick="initiatePaymentFlow()">
                     <i class="fas fa-check-circle"></i> Pagar Fatura Total
                 </button>
                 <div id="payment-actions-confirm" style="display: none; gap: 0.5rem;">
-                    <button class="btn-primary-action" style="flex: 1;" onclick="handleConfirmarPagamento()">Confirmar</button>
-                    <button class="btn-secondary" style="flex: 1; border: 1px solid var(--color-border); background: transparent; color: var(--color-text-main);" onclick="cancelPaymentFlow()">Cancelar</button>
+                    <button class="btn-primary-action" style="flex: 1;"
+                        onclick="handleConfirmarPagamento()">Confirmar</button>
+                    <button class="btn-secondary"
+                        style="flex: 1; border: 1px solid var(--color-border); background: transparent; color: var(--color-text-main);"
+                        onclick="cancelPaymentFlow()">Cancelar</button>
                 </div>
             </div>
         </div>
@@ -1616,19 +1741,40 @@
             <span>Contas</span>
         </a>
         <div class="mobile-nav-center">
-            <button id="btn-quick-add-mobile" class="btn-primary-action" style="border-radius: 50%; width: 56px; height: 56px; margin-top: -28px; box-shadow: 0 10px 25px var(--color-primary-glow);">
+            <button id="btn-quick-add-mobile" class="btn-primary-action"
+                onclick="document.getElementById('btn-new-transaction').click()"
+                style="border-radius: 50%; width: 56px; height: 56px; margin-top: -28px; box-shadow: 0 10px 25px var(--color-primary-glow);">
                 <i class="fas fa-plus"></i>
             </button>
         </div>
-        <a href="#" class="mobile-nav-item" data-target="subscriptions">
-            <i class="fas fa-sync"></i>
-            <span>Assinaturas</span>
+        <a href="#" class="mobile-nav-item" data-target="investments">
+            <i class="fas fa-chart-line"></i>
+            <span>Patrimônio</span>
         </a>
-        <a href="#" class="mobile-nav-item" onclick="openSidebar()">
-            <i class="fas fa-bars"></i>
-            <span>Menu</span>
+        <a href="#" class="mobile-nav-item" data-target="goals">
+            <i class="fas fa-bullseye"></i>
+            <span>Metas</span>
+        </a>
+        <a href="#" class="mobile-nav-item" data-target="profile">
+            <i class="fas fa-user"></i>
+            <span>Perfil</span>
         </a>
     </nav>
+    
+    <!-- Modal de Confirmação Premium -->
+    <div id="modal-confirm" class="modal-premium modal-confirm">
+        <div class="modal-content">
+            <div id="confirm-icon" class="confirm-icon warning">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <h3 id="confirm-title">Confirmar Ação</h3>
+            <p id="confirm-message">Deseja realmente prosseguir com esta operação?</p>
+            <div class="confirm-actions">
+                <button id="btn-confirm-no" class="btn-confirm-no">Cancelar</button>
+                <button id="btn-confirm-yes" class="btn-confirm-yes">Confirmar</button>
+            </div>
+        </div>
+    </div>
 
     <script src="js/charts.js?v=9" defer></script>
     <script src="js/events.js?v=9" defer></script>
@@ -1636,7 +1782,54 @@
     <script src="js/pwa-analytics.js" defer></script>
     <script src="js/smart-parser.js?v=9" defer></script>
     <script src="js/offline-sync.js?v=9" defer></script>
+    <script src="js/investments.js?v=9" defer></script>
     <script src="main.js?v=9" defer></script>
+    <!-- Modal de Ativos -->
+    <div id="modal-asset" class="modal-overlay">
+        <div class="modal-content card-glass" style="max-width: 500px;">
+            <div class="modal-header">
+                <h2><i class="fas fa-chart-line"></i> Gerenciar Ativo</h2>
+                <button class="btn-close btn-close-premium"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <form id="asset-form" class="modern-form">
+                    <input type="hidden" id="asset-id">
+                    <div class="form-field">
+                        <label>Nome do Ativo</label>
+                        <input type="text" id="asset-nome" required placeholder="Ex: PETR4, Tesouro Selic, Bitcoin">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-field">
+                            <label>Tipo</label>
+                            <select id="asset-tipo" required>
+                                <option value="renda_fixa">Renda Fixa (CDB, Tesouro, etc)</option>
+                                <option value="renda_variavel">Ações / ETFs / Stocks</option>
+                                <option value="fii">FIIs (Fundos Imobiliários)</option>
+                                <option value="cripto">Cripto / DeFi</option>
+                                <option value="bens">Ativos Reais (Gado, Imóveis, etc)</option>
+                                <option value="outros">Outros</option>
+                            </select>
+                        </div>
+                        <div class="form-field">
+                            <label>Instituição</label>
+                            <input type="text" id="asset-instituicao" placeholder="Ex: NuInvest, Binance">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-field">
+                            <label id="label-asset-custo">Custo Médio / Aporte</label>
+                            <input type="number" id="asset-custo" step="0.01" placeholder="0,00">
+                        </div>
+                        <div class="form-field">
+                            <label id="label-asset-valor-atual">Valor Atual Total</label>
+                            <input type="number" id="asset-valor-atual" step="0.01" required placeholder="0,00">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn-primary-action" style="width: 100%; margin-top: 1rem;">Salvar Ativo</button>
+                </form>
+            </div>
+        </div>
+    </div>
 </body>
 
 </html>

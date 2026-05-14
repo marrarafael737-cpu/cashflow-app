@@ -179,9 +179,10 @@ async function initDashboard() {
         try { setupModalLogic(); } catch (e) { console.error('Erro ModalLogic:', e); }
         try { setupMobileInteractions(); } catch (e) { console.error('Erro MobileInteractions:', e); }
         try { setupDynamicDropdowns(); } catch (e) { console.error('Erro Dropdowns:', e); }
-        try { setupSecurity(user.id); } catch (e) { console.error('Erro Security:', e); }
+        try { setupPrivacyAndSecurity(user.id); } catch (e) { console.error('Erro Security:', e); }
         try { setupNavigation(); } catch (e) { console.error('Erro Navigation:', e); }
         try { setupEventListeners(user.id); } catch (e) { console.error('Erro EventListeners:', e); }
+        try { if (window.Investments) window.Investments.init(); } catch (e) { console.error('Erro InvestmentsInit:', e); }
 
         // 2. Inicializar Mascote (Visual)
         await loadMascotSVG();
@@ -246,20 +247,25 @@ async function initDashboard() {
                 await processRecurringTransactions(user.id);
             }
         } catch (dataError) {
-            console.warn('Alguns dados não puderam ser carregados, mas o app continua funcional.', dataError);
+            console.warn('C.A.S.H. Unit: Alguns dados não puderam ser carregados, mas o app continua funcional.', dataError);
         } finally {
             // --- REMOVER LOADER SEMPRE ---
-            const loader = document.getElementById('loading-overlay');
-            if (loader) {
-                loader.style.opacity = '0';
-                setTimeout(() => {
-                    loader.remove();
-                    // Finalizar Skeletons (Phase 2)
-                    if (typeof showSkeletons === 'function') showSkeletons(false);
-                    if (typeof App !== 'undefined') App.State.isLoading = false;
-                    console.log('C.A.S.H. Unit: Interface Liberada.');
-                }, 500);
-            }
+            const removeLoader = () => {
+                const loader = document.getElementById('loading-overlay');
+                if (loader) {
+                    loader.style.opacity = '0';
+                    loader.style.pointerEvents = 'none';
+                    setTimeout(() => {
+                        if (loader.parentNode) loader.remove();
+                        if (typeof showSkeletons === 'function') showSkeletons(false);
+                        console.log('C.A.S.H. Unit: Interface Liberada.');
+                    }, 500);
+                }
+            };
+
+            // Force loader removal after safety timeout (5s)
+            setTimeout(removeLoader, 5000); 
+            removeLoader();
         }
         
         showSkeletons(false);
@@ -677,7 +683,11 @@ function setupSecurity(userId) {
 
     if (btnLogoutOthers) {
         btnLogoutOthers.addEventListener('click', async () => {
-            if (confirm('Deseja realmente encerrar todas as outras sessões?')) {
+            const confirmed = await confirmPremium('Deseja realmente encerrar todas as outras sessões?', {
+                title: 'Segurança da Conta',
+                type: 'warning'
+            });
+            if (confirmed) {
                 try {
                     await SecurityVault.logoutAllOtherSessions(supabase);
                     showToast('Outras sessões encerradas.', 'success');
@@ -904,7 +914,14 @@ window.handleBiometry = async function() {
 };
 
 window.handleLogout = async function() {
-    if (confirm('Deseja realmente sair da sua conta?')) {
+    const confirmed = await confirmPremium('Deseja realmente sair da sua conta?', {
+        title: 'Encerrar Sessão',
+        type: 'warning',
+        confirmText: 'Sair agora',
+        cancelText: 'Ficar conectado'
+    });
+    
+    if (confirmed) {
         const { error } = await supabase.auth.signOut();
         if (!error) window.location.href = 'login.html';
     }
@@ -1150,13 +1167,6 @@ async function handleMagicInput(userId) {
     } else {
         console.error('Erro no Magic Input:', error);
         showToast('Erro ao processar comando.', 'error');
-    }
-        showToast('Lançado com sucesso!', 'success');
-        input.value = '';
-        await loadTransactions(userId);
-        if (typeof filterAndRenderData === 'function') filterAndRenderData();
-    } else {
-        showToast('Erro ao processar Magic Input.', 'error');
     }
 }
 

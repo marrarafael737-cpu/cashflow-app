@@ -89,7 +89,7 @@ function initGlobalSearch() {
             resultsArea.innerHTML = `
                 <div class="search-empty-state">
                     <i class="fas fa-search-minus"></i>
-                    <p>Nenhum resultado para "${query}"</p>
+                    <p>Nenhum resultado para "${escapeHTML(query)}"</p>
                 </div>
             `;
             return;

@@ -220,8 +220,8 @@ function renderOrcamentos() {
                                 <p>${o.mes}/${o.ano}</p>
                             </div>
                         </div>
-                        <button class="btn-icon-plain" onclick="handleDeleteOrcamento('${o.id}')">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                        <button class="btn-icon-danger" onclick="handleDeleteOrcamento('${o.id}')">
+                            <i class="fas fa-trash-alt"></i>
                         </button>
                     </div>
                     <div class="budget-progress-container">
@@ -465,6 +465,11 @@ function calculateProjection(transactions) {
     const projectionEl = document.getElementById('projected-balance');
     const projectionTextEl = document.getElementById('projection-insight-text');
     if (!projectionEl) return;
+    
+    // Garantia de dados
+    if (!transactions || !Array.isArray(transactions)) {
+        transactions = window._allTransactions || [];
+    }
 
     const now = new Date();
     const today = now.getDate();

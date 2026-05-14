@@ -347,7 +347,11 @@ function showMascotMessage(text, visorMode = 'eyes', visorValue = '', expression
 
     if (_mascotMessageTimeout) clearTimeout(_mascotMessageTimeout);
 
-    msgEl.innerHTML = text;
+    if (text.includes('<') && text.includes('>')) {
+        msgEl.innerHTML = text;
+    } else {
+        msgEl.textContent = text;
+    }
     container.classList.add('active');
 
     // Update Visor Mode

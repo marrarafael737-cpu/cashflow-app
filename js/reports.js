@@ -109,13 +109,18 @@ function exportToExcel() {
         return;
     }
 
+    const sanitizeExcel = (str) => {
+        if (typeof str !== 'string') return str;
+        return str.replace(/^([=\+\-@])/, "'$1");
+    };
+
     const data = _allTransactions.map(t => ({
-        Descrição: t.descricao,
-        Categoria: t.categoria_nome || 'Geral',
+        Descrição: sanitizeExcel(t.descricao),
+        Categoria: sanitizeExcel(t.categoria_nome || 'Geral'),
         Data: t.data,
         Tipo: t.tipo === 'entrada' ? 'Receita' : 'Despesa',
         Valor: parseFloat(t.valor),
-        Conta: _contas.find(c => c.id === t.conta_id)?.nome || 'N/A'
+        Conta: sanitizeExcel(_contas.find(c => c.id === t.conta_id)?.nome || 'N/A')
     }));
 
     const ws = XLSX.utils.json_to_sheet(data);

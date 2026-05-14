@@ -11,6 +11,9 @@ let _chartSavings = null;
 function updateCharts(transactions) {
     if (typeof Chart === 'undefined') return;
 
+    // 0. Calcular Saúde Financeira primeiro para definir cores globais (Phase 3)
+    calculateFinancialHealthScore(transactions);
+
     // 1. Gastos por Categoria (Doughnut)
     renderCategoryChart(transactions);
 
@@ -253,9 +256,8 @@ function renderRadarChart(transactions) {
 
     if (_chartRadar) _chartRadar.destroy();
 
-    // Calcula scores reais
-    const health = typeof calculateFinancialHealthScore === 'function' ? calculateFinancialHealthScore(transactions) : { pillars: [0,0,0,0,0] };
-    const scores = health.pillars; 
+    // Usa o score já calculado globalmente
+    const pillars = window._currentPillars || [0,0,0,0,0];
 
     _chartRadar = new Chart(ctx, {
         type: 'radar',
@@ -263,7 +265,7 @@ function renderRadarChart(transactions) {
             labels: ['Poupança', 'Controle', 'Foco', 'Disciplina', 'Liquidez'],
             datasets: [{
                 label: 'Perfil Financeiro',
-                data: scores,
+                data: pillars,
                 backgroundColor: 'rgba(255, 122, 0, 0.2)',
                 borderColor: '#FF7A00',
                 pointBackgroundColor: '#FF7A00'
@@ -296,17 +298,18 @@ function renderTrendChart(transactions) {
     const dailyBalances = [];
     const labels = [];
     
+    const initialBalance = (typeof _contas !== 'undefined' && _contas) ? _contas.reduce((acc, c) => acc + parseFloat(c.saldo_inicial || 0), 0) : 0;
+
     for (let i = 29; i >= 0; i--) {
         const d = new Date();
         d.setDate(now.getDate() - i);
         const dateStr = d.toLocaleDateString('en-CA');
         
         // Saldo até aquele dia
-        const balanceAtDay = _contas.reduce((acc, c) => acc + parseFloat(c.saldo_inicial || 0), 0) + 
+        const balanceAtDay = initialBalance + 
             transactions.filter(t => t.data <= dateStr).reduce((acc, t) => acc + (t.tipo === 'entrada' ? parseFloat(t.valor) : -parseFloat(t.valor)), 0);
         
         dailyBalances.push(balanceAtDay);
-        days.push(d.toLocaleDateString('en-CA'));
         labels.push(d.getDate());
     }
 
@@ -365,6 +368,8 @@ window.addEventListener('resize', () => {
         if (_chartEvolucao) _chartEvolucao.resize();
         if (_chartRadar) _chartRadar.resize();
         if (_chartTendencia) _chartTendencia.resize();
+        if (_chartForecast) _chartForecast.resize();
+        if (_chartMiniForecast) _chartMiniForecast.resize();
     }, 250);
 });
 
@@ -498,6 +503,7 @@ function renderInvoiceEvolutionChart(invoiceTransactions) {
         }
     });
 }
+
 function renderMiniForecast(forecastData) {
     const ctx = document.getElementById('chart-mini-forecast')?.getContext('2d');
     if (!ctx || !forecastData) return;
@@ -528,4 +534,64 @@ function renderMiniForecast(forecastData) {
             animation: { duration: 1000 }
         }
     });
+}
+
+function calculateFinancialHealthScore(transactions = (typeof _allTransactions !== 'undefined' ? _allTransactions : [])) {
+    if (!transactions || transactions.length === 0) {
+        const fallback = { score: 0, pillars: [0, 0, 0, 0, 0] };
+        window._currentHealthScore = fallback.score;
+        window._currentPillars = fallback.pillars;
+        return fallback;
+    }
+
+    const balance = typeof calculateGlobalBalance === 'function' ? calculateGlobalBalance() : 0;
+    const income = transactions.filter(t => t.tipo === 'entrada').reduce((acc, t) => acc + parseFloat(t.valor), 0);
+    const expenses = transactions.filter(t => t.tipo === 'saida').reduce((acc, t) => acc + parseFloat(t.valor), 0);
+
+    // 1. Poupança: % da renda não gasta
+    const savingsRate = income > 0 ? Math.max(0, ((income - expenses) / income) * 100) : 0;
+    const scorePoupanca = Math.min(savingsRate * 2, 100); 
+
+    // 2. Controle: Aderência aos orçamentos
+    let scoreControle = 100;
+    if (typeof _budgets !== 'undefined' && _budgets.length > 0) {
+        let overBudgetCount = 0;
+        _budgets.forEach(b => {
+            const spent = transactions.filter(t => t.categoria_id === b.categoria_id && t.tipo === 'saida').reduce((acc, t) => acc + parseFloat(t.valor), 0);
+            if (spent > b.valor_limite) overBudgetCount++;
+        });
+        scoreControle = Math.max(0, 100 - (overBudgetCount * 25));
+    }
+
+    // 3. Foco: Progresso em metas (Mocked for now)
+    const scoreFoco = 75; 
+
+    // 4. Disciplina: Frequência de uso (Baseado no número de transações no mês)
+    const now = new Date();
+    const currentMonthTrans = transactions.filter(t => {
+        const d = parseDate(t.data);
+        return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+    }).length;
+    const scoreDisciplina = Math.min(currentMonthTrans * 5, 100);
+
+    // 5. Liquidez: Saldo / Gastos Mensais
+    const avgMonthlyExpense = expenses || 1;
+    const monthsOfRunway = balance / avgMonthlyExpense;
+    const scoreLiquidez = Math.min(monthsOfRunway * 20, 100);
+
+    const pillars = [scorePoupanca, scoreControle, scoreFoco, scoreDisciplina, scoreLiquidez];
+    const finalScore = Math.round(pillars.reduce((a, b) => a + b, 0) / 5);
+
+    // Persistir globalmente para uso em outros gráficos
+    window._currentHealthScore = finalScore;
+    window._currentPillars = pillars;
+
+    // Update UI
+    const badge = document.getElementById('health-score-badge');
+    if (badge) {
+        badge.textContent = finalScore;
+        badge.className = `score-badge ${finalScore > 80 ? 'success' : finalScore > 50 ? 'warning' : 'danger'}`;
+    }
+
+    return { score: finalScore, pillars };
 }
