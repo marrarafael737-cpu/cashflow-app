@@ -819,6 +819,11 @@ function setupPrivacyAndSecurity(userId) {
 
     // 2. Lógica de Inatividade (Bloqueio PIN)
     setupInactivityManager(userId);
+
+    // 3. Inicializar UI de Reset de Fábrica
+    if (typeof initResetUI === 'function') {
+        initResetUI(userId);
+    }
 }
 
 let _inactivityTimer;

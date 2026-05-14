@@ -1465,3 +1465,21 @@ function renderProactiveAlerts() {
 
 // Tornar global
 window.renderProactiveAlerts = renderProactiveAlerts;
+
+/**
+ * Global Modal Helpers
+ */
+window.openModal = function(id) {
+    const modal = document.getElementById(id);
+    if (!modal) return;
+    modal.style.display = 'flex';
+    setTimeout(() => modal.classList.add('active'), 10);
+    if (typeof triggerHaptic === 'function') triggerHaptic(20);
+};
+
+window.closeModal = function(id) {
+    const modal = document.getElementById(id);
+    if (!modal) return;
+    modal.classList.remove('active');
+    setTimeout(() => { modal.style.display = 'none'; }, 300);
+};

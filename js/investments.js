@@ -302,10 +302,10 @@ const Investments = {
                     document.getElementById('asset-valor-atual').value = asset.valor_atual;
                 }
             }
+        }
 
         this.updateModalLabels();
-        modal.style.display = 'flex';
-        setTimeout(() => modal.classList.add('active'), 10);
+        openModal('modal-asset');
     },
 
     updateModalLabels: function() {
@@ -401,7 +401,7 @@ const Investments = {
             if (error) throw error;
 
             showToast(`Ativo ${id ? 'atualizado' : 'cadastrado'} com sucesso!`, 'success');
-            closeAllModals();
+            closeModal('modal-asset');
             await this.loadAssets();
         } catch (err) {
             console.error('Erro ao salvar ativo:', err);
@@ -414,10 +414,12 @@ const Investments = {
 
     handleDeleteAsset: async function(id) {
         const confirmed = await confirmPremium(
-            'Excluir Ativo?',
             'Esta ação removerá este investimento permanentemente do seu patrimônio.',
-            'danger',
-            'Excluir'
+            {
+                title: 'Excluir Ativo?',
+                type: 'danger',
+                confirmText: 'Excluir'
+            }
         );
 
         if (!confirmed) return;
@@ -439,10 +441,3 @@ const Investments = {
 window.Investments = Investments;
 window.renderInvestments = () => Investments.render();
 
-// Helper para fechar modais (se não houver um global)
-function closeAllModals() {
-    document.querySelectorAll('.modal-overlay').forEach(m => {
-        m.classList.remove('active');
-        setTimeout(() => m.style.display = 'none', 300);
-    });
-}
