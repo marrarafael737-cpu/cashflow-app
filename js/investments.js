@@ -96,6 +96,7 @@ const Investments = {
      */
     render: function() {
         this.renderAssetCards();
+        this.calculateSummary();
         this.updateSummaryCards();
         this.renderAllocationChart();
     },
@@ -172,42 +173,136 @@ const Investments = {
         }).join('');
     },
 
-    updateSummaryCards: function() {
-        const totalInvested = this.State.ativos.reduce((acc, curr) => acc + Number(curr.valor_atual), 0);
+    calculateSummary: async function() {
+        console.log('C.A.S.H. Unit: Calculando resumo de patrimônio...');
+        const assets = this.State.ativos;
         
-        // Calcular patrimônio das contas (apenas as que não são cartão de crédito se quisermos)
-        const totalContas = (window._contas || []).reduce((acc, curr) => acc + Number(curr.saldo), 0);
-        const patrimonioTotal = totalInvested + totalContas;
+        // Elementos para Skeletons
+        const heroTotalEl = document.getElementById('total-balance');
+        const costEl = document.getElementById('invested-cost-value');
+        const marketEl = document.getElementById('market-price-value');
+
+        if (heroTotalEl) heroTotalEl.classList.add('skeleton');
+        if (costEl) costEl.classList.add('skeleton');
+        if (marketEl) marketEl.classList.add('skeleton');
+
+        let totalInvestedCost = 0;
+        let totalMarketValue = 0;
+        
+        assets.forEach(curr => {
+            totalMarketValue += Number(curr.valor_atual);
+            const cost = curr.tipo === 'bens' ? (Number(curr.quantidade) * Number(curr.preco_unitario)) : Number(curr.custo_aquisicao);
+            totalInvestedCost += (cost || Number(curr.valor_atual));
+        });
+        
+        const totalContas = (window._contas || []).filter(c => c.tipo !== 'credito').reduce((acc, curr) => acc + Number(curr.saldo_atual || 0), 0);
+        const patrimonioTotal = totalMarketValue + totalContas;
 
         const totalEl = document.getElementById('total-investments-value');
         if (totalEl) totalEl.textContent = formatCurrency(patrimonioTotal);
 
-        // Atualizar também o saldo no Hero (Dashboard Home) se existir
-        const heroTotalEl = document.getElementById('total-balance');
-        if (heroTotalEl) {
-            heroTotalEl.textContent = formatCurrency(patrimonioTotal);
-            heroTotalEl.style.background = 'linear-gradient(to right, #fff, #00D2FF)';
-            heroTotalEl.style.webkitBackgroundClip = 'text';
-            heroTotalEl.style.webkitTextFillColor = 'transparent';
+        // Remover Skeletons e atualizar valores
+        if (costEl) {
+            costEl.classList.remove('skeleton');
+            costEl.textContent = formatCurrency(totalInvestedCost);
+        }
+        if (marketEl) {
+            marketEl.classList.remove('skeleton');
+            marketEl.textContent = formatCurrency(totalMarketValue);
         }
 
-        // Reserva de Emergência
-        const reservaContas = (window._contas || []).filter(c => c.is_reserva_emergencia).reduce((acc, curr) => acc + Number(curr.saldo), 0);
+        // Atualizar rentabilidade global de ativos
+        const deltaEl = document.getElementById('investments-delta');
+        if (deltaEl && totalInvestedCost > 0) {
+            const yieldPercent = ((totalMarketValue / totalInvestedCost) - 1) * 100;
+            deltaEl.textContent = `${yieldPercent >= 0 ? '+' : ''}${yieldPercent.toFixed(2)}%`;
+            deltaEl.className = yieldPercent >= 0 ? 'badge-success' : 'badge-danger';
+        }
+
+        // Atualizar também o saldo no Hero (Dashboard Home) se existir com animação GSAP
+        if (heroTotalEl) {
+            heroTotalEl.classList.remove('skeleton');
+            const currentVal = parseFloat(heroTotalEl.textContent.replace(/[^\d,-]/g, '').replace(',', '.')) || 0;
+            
+            const counter = { val: currentVal };
+            gsap.to(counter, {
+                val: patrimonioTotal,
+                duration: 1.2,
+                ease: "power2.out",
+                onUpdate: () => {
+                    heroTotalEl.textContent = formatCurrency(counter.val);
+                }
+            });
+        }
+    },
+
+    updateSummaryCards: async function() {
+        const targetEl = document.getElementById('emergency-fund-progress-container');
         const valReservaEl = document.getElementById('emergency-fund-value');
-        if (valReservaEl) valReservaEl.textContent = formatCurrency(reservaContas);
+        const percentEl = document.getElementById('emergency-fund-percent');
 
-        // Calcular meta de reserva (ex: 6 meses de gastos médios)
-        // Por agora, vamos usar um valor fixo ou tentar calcular do histórico
-        const metaReserva = 15000; // Mock meta
-        const percent = Math.min(100, (reservaContas / metaReserva) * 100);
+        // Estado inicial de Skeleton
+        if (valReservaEl) valReservaEl.classList.add('skeleton');
+        if (percentEl) percentEl.classList.add('skeleton');
+
+        const metas = window._metas || [];
+        const reservaContas = (window._contas || []).filter(c => !!c.is_reserva_emergencia).reduce((acc, curr) => acc + Number(curr.saldo_atual || 0), 0);
         
-        const barEl = document.getElementById('emergency-fund-bar');
-        const pctEl = document.getElementById('emergency-fund-percent');
-        const targetEl = document.getElementById('emergency-fund-target');
+        // Busca a meta que contém "reserva" no nome
+        const metaReservaObj = metas.find(m => m.nome.toLowerCase().includes('reserva'));
+        
+        // Se houver uma meta, usamos o valor_atual dela como base, 
+        // e SOMAMOS o saldo das contas marcadas como reserva.
+        const valorMetaAtual = metaReservaObj ? Number(metaReservaObj.valor_atual || 0) : 0;
+        const valorExibidoReserva = reservaContas + valorMetaAtual;
 
-        if (barEl) barEl.style.width = `${percent}%`;
-        if (pctEl) pctEl.textContent = `${Math.round(percent)}%`;
-        if (targetEl) targetEl.textContent = `Meta: ${formatCurrency(metaReserva)} (6 meses de gastos)`;
+        // Remover Skeleton
+        if (valReservaEl) {
+            valReservaEl.classList.remove('skeleton');
+            valReservaEl.textContent = formatCurrency(valorExibidoReserva);
+        }
+
+        let metaReservaObjetivo = 10000; // Valor padrão caso não exista meta
+        if (metaReservaObj) {
+            metaReservaObjetivo = Number(metaReservaObj.valor_objetivo || 10000);
+        }
+
+        const percent = Math.min(Math.round((valorExibidoReserva / metaReservaObjetivo) * 100), 100);
+        const faltante = Math.max(metaReservaObjetivo - valorExibidoReserva, 0);
+
+        if (percentEl) {
+            percentEl.classList.remove('skeleton');
+            percentEl.textContent = `${percent}%`;
+        }
+
+        // Renderização do progresso com animação GSAP
+        if (targetEl) {
+            targetEl.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 0.5rem;">
+                    <span style="font-size: 0.8rem; font-weight: 700; color: var(--color-text-muted);">Meta: ${formatCurrency(metaReservaObjetivo)}</span>
+                    <span style="font-size: 0.8rem; font-weight: 700; color: ${faltante > 0 ? 'var(--color-warning)' : 'var(--color-success)'};">
+                        ${faltante > 0 ? `Faltam ${formatCurrency(faltante)}` : 'Meta Atingida! 🎉'}
+                    </span>
+                </div>
+                <div class="progress-bar-bg" style="width: 100%; height: 12px; background: rgba(255,255,255,0.05); border-radius: 10px; overflow: hidden; position: relative; border: 1px solid rgba(255,255,255,0.05);">
+                    <div id="reserva-progress-fill" style="width: 0%; height: 100%; background: linear-gradient(90deg, var(--color-primary), #FFB800); border-radius: 10px; position: relative;">
+                        <div style="position: absolute; top: 0; right: 0; width: 20px; height: 100%; background: white; opacity: 0.2; filter: blur(5px);"></div>
+                    </div>
+                </div>
+            `;
+
+            // Animação suave com GSAP
+            setTimeout(() => {
+                const fill = document.getElementById('reserva-progress-fill');
+                if (fill) {
+                    gsap.to(fill, {
+                        width: `${percent}%`,
+                        duration: 1.5,
+                        ease: "expo.out"
+                    });
+                }
+            }, 100);
+        }
     },
 
     renderAllocationChart: function() {

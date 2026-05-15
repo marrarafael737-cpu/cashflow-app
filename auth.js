@@ -242,6 +242,73 @@ function initMascotAuthInteractions() {
 function setupAuthUI() {
     const loginForm = document.getElementById('login-form');
     const signupForm = document.getElementById('cadastro-form');
+    const forgotForm = document.getElementById('forgot-password-form');
+    const newPassForm = document.getElementById('new-password-form');
+    const btnForgot = document.getElementById('btn-forgot-password');
+    const btnCloseForgot = document.querySelector('.btn-close-forgot');
+
+    // Link "Esqueci minha chave"
+    if (btnForgot) {
+        btnForgot.addEventListener('click', (e) => {
+            e.preventDefault();
+            document.getElementById('modal-forgot').style.display = 'flex';
+        });
+    }
+
+    if (btnCloseForgot) {
+        btnCloseForgot.addEventListener('click', () => {
+            document.getElementById('modal-forgot').style.display = 'none';
+        });
+    }
+
+    // Solicitar Reset de Senha
+    if (forgotForm) {
+        forgotForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('forgot-email').value.trim();
+            const client = getSupabaseClient();
+            
+            setLoading('btn-forgot-submit', true);
+            try {
+                const { error } = await client.auth.resetPasswordForEmail(email, {
+                    redirectTo: window.location.origin + window.location.pathname,
+                });
+                if (error) throw error;
+                showMessage('success', 'Link enviado! Verifique seu e-mail.');
+                setTimeout(() => document.getElementById('modal-forgot').style.display = 'none', 2000);
+            } catch (err) {
+                showMessage('error', err.message);
+            } finally {
+                setLoading('btn-forgot-submit', false);
+            }
+        });
+    }
+
+    // Atualizar Senha (após clicar no link)
+    if (newPassForm) {
+        newPassForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const newPassword = document.getElementById('new-pass').value;
+            const client = getSupabaseClient();
+
+            if (newPassword.length < 6) {
+                showMessage('error', 'A senha deve ter pelo menos 6 caracteres.');
+                return;
+            }
+
+            setLoading('btn-new-pass-submit', true);
+            try {
+                const { error } = await client.auth.updateUser({ password: newPassword });
+                if (error) throw error;
+                showMessage('success', 'Senha atualizada com sucesso! Acessando...');
+                setTimeout(() => window.location.href = 'dashboard.html', 1500);
+            } catch (err) {
+                showMessage('error', err.message);
+            } finally {
+                setLoading('btn-new-pass-submit', false);
+            }
+        });
+    }
 
     if (loginForm) {
         loginForm.addEventListener('submit', (e) => {
@@ -281,6 +348,16 @@ function setupAuthUI() {
             handleSignUp(email, pass);
         });
     }
+
+    // Detecção de Recovery Token (Supabase coloca no Hash)
+    const checkRecovery = () => {
+        const hash = window.location.hash;
+        if (hash && (hash.includes('type=recovery') || hash.includes('access_token='))) {
+            const modalNew = document.getElementById('modal-new-password');
+            if (modalNew) modalNew.style.display = 'flex';
+        }
+    };
+    checkRecovery();
 }
 
 document.addEventListener('DOMContentLoaded', () => {

@@ -70,13 +70,13 @@ function calculateSummary(transactions) {
     let creditDebt = 0;
 
     // 1. Calcular Saldo de Contas Iniciais (Separado por tipo)
-    if (typeof _contas !== 'undefined') {
+    if (typeof _contas !== 'undefined' && _contas) {
         _contas.forEach(c => {
+            c.saldo_atual = parseFloat(c.saldo_inicial || 0);
             if (c.tipo === 'credito') {
-                // No cartão, o saldo inicial costuma ser o que você já devia ao cadastrar
-                creditDebt += parseFloat(c.saldo_inicial || 0);
+                creditDebt += c.saldo_atual;
             } else {
-                liquidBalance += parseFloat(c.saldo_inicial || 0);
+                liquidBalance += c.saldo_atual;
             }
         });
     }
@@ -84,27 +84,39 @@ function calculateSummary(transactions) {
     // 2. Processar Transações Reais
     transactions.forEach(t => {
         const val = parseFloat(t.valor || 0);
-        const conta = (typeof _contas !== 'undefined') ? _contas.find(c => c.id === t.conta_id) : null;
+        const conta = (typeof _contas !== 'undefined' && _contas) ? _contas.find(c => c.id === t.conta_id) : null;
         
         if (t.tipo === 'entrada') {
             receitas += val;
-            if (conta && conta.tipo !== 'credito') {
-                liquidBalance += val;
-            } else if (conta && conta.tipo === 'credito') {
-                creditDebt -= val;
+            if (conta) {
+                if (conta.tipo !== 'credito') {
+                    liquidBalance += val;
+                    conta.saldo_atual += val;
+                } else {
+                    creditDebt -= val;
+                    conta.saldo_atual -= val; // Diminui a dívida
+                }
             }
         } else if (t.tipo === 'saida') {
             despesas += val;
-            if (conta && conta.tipo !== 'credito') {
-                liquidBalance -= val;
-            } else if (conta && conta.tipo === 'credito') {
-                creditDebt += val;
+            if (conta) {
+                if (conta.tipo !== 'credito') {
+                    liquidBalance -= val;
+                    conta.saldo_atual -= val;
+                } else {
+                    creditDebt += val;
+                    conta.saldo_atual += val; // Aumenta a dívida
+                }
             }
         }
-        // Nota: t.tipo === 'transferencia' não altera o resumo global de Receitas/Despesas
     });
 
     const saldoTotal = liquidBalance - creditDebt;
+    
+    // Atualizar cartões de investimento/reserva se o módulo estiver carregado
+    if (typeof Investments !== 'undefined' && typeof Investments.updateSummaryCards === 'function') {
+        Investments.updateSummaryCards();
+    }
 
     // 3. Atualizar UI
     const recReceitas = document.getElementById('total-income');

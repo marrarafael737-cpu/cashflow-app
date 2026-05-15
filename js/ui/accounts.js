@@ -34,13 +34,7 @@ window.renderContas = function() {
     }
 
     const cardsHTML = _contas.map(c => {
-        const transactions = (typeof _allTransactions !== 'undefined' && _allTransactions) ? _allTransactions : [];
-        const saldoTransacoes = transactions
-            .filter(t => t.conta_id === c.id)
-            .reduce((acc, t) => acc + (t.tipo === "entrada" ? parseFloat(t.valor) : -parseFloat(t.valor)), 0);
-        
-        const saldoInicial = parseFloat(c.saldo_inicial) || 0;
-        const saldoFinal = (c.tipo === 'credito') ? (-saldoInicial + saldoTransacoes) : (saldoInicial + saldoTransacoes);
+        const saldoFinal = c.saldo_atual || 0;
         const color = c.cor || "var(--color-primary)";
         const typeLabels = { corrente: 'Conta Corrente', poupanca: 'Poupança', investimento: 'Investimento', dinheiro: 'Dinheiro', credito: 'Cartão de Crédito' };
         const typeLabel = typeLabels[c.tipo] || 'Conta';
@@ -108,6 +102,7 @@ window.renderContas = function() {
                     <div style="margin: 1.5rem 0;">
                         <span style="font-size: 0.7rem; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 1px;">Saldo Disponível</span>
                         <div style="font-size: 1.5rem; font-weight: 800; color: ${saldoFinal >= 0 ? 'var(--color-success)' : 'var(--color-danger)'};" class="privacy-blur">${window.formatar(saldoFinal)}</div>
+                        ${c.is_reserva_emergencia ? '<span class="badge-premium-blue" style="font-size: 0.6rem; padding: 2px 6px; border-radius: 4px; background: rgba(0, 210, 255, 0.1); color: #00D2FF; margin-top: 5px; display: inline-block;"><i class="fas fa-shield-alt"></i> Reserva de Emergência</span>' : ''}
                     </div>
                     <div style="margin-top: auto; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--color-border); padding-top: 0.75rem;">
                         <button class="btn-icon-premium" onclick="handleEditAccount('${c.id}')">

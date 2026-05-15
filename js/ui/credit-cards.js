@@ -99,6 +99,11 @@ window.renderInvoiceTransactions = function(contaId, month, year) {
 
     if (invoiceTransactions.length === 0) {
         listContainer.innerHTML = '<div class="empty-state"><p>Nenhum lançamento.</p></div>';
+        const canvas = document.getElementById('chart-invoice-evolution');
+        if (canvas) {
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
         return;
     }
 
@@ -120,7 +125,73 @@ window.renderInvoiceTransactions = function(contaId, month, year) {
                 ${t.parcelas_total > 1 ? `<span style="font-size: 0.6rem; color: var(--color-primary); font-weight: 800;">Parc. ${t.parcela_atual}/${t.parcelas_total}</span>` : ''}
             </div>
         </div>`).join('');
+
+    // --- Renderizar Gráfico de Evolução (Linha) ---
+    renderInvoiceEvolutionChart(invoiceTransactions);
 };
+
+let _invoiceChartInstance = null;
+function renderInvoiceEvolutionChart(transactions) {
+    const canvas = document.getElementById('chart-invoice-evolution');
+    if (!canvas) return;
+
+    // Agrupar por dia para o gráfico
+    const days = {};
+    transactions.forEach(t => {
+        const day = new Date(t.data + 'T00:00:00').getDate();
+        const val = t.tipo === 'entrada' ? -parseFloat(t.valor) : parseFloat(t.valor);
+        days[day] = (days[day] || 0) + val;
+    });
+
+    const sortedDays = Object.keys(days).sort((a, b) => a - b);
+    let cumulative = 0;
+    const labels = sortedDays.map(d => `Dia ${d}`);
+    const data = sortedDays.map(d => {
+        cumulative += days[d];
+        return cumulative;
+    });
+
+    if (_invoiceChartInstance) _invoiceChartInstance.destroy();
+
+    const ctx = canvas.getContext('2d');
+    _invoiceChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Gasto Acumulado',
+                data: data,
+                borderColor: '#00D2FF',
+                backgroundColor: 'rgba(0, 210, 255, 0.1)',
+                borderWidth: 2,
+                fill: true,
+                tension: 0.4,
+                pointRadius: 3,
+                pointBackgroundColor: '#00D2FF'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    mode: 'index',
+                    intersect: false,
+                    callbacks: {
+                        label: function(context) {
+                            return `Total: ${window.formatar(context.parsed.y)}`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: { display: true, grid: { display: false }, ticks: { color: 'rgba(255,255,255,0.4)', font: { size: 9 } } },
+                y: { display: false, grid: { color: 'rgba(255,255,255,0.05)' } }
+            }
+        }
+    });
+}
 
 window.checkInvoiceDueDates = function() {
     const container = document.getElementById('invoice-alerts-container');

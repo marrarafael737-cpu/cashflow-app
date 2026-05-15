@@ -2,6 +2,12 @@
 
 // Centralized Application State & Utilities
 const App = {
+    init: () => {
+        window.addEventListener('error', (e) => {
+            console.error('🔴 C.A.S.H. Unit Error:', e.message);
+            if (typeof showToast === 'function') showToast('Erro no sistema: ' + e.message, 'error');
+        });
+    },
     State: {
         allTransactions: [],
         cacheFiles: [
@@ -47,6 +53,8 @@ const App = {
         }
     }
 };
+
+App.init();
 
 // Legacy global pointer for compatibility with older modules
 window._allTransactions = App.State.allTransactions;
@@ -97,13 +105,17 @@ function getCategoryConfig(name) {
  */
 function updateAvatarUI(fullName, avatarUrl) {
     const initials = (fullName || 'U').trim().split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+    
+    // Aplicar cache buster se for uma URL remota
+    const finalUrl = avatarUrl ? (avatarUrl.includes('?') ? `${avatarUrl}&t=${Date.now()}` : `${avatarUrl}?t=${Date.now()}`) : null;
+
+    console.log('C.A.S.H. Unit: Atualizando Avatar UI...', { fullName, hasUrl: !!avatarUrl });
 
     // Sidebar avatar
     const sidebarAvatar = document.getElementById('avatar-header');
-    const sidebarInitials = document.getElementById('avatar-initials');
     if (sidebarAvatar) {
-        if (avatarUrl) {
-            sidebarAvatar.innerHTML = `<img src="${avatarUrl}" alt="Avatar" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+        if (finalUrl) {
+            sidebarAvatar.innerHTML = `<img src="${finalUrl}" alt="Avatar" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
         } else {
             sidebarAvatar.innerHTML = `<span id="avatar-initials" style="font-size:0.875rem;">${initials}</span>`;
         }
@@ -113,10 +125,12 @@ function updateAvatarUI(fullName, avatarUrl) {
     const previewEl = document.getElementById('profile-avatar-preview');
     const previewInitials = document.getElementById('profile-avatar-initials');
     if (previewEl) {
-        if (avatarUrl) {
-            previewEl.innerHTML = `<img src="${avatarUrl}" alt="Avatar" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+        if (finalUrl) {
+            previewEl.innerHTML = `<img src="${finalUrl}" alt="Avatar" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
         } else if (previewInitials) {
             previewInitials.textContent = initials;
+            previewEl.innerHTML = ''; // Limpar se houver imagem anterior
+            previewEl.appendChild(previewInitials);
         }
     }
 }
@@ -489,6 +503,25 @@ function setupEventListeners(userId) {
     setupAccountFormEvents(userId);
     setupGoalsLogic(userId);
     if (typeof setupRecurringEvents === 'function') setupRecurringEvents(userId);
+    
+    // Abrir modal de meta (Novo)
+    const btnOpenMeta = document.getElementById('btn-open-modal-meta');
+    if (btnOpenMeta) {
+        btnOpenMeta.addEventListener('click', () => {
+            const editField = document.getElementById('edit-goal-id');
+            if (editField) editField.value = '';
+            
+            const form = document.getElementById('goal-form');
+            if (form) form.reset();
+            
+            const modal = document.getElementById('modal-goal');
+            if (modal) {
+                modal.querySelector('h2').innerHTML = '<i class="fas fa-bullseye"></i> Definir Meta';
+                window.openModal('modal-goal');
+            }
+        });
+    }
+
     initBudgetEvents(userId);
     setupEnhancementListeners(userId);
     setupSmartSearch(userId);
@@ -1103,23 +1136,55 @@ function showSkeletons(show) {
         }
     });
 }
-
-async function handleMagicInput(userId) {
-    if (!userId && App.State.user) userId = App.State.user.id;
-    const input = document.getElementById('magic-input');
+/**
+ * Centralized state management for Magic Input button
+ */
+function setMagicButtonState(loading) {
     const btn = document.getElementById('btn-magic-submit');
-    const text = input.value.trim().toLowerCase();
-    
-    if (!text) return;
+    if (!btn) return;
 
-    console.log('C.A.S.H. Unit: Magic Input acionado com texto:', text);
-
-    // Feedback visual/háptico imediato
-    if (typeof App !== 'undefined' && App.Utils.triggerHaptic) App.Utils.triggerHaptic(15);
-    if (btn) {
+    if (loading) {
         btn.classList.add('loading');
         btn.disabled = true;
         btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    } else {
+        btn.classList.remove('loading');
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-wand-magic-sparkles"></i> <span>Processar</span>';
+    }
+}
+
+console.log('🚀 C.A.S.H. Unit: Motor Magic Input Inicializado v1.2');
+
+window.handleMagicInput = async function(userId) {
+    // 1. Tentar obter userId de várias fontes
+    if (!userId) {
+        if (window.App && App.State && App.State.user) {
+            userId = App.State.user.id;
+        } else if (window.supabase) {
+            // Tenta obter da sessão atual do Supabase de forma síncrona/rápida
+            const session = JSON.parse(localStorage.getItem('sb-yiduasujytzsqjyrjytm-auth-token'));
+            if (session && session.user) userId = session.user.id;
+        }
+    }
+
+    const input = document.getElementById('magic-input');
+    const text = input ? input.value.trim() : '';
+    
+    console.log('🚀 C.A.S.H. Unit: Iniciando Magic Input...', { text, userId });
+
+    if (!text) {
+        console.warn('⚠️ C.A.S.H. Unit: Texto vazio no Magic Input.');
+        return;
+    }
+
+    // Feedback visual/háptico imediato
+    if (typeof App !== 'undefined' && App.Utils.triggerHaptic) App.Utils.triggerHaptic(15);
+    setMagicButtonState(true);
+
+    // Mascot Processing Feedback
+    if (typeof showMascotMessage === 'function') {
+        showMascotMessage('Deixa eu ver aqui...', 'thinking', '', 'neutral');
     }
 
     try {
@@ -1131,12 +1196,14 @@ async function handleMagicInput(userId) {
         }
 
         // --- DETECÇÃO DE SIMULAÇÃO (Oráculo Phase 11) ---
-        const simulationKeywords = ['posso comprar', 'consigo comprar', 'vale a pena comprar', 'simular compra', 'devo comprar'];
-        const isSimulation = simulationKeywords.some(k => text.includes(k));
+        const simulationKeywords = ['posso comprar', 'consigo comprar', 'vale a pena comprar', 'simular compra', 'devo comprar', 'poso compra'];
+        const isSimulation = simulationKeywords.some(k => text.includes(k) || (window.NLP && window.NLP.isSimilar(text, k, 2)));
 
         if (isSimulation) {
             console.log('C.A.S.H. Unit: Detectada intenção de simulação financeira.');
-            const amountMatch = text.match(/(?:r\$|\$)?\s?(\d{1,3}(?:\.\d{3})*(?:,\d{2})|\d+(?:\.\d{2})?)/i);
+            // Match amount using enhanced logic (handles reais, reias, etc)
+            const amountRegex = /(?:R\$|r\$|\$|reais|reias|conto|pila)?\s?(\d{1,3}(?:\.\d{3})*(?:,\d{2})|\d+(?:\.\d{2})?)(?!\/)(?:\s?(?:reais|reias|conto|pila))?/i;
+            const amountMatch = text.match(amountRegex);
             
             if (amountMatch) {
                 let valStr = amountMatch[1].replace(/\./g, '').replace(',', '.');
@@ -1148,14 +1215,7 @@ async function handleMagicInput(userId) {
                         window.OracleEngine.simulatePurchase(valorSimulado);
                         input.value = '';
                         showToast('O Oráculo está analisando sua compra...', 'info');
-                        
-                        // Reset button state
-                        if (btn) {
-                            btn.classList.remove('loading');
-                            btn.disabled = false;
-                            btn.innerHTML = '<i class="fas fa-wand-magic-sparkles"></i> Processar';
-                        }
-                        return; // Sair após simulação
+                        return; // Sair após simulação (finally will handle button reset)
                     } else {
                         console.warn('C.A.S.H. Unit: OracleEngine ou simulatePurchase não disponíveis.');
                         showToast('O Oráculo está meditando... tente novamente em breve.', 'warning');
@@ -1167,20 +1227,54 @@ async function handleMagicInput(userId) {
             }
         }
 
-        const parsed = SmartParser.parse(text);
-        if (!parsed || !parsed.valor) {
-            showToast('Não entendi o comando. Tente algo como "Gastei 50 no café" ou "Posso comprar um PS5 por 4000?"', 'warning');
+        if (!userId) {
+            console.error('❌ C.A.S.H. Unit: Usuário não autenticado.');
+            showToast('Por favor, faça login para usar o Magic Input.', 'error');
             return;
         }
 
+        const parsed = SmartParser.parse(text);
+        if (!parsed || (!parsed.valor && !isSimulation)) {
+            console.warn('⚠️ C.A.S.H. Unit: SmartParser não entendeu o texto.', { text });
+            showToast('Não entendi bem. Tente: "Gastei 50 no café" ou "Posso comprar um PS5 por 4000?"', 'warning');
+            if (typeof showMascotMessage === 'function') {
+                showMascotMessage('Hã? Não entendi direito. Pode repetir de outro jeito?', 'alert', '', 'angry');
+            }
+            return;
+        }
+
+        console.log('✅ C.A.S.H. Unit: Texto processado com sucesso:', parsed);
+
         const valor = parsed.valor;
         const tipo = parsed.tipo;
-        const categoria_id = parsed.categoria_id;
         
-        // Obter conta padrão se não detectada
+        // --- RESOLUÇÃO DE CATEGORIA ---
+        let categoria_id = parsed.categoria_id;
+        
+        // Se o parser não achou ID mas achou nome, tenta buscar novamente nos globais
+        if (!categoria_id && parsed.categoria_nome && typeof _categories !== 'undefined') {
+            const catMatch = _categories.find(c => 
+                c.nome.toLowerCase().includes(parsed.categoria_nome.toLowerCase()) ||
+                (window.NLP && window.NLP.isSimilar(c.nome, parsed.categoria_nome, 1))
+            );
+            if (catMatch) categoria_id = catMatch.id;
+        }
+
+        // --- RESOLUÇÃO DE CONTA ---
         let conta_id = parsed.conta_id;
         if (!conta_id && typeof _contas !== 'undefined' && Array.isArray(_contas) && _contas.length > 0) {
-            conta_id = _contas[0].id;
+            // Tenta pegar a primeira conta ativa ou 'Carteira'
+            const defaultAcc = _contas.find(c => c.nome.toLowerCase().includes('carteira')) || _contas[0];
+            conta_id = defaultAcc.id;
+        }
+
+        if (!categoria_id || !conta_id) {
+            console.warn('⚠️ C.A.S.H. Unit: Falha ao mapear Categoria ou Conta.', { categoria_id, conta_id });
+            showToast('Configure categorias e contas antes de usar o Magic Input.', 'error');
+            if (typeof showMascotMessage === 'function') {
+                showMascotMessage('Ei! Você precisa criar suas categorias e contas primeiro para eu saber onde anotar.', 'alert', '', 'neutral');
+            }
+            return;
         }
 
         let forma_pagamento = 'dinheiro';
@@ -1191,49 +1285,50 @@ async function handleMagicInput(userId) {
             }
         }
 
-        if (!categoria_id || !conta_id) {
-            showToast('Configure categorias e contas antes de usar o Magic Input.', 'error');
+        const transactionData = {
+            descricao: parsed.descricao,
+            valor: valor,
+            tipo: tipo,
+            categoria_id: categoria_id,
+            conta_id: conta_id,
+            forma_pagamento: forma_pagamento,
+            data: parsed.data || new Date().toLocaleDateString('en-CA'),
+            user_id: userId
+        };
+
+        // --- PHASE 4: OFFLINE SYNC ENGINE ---
+        if (typeof OfflineSync !== 'undefined' && !OfflineSync.isOnline()) {
+            OfflineSync.addToQueue(transactionData);
+            showToast('Comando Mágico em fila offline! 🪄', 'info');
+            input.value = '';
+            if (typeof showMascotMessage === 'function') {
+                showMascotMessage('Salvo no meu caderninho offline! Sincronizo logo mais. ✨', 'wink', '', 'happy');
+            }
             return;
         }
 
-    const transactionData = {
-        descricao: parsed.descricao,
-        valor: valor,
-        tipo: tipo,
-        categoria_id: categoria_id,
-        conta_id: conta_id,
-        forma_pagamento: forma_pagamento,
-        data: parsed.data || new Date().toLocaleDateString('en-CA'),
-        user_id: userId
-    };
+        const { error } = await supabase.from('transacoes').insert([transactionData]);
 
-    // --- PHASE 4: OFFLINE SYNC ENGINE ---
-    if (typeof OfflineSync !== 'undefined' && !OfflineSync.isOnline()) {
-        OfflineSync.addToQueue(transactionData);
-        showToast('Comando Mágico em fila offline! 🪄', 'info');
-        input.value = '';
-        return;
-    }
-
-    const { error } = await supabase.from('transacoes').insert([transactionData]);
-
-    if (!error) {
-        showToast('Mágica realizada com sucesso! ✨', 'success');
-        input.value = '';
-        await loadTransactions(userId);
-        if (typeof addXP === 'function') addXP(15);
-    } else {
-        throw error;
-    }
-} catch (error) {
-        console.error('C.A.S.H. Unit: Erro crítico no Magic Input:', error);
-        showToast('Erro ao processar sua mágica. Tente novamente.', 'error');
-    } finally {
-        if (btn) {
-            btn.classList.remove('loading');
-            btn.disabled = false;
-            btn.innerHTML = '<i class="fas fa-wand-magic-sparkles"></i> <span>Processar</span>';
+        if (!error) {
+            showToast('Mágica realizada com sucesso! ✨', 'success');
+            input.value = '';
+            await loadTransactions(userId);
+            if (typeof addXP === 'function') addXP(15);
+            
+            if (typeof showMascotMessage === 'function') {
+                showMascotMessage(`Prontinho! Registrei R$ ${valor.toFixed(2)} em ${parsed.categoria_nome}. Mágica! ✨`, 'happy', '', 'happy');
+            }
+        } else {
+            throw error;
         }
+    } catch (error) {
+        console.error('C.A.S.H. Unit: Erro crítico no Magic Input:', error);
+        showToast('Eita! Minha varinha quebrou. Tente novamente.', 'error');
+        if (typeof showMascotMessage === 'function') {
+            showMascotMessage('Ops! Tive um curto-circuito tentando processar isso.', 'alert', '', 'angry');
+        }
+    } finally {
+        setMagicButtonState(false);
     }
 }
 

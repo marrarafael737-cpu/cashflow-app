@@ -382,7 +382,7 @@
                     </div>
                 </div>
 
-                <div class="form-group">
+                <div class="form-group" style="margin-bottom: 0.5rem;">
                     <label class="form-label" for="password">Chave Criptográfica</label>
                     <div class="input-with-icon">
                         <i class="fas fa-key"></i>
@@ -391,12 +391,70 @@
                     </div>
                 </div>
 
+                <div style="text-align: right; margin-bottom: 1.5rem;">
+                    <a href="#" id="btn-forgot-password" 
+                       style="font-size: 0.75rem; color: var(--color-text-muted); text-decoration: none; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; transition: color 0.3s;"
+                       onmouseover="this.style.color='var(--color-primary)'" 
+                       onmouseout="this.style.color='var(--color-text-muted)'">
+                        Esqueci minha chave
+                    </a>
+                </div>
+
                 <button type="submit" id="btn-submit" class="btn-primary"
-                    style="opacity: 1 !important; visibility: visible !important;">
+                    style="opacity: 1 !important; visibility: visible !important; margin-top: 0;">
                     <span>Sincronizar Acesso</span>
                     <i class="fas fa-bolt"></i>
                 </button>
             </form>
+
+            <!-- Modal: Esqueci Senha -->
+            <div id="modal-forgot" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(10px); z-index: 1000; align-items: center; justify-content: center; padding: 1rem;">
+                <div class="card-glass" style="max-width: 400px; width: 100%; padding: 2rem; border-radius: 24px; position: relative; border: 1px solid rgba(255, 122, 0, 0.2);">
+                    <div style="text-align: center; margin-bottom: 1.5rem;">
+                        <i class="fas fa-envelope-open-text" style="font-size: 2.5rem; color: var(--color-primary); margin-bottom: 1rem;"></i>
+                        <h2 style="font-family: 'Outfit'; font-weight: 800; color: white; margin-bottom: 0.5rem;">Recuperar Acesso</h2>
+                        <p style="font-size: 0.85rem; color: var(--color-text-muted);">Enviaremos um link de recuperação para o seu e-mail operacional.</p>
+                    </div>
+                    <form id="forgot-password-form">
+                        <div class="form-group">
+                            <label class="form-label">E-mail Cadastrado</label>
+                            <div class="input-with-icon">
+                                <i class="fas fa-id-card"></i>
+                                <input type="email" id="forgot-email" required placeholder="seu@email.com">
+                            </div>
+                        </div>
+                        <button type="submit" class="btn-primary" id="btn-forgot-submit" style="margin-top: 1rem;">
+                            <span>Enviar Link</span>
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                        <button type="button" class="btn-close-forgot" style="width: 100%; background: transparent; border: none; color: var(--color-text-muted); margin-top: 1rem; cursor: pointer; font-size: 0.85rem; font-weight: 600;">Voltar ao Login</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Modal: Nova Senha (Aparece após clicar no link do e-mail) -->
+            <div id="modal-new-password" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(10px); z-index: 1001; align-items: center; justify-content: center; padding: 1rem;">
+                <div class="card-glass" style="max-width: 400px; width: 100%; padding: 2rem; border-radius: 24px; border: 1px solid #10B981;">
+                    <div style="text-align: center; margin-bottom: 1.5rem;">
+                        <i class="fas fa-shield-halved" style="font-size: 2.5rem; color: #10B981; margin-bottom: 1rem;"></i>
+                        <h2 style="font-family: 'Outfit'; font-weight: 800; color: white; margin-bottom: 0.5rem;">Nova Chave</h2>
+                        <p style="font-size: 0.85rem; color: var(--color-text-muted);">Defina sua nova chave de criptografia para acessar o núcleo.</p>
+                    </div>
+                    <form id="new-password-form">
+                        <div class="form-group">
+                            <label class="form-label">Nova Senha</label>
+                            <div class="input-with-icon">
+                                <i class="fas fa-key"></i>
+                                <input type="password" id="new-pass" required placeholder="Mínimo 6 caracteres">
+                            </div>
+                        </div>
+                        <button type="submit" class="btn-primary" id="btn-new-pass-submit" style="background: linear-gradient(135deg, #10B981 0%, #059669 100%) !important; color: white !important;">
+                            <span>Atualizar Senha</span>
+                            <i class="fas fa-check"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
 
             <footer class="auth-footer">
                 <p>Novo operador? <a href="cadastro.html">Solicitar Credenciais</a></p>

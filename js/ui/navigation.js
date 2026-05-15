@@ -37,7 +37,7 @@ window.switchView = function(target) {
             }
         });
 
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        window.scrollTo({ top: 0, behavior: 'auto' });
         
         if (window.innerWidth <= 1024 && typeof window.closeSidebar === 'function') {
             window.closeSidebar();
@@ -64,11 +64,14 @@ window.switchView = function(target) {
 
     if (typeof gsap !== 'undefined') {
         gsap.to(mainContent, {
-            opacity: 0, y: 10, duration: 0.15, ease: "power2.in",
+            opacity: 0, y: 5, duration: 0.1, ease: "power1.in",
             onComplete: () => {
                 clearTimeout(animationTimeout);
                 performSwitch();
-                gsap.to(mainContent, { opacity: 1, y: 0, duration: 0.3, ease: "power2.out" });
+                gsap.fromTo(mainContent, 
+                    { opacity: 0, y: 5 }, 
+                    { opacity: 1, y: 0, duration: 0.2, ease: "power1.out" }
+                );
             }
         });
     } else {

@@ -163,3 +163,30 @@ body.privacy-active .privacy-blur:hover {
 .onboarding-overlay.active {
     display: block;
 }
+/* Mobile UX Improvements */
+@media (max-width: 768px) {
+    /* Feedback tátil universal para botões e elementos interativos */
+    button:active, 
+    .btn-primary:active, 
+    .btn-secondary:active,
+    .btn-icon-premium:active,
+    .card-glass:active {
+        transform: scale(0.96);
+        transition: transform 0.1s ease;
+    }
+
+    /* Evitar seleção de texto em botões e menus (sensação de app nativo) */
+    button, 
+    .nav-item, 
+    .btn-primary, 
+    .card-glass {
+        user-select: none;
+        -webkit-user-select: none;
+        -webkit-tap-highlight-color: transparent;
+    }
+}
+
+/* Suavizar transições globais */
+* {
+    -webkit-tap-highlight-color: transparent;
+}

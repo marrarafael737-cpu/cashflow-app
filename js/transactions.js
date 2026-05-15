@@ -10,10 +10,27 @@ function escapeHTML(str) {
 
 async function initializeCategories(userId) {
     try {
-        const { data: cats, error: e1 } = await supabase.from('categorias').select('*').eq('user_id', userId);
+        let { data: cats, error: e1 } = await supabase.from('categorias').select('*').eq('user_id', userId);
         const { data: subs, error: e2 } = await supabase.from('subcategorias').select('*').eq('user_id', userId);
 
         if (e1 || e2) throw (e1 || e2);
+
+        // Se o usuário não tem categorias, vamos criar o "Kit Básico"
+        if (!cats || cats.length === 0) {
+            console.log('C.A.S.H. Unit: Criando categorias padrão para novo usuário...');
+            const defaultCats = [
+                { nome: 'Alimentação', tipo: 'saida', user_id: userId },
+                { nome: 'Moradia', tipo: 'saida', user_id: userId },
+                { nome: 'Lazer', tipo: 'saida', user_id: userId },
+                { nome: 'Saúde', tipo: 'saida', user_id: userId },
+                { nome: 'Transporte', tipo: 'saida', user_id: userId },
+                { nome: 'Salário', tipo: 'entrada', user_id: userId }
+            ];
+            
+            const { data: newCats, error: insertError } = await supabase.from('categorias').insert(defaultCats).select();
+            if (insertError) throw insertError;
+            cats = newCats;
+        }
 
         _categories = cats;
         _subcategories = subs;
@@ -31,7 +48,14 @@ async function loadContas(userId) {
         _contas = data;
         renderContas();
         updateAccountDropdown();
-    } catch (err) { console.error(err); }
+        
+        // Recalcular saldos para refletir nas UIs de investimento e reserva
+        if (typeof calculateSummary === 'function') {
+            calculateSummary(window._allTransactions || []);
+        } else if (typeof Investments !== 'undefined' && typeof Investments.updateSummaryCards === 'function') {
+            Investments.updateSummaryCards();
+        }
+    } catch (err) { console.error('Erro em loadContas:', err); }
 }
 
 async function loadMetas(userId) {
@@ -40,6 +64,9 @@ async function loadMetas(userId) {
         if (error) throw error;
         _metas = data || [];
         if (typeof renderMetas === 'function') renderMetas();
+        if (typeof Investments !== 'undefined' && typeof Investments.updateSummaryCards === 'function') {
+            Investments.updateSummaryCards();
+        }
     } catch (err) {
         console.warn('Erro ao carregar metas:', err.message);
         _metas = [];

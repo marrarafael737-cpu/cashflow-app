@@ -243,9 +243,10 @@ function setupGoalsLogic(userId) {
             e.preventDefault();
             if (typeof triggerHaptic === 'function') triggerHaptic(50);
 
+            const editId = document.getElementById('edit-goal-id').value;
             const nome = document.getElementById('goal-name').value;
-            const valor_objetivo = parseFloat(document.getElementById('goal-target').value.replace(',', '.')) || 0;
-            const valor_atual = parseFloat(document.getElementById('goal-current').value.replace(',', '.')) || 0;
+            const valor_objetivo = parseFloat(document.getElementById('goal-target').value) || 0;
+            const valor_atual = parseFloat(document.getElementById('goal-current').value) || 0;
             let prazo = document.getElementById('goal-deadline') ? document.getElementById('goal-deadline').value : null;
             if (prazo === "") prazo = null;
 
@@ -258,13 +259,18 @@ function setupGoalsLogic(userId) {
             if (btn && (btn.disabled || btn.classList.contains('loading'))) return;
             if (btn) { btn.classList.add('loading'); btn.disabled = true; }
 
-            const { error } = await supabase.from('metas').insert([{
-                nome,
-                valor_objetivo,
-                valor_atual,
-                prazo,
-                user_id: userId
-            }]);
+            let result;
+            if (editId) {
+                result = await supabase.from('metas').update({
+                    nome, valor_objetivo, valor_atual, prazo
+                }).eq('id', editId);
+            } else {
+                result = await supabase.from('metas').insert([{
+                    nome, valor_objetivo, valor_atual, prazo, user_id: userId
+                }]);
+            }
+
+            const { error } = result;
 
             if (btn) { btn.classList.remove('loading'); btn.disabled = false; }
 

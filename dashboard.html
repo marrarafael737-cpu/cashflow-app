@@ -99,6 +99,7 @@
         integrity="sha384-vtjasyidUo0kW94K5MXDXntzOJpQgBKXmE7e2Ga4LG0skTTLeBi97eFAXsqewJjw"
         crossorigin="anonymous"></script>
     <script src="js/search.js"></script>
+    <script src="js/utils/nlp.js"></script>
 </head>
 
 <body class="dashboard-body">
@@ -469,7 +470,7 @@
                                 <div class="magic-input-wrapper" style="display: flex; gap: 1rem; position: relative;">
                                     <input type="text" id="magic-input" placeholder="Ex: Gastei 50 no almoço hoje..."
                                         style="flex: 1; padding: 1rem 1.2rem; border-radius: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white; font-size: 0.95rem; transition: all 0.3s ease; box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);">
-                                    <button id="btn-magic-submit" class="btn-primary-action"
+                                    <button id="btn-magic-submit" class="btn-primary-action" onclick="handleMagicInput()"
                                         style="margin: 0; padding: 0 1.8rem; border-radius: 12px; font-weight: 700; letter-spacing: 0.5px;">
                                         <i class="fas fa-wand-magic-sparkles"></i> Processar
                                     </button>
@@ -1068,10 +1069,22 @@
                             <h2 id="total-investments-value" class="privacy-blur"
                                 style="margin: 0.5rem 0; font-size: 2.2rem; font-weight: 850; background: linear-gradient(to right, #fff, #00D2FF); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
                                 R$ 0,00</h2>
+                            
+                            <div style="margin-bottom: 1rem; display: flex; gap: 1.5rem;">
+                                <div>
+                                    <span style="font-size: 0.65rem; color: var(--color-text-muted); display: block; text-transform: uppercase;">Investido</span>
+                                    <span id="invested-cost-value" class="privacy-blur" style="font-size: 1rem; font-weight: 700; color: white;">R$ 0,00</span>
+                                </div>
+                                <div>
+                                    <span style="font-size: 0.65rem; color: var(--color-text-muted); display: block; text-transform: uppercase;">Mercado</span>
+                                    <span id="market-price-value" class="privacy-blur" style="font-size: 1rem; font-weight: 700; color: #00D2FF;">R$ 0,00</span>
+                                </div>
+                            </div>
+
                             <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem;">
                                 <span class="badge-success" id="investments-delta"
                                     style="padding: 2px 8px; border-radius: 4px; background: rgba(16, 185, 129, 0.1); color: #10B981;">+0.0%</span>
-                                <span style="color: var(--color-text-muted);">em relação ao mês anterior</span>
+                                <span style="color: var(--color-text-muted);">de rentabilidade total</span>
                             </div>
                         </div>
 
@@ -1358,6 +1371,7 @@
             </div>
             <div class="modal-body">
                 <form id="goal-form" class="modern-form">
+                    <input type="hidden" id="edit-goal-id" value="">
                     <div class="form-field">
                         <label>O que você quer conquistar?</label>
                         <input type="text" id="goal-name" required placeholder="Ex: Viagem de Fim de Ano">
@@ -1850,8 +1864,8 @@
         <div class="mobile-nav-center">
             <button id="btn-quick-add-mobile" class="btn-primary-action"
                 onclick="document.getElementById('btn-new-transaction').click()"
-                style="border-radius: 50%; width: 56px; height: 56px; margin-top: -28px; box-shadow: 0 10px 25px var(--color-primary-glow);">
-                <i class="fas fa-plus"></i>
+                style="border-radius: 50%; width: 56px; height: 56px; margin-top: -28px; box-shadow: 0 10px 25px var(--color-primary-glow); display: flex; align-items: center; justify-content: center;">
+                <i class="fas fa-plus" style="margin: 0; font-size: 1.25rem;"></i>
             </button>
         </div>
         <a href="#" class="mobile-nav-item" data-target="investments">
@@ -1861,10 +1875,6 @@
         <a href="#" class="mobile-nav-item" data-target="goals">
             <i class="fas fa-bullseye"></i>
             <span>Metas</span>
-        </a>
-        <a href="#" class="mobile-nav-item" data-target="profile">
-            <i class="fas fa-user"></i>
-            <span>Perfil</span>
         </a>
     </nav>
 

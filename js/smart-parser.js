@@ -56,18 +56,19 @@ const SmartParser = {
 
     /**
      * Parses the notification text and returns a transaction object
-     * Uses contextual scoring to simulate "AI" logic.
+     * Uses contextual scoring and fuzzy matching to simulate "AI" logic.
      * @param {string} text 
      * @returns {Object|null}
      */
     parse(text) {
-        if (!text || text.trim().length < 5) return null;
+        if (!text || text.trim().length < 2) return null;
 
         let workingText = text.trim();
         const cleanText = workingText.toLowerCase();
         
-        // 1. Extract Value (Enhanced Regex with date protection)
-        const amountRegex = /(?:R\$|r\$|\$)?\s?(\d{1,3}(?:\.\d{3})*(?:,\d{2})|\d+(?:\.\d{2})?)(?!\/)/i;
+        // 1. Extract Value (Enhanced Regex with date protection and common currency words)
+        // Detects: 50.00, 50,00, R$ 50, 50 reais, 50 reias, 50 conto
+        const amountRegex = /(?:R\$|r\$|\$|reais|reias|conto|pila)?\s?(\d{1,3}(?:\.\d{3})*(?:,\d{2})|\d+(?:\.\d{2})?)(?!\/)(?:\s?(?:reais|reias|conto|pila))?/i;
         const amountMatch = workingText.match(amountRegex);
         let valor = 0;
         if (amountMatch) {
@@ -78,13 +79,15 @@ const SmartParser = {
                 rawValue = rawValue.replace(',', '.');
             }
             valor = parseFloat(rawValue);
-            workingText = workingText.replace(amountMatch[0], '').trim();
+            // We don't remove it yet to keep context for description, but we note its presence
         }
 
         // 2. Identify Type (Entry vs Exit vs Transfer)
         let tipo = 'saida';
-        const isTransfer = this.keywords.transfer.some(k => cleanText.includes(k));
-        const isIncome = this.keywords.income.some(k => cleanText.includes(k)) || 
+        const isTransfer = this.keywords.transfer.some(k => cleanText.includes(k) || (window.NLP && window.NLP.isSimilar(cleanText, k, 1)));
+        
+        // Enhanced income detection
+        const isIncome = this.keywords.income.some(k => cleanText.includes(k) || (window.NLP && window.NLP.isSimilar(cleanText, k, 1))) || 
                          (cleanText.includes('recebi') && !cleanText.includes('não recebi')) ||
                          (cleanText.includes('pix') && (cleanText.includes('recebido') || cleanText.includes('crédito')));
 
@@ -96,12 +99,14 @@ const SmartParser = {
 
         // 3. Extract Description (Advanced Heuristic)
         let descricao = "Nova Transação";
-        const stopWords = ['no valor de', 'no valor', 'valor', 'em', 'da', 'do', 'de', 'na', 'no', 'para', 'com', 'realizada', 'realizado', 'aprovada', 'recebido', 'paguei', 'gastei', 'recebi', 'um', 'uma', 'compra', 'venda', 'pagamento', 'estabelecimento', 'sucesso', 'comprovante', 'autorizado', 'mensagem', 'alerta', 'banco', 'agencia', 'conta', 'cartão', 'final', 'vencimento', 'transação', 'efetuada', 'via', 'pix'];
+        const stopWords = ['no valor de', 'no valor', 'valor', 'em', 'da', 'do', 'de', 'na', 'no', 'para', 'com', 'realizada', 'realizado', 'aprovada', 'recebido', 'paguei', 'gastei', 'recebi', 'um', 'uma', 'compra', 'venda', 'pagamento', 'estabelecimento', 'sucesso', 'comprovante', 'autorizado', 'mensagem', 'alerta', 'banco', 'agencia', 'conta', 'cartão', 'final', 'vencimento', 'transação', 'efetuada', 'via', 'pix', 'reais', 'reias', 'conto', 'pila'];
         
         const patterns = [
             /(?:em|no|na|estabelecimento|para|de)\s+([^,.:;()0-9]+)/i,
             /aprovada\s+(?:no|na|em)\s+([^,.:;()0-9]+)/i,
-            /recebido\s+de\s+([^,.:;()0-9]+)/i
+            /recebido\s+de\s+([^,.:;()0-9]+)/i,
+            /gastei\s+(?:no|na|em)?\s?([^,.:;()0-9]+)/i,
+            /paguei\s+(?:no|na|em)?\s?([^,.:;()0-9]+)/i
         ];
 
         for (const pattern of patterns) {
@@ -136,7 +141,11 @@ const SmartParser = {
         });
 
         if (descricao.length < 3 || descricao === "Nova Transação") {
-            descricao = workingText.split(/\s+/).slice(0, 3).join(' ') || "Nova Transação";
+            // Remove the value from the text to get a better fallback description
+            let textWithoutValue = workingText;
+            if (amountMatch) textWithoutValue = textWithoutValue.replace(amountMatch[0], '');
+            
+            descricao = textWithoutValue.split(/\s+/).filter(w => w.length > 2 && !stopWords.includes(w.toLowerCase())).slice(0, 3).join(' ') || "Nova Transação";
         }
 
         descricao = descricao
@@ -145,12 +154,12 @@ const SmartParser = {
             .replace(/\s+/g, ' ')
             .trim();
 
-        // 4. Contextual Category Scoring (Simulated AI)
+        // 4. Contextual Category Scoring (Simulated AI with Fuzzy Matching)
         let bestCategory = 'Geral';
         let highestScore = 0;
 
         for (const [vendor, category] of Object.entries(this.vendorCache)) {
-            if (descricao.toLowerCase().includes(vendor.toLowerCase())) {
+            if (descricao.toLowerCase().includes(vendor.toLowerCase()) || (window.NLP && window.NLP.isSimilar(descricao, vendor, 1))) {
                 bestCategory = category;
                 highestScore = 100;
                 break;
@@ -160,9 +169,19 @@ const SmartParser = {
         if (highestScore < 100) {
             for (const [catName, data] of Object.entries(this.categoryMappings)) {
                 let score = 0;
-                data.keywords.forEach(k => { if (cleanText.includes(k)) score += 10; });
-                data.keywords.forEach(k => { if (descricao.toLowerCase().includes(k)) score += 15; });
-                data.context.forEach(c => { if (cleanText.includes(c)) score += 5; });
+                data.keywords.forEach(k => { 
+                    if (cleanText.includes(k)) score += 10; 
+                    else if (window.NLP && window.NLP.isSimilar(cleanText, k, 1)) score += 8;
+                });
+                
+                data.keywords.forEach(k => { 
+                    if (descricao.toLowerCase().includes(k)) score += 15; 
+                    else if (window.NLP && window.NLP.isSimilar(descricao, k, 1)) score += 12;
+                });
+
+                data.context.forEach(c => { 
+                    if (cleanText.includes(c)) score += 5; 
+                });
 
                 if (score > highestScore) {
                     highestScore = score;

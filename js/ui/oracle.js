@@ -112,19 +112,24 @@ window.OracleEngine = {
      */
     simulatePurchase: function(valor) {
         const projection = window._projectedBalance || 0;
+        const liquid = window._liquidBalance || 0;
         const newProjection = projection - valor;
+        const reserva = (window._contas || []).filter(c => c.is_reserva_emergencia).reduce((acc, curr) => acc + Number(curr.saldo || 0), 0);
         
         let message = "";
         let mood = "happy";
 
         if (newProjection < 0) {
-            message = `Se você comprar isso agora, sua projeção de fim de mês ficará negativa em R$ ${Math.abs(newProjection).toFixed(2)}. Recomendo esperar.`;
+            message = `Cuidado! Se você comprar isso agora, sua projeção de fim de mês ficará negativa em ${window.formatar(Math.abs(newProjection))}. O Oráculo recomenda adiar esta compra.`;
             mood = "sad";
-        } else if (newProjection < 500) {
-            message = `Você pode comprar, mas sua margem de segurança será de apenas R$ ${newProjection.toFixed(2)}. Cuidado com imprevistos!`;
+        } else if (newProjection < reserva * 0.1) {
+            message = `Essa compra de ${window.formatar(valor)} vai consumir quase toda sua margem de segurança. Sobrarão apenas ${window.formatar(newProjection)} no fim do mês.`;
             mood = "neutral";
+        } else if (valor > liquid * 0.5) {
+            message = `O valor de ${window.formatar(valor)} representa mais de 50% do seu saldo atual disponível. Pense se realmente é o momento ideal.`;
+            mood = "worried";
         } else {
-            message = `Compra segura! Mesmo após os R$ ${valor.toFixed(2)}, você ainda terá R$ ${newProjection.toFixed(2)} de sobra no fim do mês.`;
+            message = `Veredito: Compra Segura! ✅ Mesmo após gastar ${window.formatar(valor)}, sua saúde financeira permanece excelente com ${window.formatar(newProjection)} de sobra projetada.`;
             mood = "happy";
         }
 
@@ -132,8 +137,8 @@ window.OracleEngine = {
             console.log('C.A.S.H. Unit: Enviando veredito para o Mascote.');
             showMascotMessage(message, 'eyes', '', mood);
         } else {
-            console.warn('C.A.S.H. Unit: showMascotMessage não disponível para exibir veredito.');
-            alert(message); // Fallback extremo
+            console.warn('C.A.S.H. Unit: showMascotMessage não disponível.');
+            alert(message);
         }
     }
 };
