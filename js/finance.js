@@ -127,10 +127,21 @@ function calculateSummary(transactions) {
         totalEl.style.color = saldoTotal >= 0 ? 'var(--color-success)' : 'var(--color-danger)';
     }
 
+    const summary = {
+        receitas,
+        despesas,
+        saldoMes: receitas - despesas,
+        saldoTotal,
+        liquidBalance,
+        creditDebt,
+        transactions
+    };
+
     // Exportar para uso global em outros módulos
     window._liquidBalance = liquidBalance;
     window._creditDebt = creditDebt;
     window._netWealth = saldoTotal;
+    window._lastSummary = summary;
 
     // --- Upcoming (Próximos 7 dias) ---
     const upcomingRange = 7;
@@ -162,6 +173,13 @@ function calculateSummary(transactions) {
     }
 
     if (typeof renderContas === 'function') renderContas();
+
+    // Integrar com Gamificação
+    if (typeof evaluateFinancialPerformance === 'function') {
+        evaluateFinancialPerformance(summary);
+    }
+
+    return summary;
 }
 
 function renderOrcamentos() {
@@ -520,8 +538,10 @@ function calculateProjection(transactions) {
     thirtyDaysAgo.setDate(now.getDate() - 30);
     const variableExpenses = transactions.filter(t => {
         const d = parseDate(t.data);
-        return t.tipo === 'saida' && d >= thirtyDaysAgo;
+        const isRecurring = typeof _recorrencias !== 'undefined' && _recorrencias.some(r => r.categoria_id === t.categoria_id);
+        return t.tipo === 'saida' && d >= thirtyDaysAgo && !isRecurring;
     }).reduce((acc, t) => acc + parseFloat(t.valor), 0);
+    
     const dailyPace = variableExpenses / 30;
     const estimatedFutureSpending = dailyPace * daysRemaining;
 
@@ -541,14 +561,34 @@ function calculateProjection(transactions) {
     if (heroBillsEl) heroBillsEl.textContent = formatCurrency(billsToPay);
     if (heroPaceEl) heroPaceEl.textContent = formatCurrency(dailyPace) + '/dia';
 
+    // Gerar Insight Inteligente do Oráculo
+    let oracleMessage = "";
+    let mascotType = "info";
+    let mascotMood = "happy";
+
+    if (projected < 0) {
+        oracleMessage = `⚠️ Risco de saldo negativo! Você terminará o mês com ${formatCurrency(projected)}.`;
+        mascotType = "alert";
+        mascotMood = "angry";
+    } else if (projected < liquidBalance * 0.2) {
+        oracleMessage = `💡 Alerta de liquidez. Suas reservas estão baixas (R$ ${projected.toFixed(2)}) em relação às despesas previstas.`;
+        mascotType = "warning";
+        mascotMood = "worried";
+    } else {
+        oracleMessage = `✨ Saúde financeira excelente. Projeção de sobra de ${formatCurrency(projected)} até o fim do mês.`;
+    }
+
     if (heroInsightEl) {
-        if (projected < 0) {
-            heroInsightEl.innerHTML = `⚠️ <span style="color: #EF4444; font-weight: 700;">Risco de saldo negativo!</span> Você precisaria de ${formatCurrency(Math.abs(projected))} para equilibrar.`;
-        } else if (projected < liquidBalance * 0.3) {
-            heroInsightEl.innerHTML = `💡 <span style="color: #F59E0B; font-weight: 700;">Alerta de liquidez.</span> Suas reservas estão baixas em relação às despesas previstas.`;
-        } else {
-            heroInsightEl.innerHTML = `✨ <span style="color: #10B981; font-weight: 700;">Saúde financeira excelente.</span> Projeção de sobra confortável até o fim do mês.`;
-        }
+        heroInsightEl.innerHTML = oracleMessage;
+    }
+
+    // Gatilho do Mascote (Evitar spam, disparar apenas se houver mudança significativa ou no load)
+    if (typeof showMascotMessage === 'function' && (projected < 0 || Math.random() > 0.7)) {
+        const msg = projected < 0 
+            ? `Ei! O Oráculo previu que você pode ficar no vermelho este mês (${formatCurrency(projected)}). Que tal revisar suas assinaturas?` 
+            : `Tudo sob controle! Se mantiver o ritmo, você terá ${formatCurrency(projected)} sobrando.`;
+        
+        setTimeout(() => showMascotMessage(msg, mascotType, '', mascotMood), 3000);
     }
 
     // Fallback UI (Para o modal/outras áreas)
@@ -557,9 +597,7 @@ function calculateProjection(transactions) {
         projectionEl.className = projected >= 0 ? 'stat-value success' : 'stat-value danger';
     }
     if (projectionTextEl) {
-        projectionTextEl.innerHTML = projected < 0 
-            ? `⚠️ Faltarão ${formatCurrency(Math.abs(projected))} no fim do mês.` 
-            : `✨ Sobra de ${formatCurrency(projected)} prevista.`;
+        projectionTextEl.innerHTML = oracleMessage;
     }
 
     if (typeof renderMiniForecast === 'function') renderMiniForecast(calculateFutureForecast());

@@ -246,8 +246,16 @@ function setupAuthUI() {
     if (loginForm) {
         loginForm.addEventListener('submit', (e) => {
             e.preventDefault();
-            const email = document.getElementById('email').value;
+            const email = document.getElementById('email').value.trim();
             const pass = document.getElementById('password').value;
+
+            // Validação proativa de formato de e-mail
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                showMessage('error', 'E-mail inválido. Certifique-se de incluir o @ e o domínio (ex: usuario@email.com).');
+                return;
+            }
+
             handleLogin(email, pass);
         });
     }
@@ -255,9 +263,16 @@ function setupAuthUI() {
     if (signupForm) {
         signupForm.addEventListener('submit', (e) => {
             e.preventDefault();
-            const email = document.getElementById('email').value;
+            const email = document.getElementById('email').value.trim();
             const pass = document.getElementById('password').value;
             const confirm = document.getElementById('confirm-password').value;
+
+            // Validação proativa de formato de e-mail
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                showMessage('error', 'E-mail inválido. Use o formato: usuario@email.com');
+                return;
+            }
 
             if (pass !== confirm) {
                 showMessage('error', 'As senhas não coincidem!');

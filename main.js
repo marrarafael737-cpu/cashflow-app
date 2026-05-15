@@ -156,6 +156,8 @@ async function initDashboard() {
             return;
         }
 
+        App.State.user = user;
+
         // --- ATUALIZAÇÃO IMEDIATA DE UI (Nomes e Emails) ---
         // Fazemos isso o mais rápido possível para evitar a sensação de "hang"
         try {
@@ -218,10 +220,8 @@ async function initDashboard() {
 
             if (typeof filterAndRenderData === 'function') filterAndRenderData();
 
-            // --- CONFIGURAÇÃO DE UI ---
             initTheme();
             initPrivacyMode();
-            if (typeof setupNavigation === 'function') setupNavigation(); 
             
             // Forçar View Inicial (Dashboard)
             if (typeof switchView === 'function') switchView('dashboard');
@@ -280,7 +280,6 @@ async function initDashboard() {
         if (typeof initSimulatorEvents === 'function') initSimulatorEvents();
         if (typeof setupCategoryViewEvents === 'function') setupCategoryViewEvents(user.id);
         if (typeof renderCategoriesView === 'function') renderCategoriesView();
-        if (typeof setupParserEvents === 'function') setupParserEvents(user.id);
         if (typeof initImportEvents === 'function') initImportEvents(user.id);
 
         // 4.1 Histórico de Segurança - Registrar acesso e renderizar log
@@ -885,7 +884,7 @@ window.handlePinInput = function(value) {
     }
     
     // Feedback tátil visual
-    if (typeof triggerHaptic === 'function') triggerHaptic(10);
+    if (typeof App !== 'undefined' && App.Utils.triggerHaptic) App.Utils.triggerHaptic(10);
 
     if (value === 'DEL') {
         _currentPinInput = _currentPinInput.slice(0, -1);
@@ -1106,42 +1105,96 @@ function showSkeletons(show) {
 }
 
 async function handleMagicInput(userId) {
+    if (!userId && App.State.user) userId = App.State.user.id;
     const input = document.getElementById('magic-input');
+    const btn = document.getElementById('btn-magic-submit');
     const text = input.value.trim().toLowerCase();
+    
     if (!text) return;
 
-    // Feedback visual/háptico
-    triggerHaptic();
-    showToast('Processando comando mágico...', 'info');
+    console.log('C.A.S.H. Unit: Magic Input acionado com texto:', text);
 
-    // Usar o novo SmartParser (Phase 4)
-    if (typeof SmartParser === 'undefined') {
-        showToast('Erro: Motor de processamento não carregado.', 'error');
-        return;
+    // Feedback visual/háptico imediato
+    if (typeof App !== 'undefined' && App.Utils.triggerHaptic) App.Utils.triggerHaptic(15);
+    if (btn) {
+        btn.classList.add('loading');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
     }
 
-    const parsed = SmartParser.parse(text);
-    if (!parsed || !parsed.valor) {
-        showToast('Não entendi o comando. Tente algo como "Gastei 50 no café"', 'warning');
-        return;
-    }
+    try {
+        // Usar o novo SmartParser (Phase 4)
+        if (typeof SmartParser === 'undefined') {
+            console.error('C.A.S.H. Unit: SmartParser não encontrado.');
+            showToast('Erro: Motor de processamento não carregado.', 'error');
+            return;
+        }
 
-    const valor = parsed.valor;
-    const tipo = parsed.tipo;
-    const categoria_id = parsed.categoria_id;
-    let conta_id = parsed.conta_id || (_contas.length > 0 ? _contas[0].id : null);
-    let forma_pagamento = 'dinheiro';
+        // --- DETECÇÃO DE SIMULAÇÃO (Oráculo Phase 11) ---
+        const simulationKeywords = ['posso comprar', 'consigo comprar', 'vale a pena comprar', 'simular compra', 'devo comprar'];
+        const isSimulation = simulationKeywords.some(k => text.includes(k));
 
-    // Ajustar forma de pagamento se a conta for crédito
-    const account = _contas.find(c => c.id === conta_id);
-    if (account && account.tipo === 'credito') {
-        forma_pagamento = 'credito';
-    }
+        if (isSimulation) {
+            console.log('C.A.S.H. Unit: Detectada intenção de simulação financeira.');
+            const amountMatch = text.match(/(?:r\$|\$)?\s?(\d{1,3}(?:\.\d{3})*(?:,\d{2})|\d+(?:\.\d{2})?)/i);
+            
+            if (amountMatch) {
+                let valStr = amountMatch[1].replace(/\./g, '').replace(',', '.');
+                const valorSimulado = parseFloat(valStr);
+                
+                if (!isNaN(valorSimulado)) {
+                    if (window.OracleEngine && typeof window.OracleEngine.simulatePurchase === 'function') {
+                        console.log('C.A.S.H. Unit: Disparando simulação para R$', valorSimulado);
+                        window.OracleEngine.simulatePurchase(valorSimulado);
+                        input.value = '';
+                        showToast('O Oráculo está analisando sua compra...', 'info');
+                        
+                        // Reset button state
+                        if (btn) {
+                            btn.classList.remove('loading');
+                            btn.disabled = false;
+                            btn.innerHTML = '<i class="fas fa-wand-magic-sparkles"></i> Processar';
+                        }
+                        return; // Sair após simulação
+                    } else {
+                        console.warn('C.A.S.H. Unit: OracleEngine ou simulatePurchase não disponíveis.');
+                        showToast('O Oráculo está meditando... tente novamente em breve.', 'warning');
+                    }
+                }
+            } else {
+                showToast('Para simular, inclua o valor (ex: "Posso comprar um monitor por 1200?")', 'warning');
+                return;
+            }
+        }
 
-    if (!categoria_id || !conta_id) {
-        showToast('Configure categorias e contas antes de usar o Magic Input.', 'error');
-        return;
-    }
+        const parsed = SmartParser.parse(text);
+        if (!parsed || !parsed.valor) {
+            showToast('Não entendi o comando. Tente algo como "Gastei 50 no café" ou "Posso comprar um PS5 por 4000?"', 'warning');
+            return;
+        }
+
+        const valor = parsed.valor;
+        const tipo = parsed.tipo;
+        const categoria_id = parsed.categoria_id;
+        
+        // Obter conta padrão se não detectada
+        let conta_id = parsed.conta_id;
+        if (!conta_id && typeof _contas !== 'undefined' && Array.isArray(_contas) && _contas.length > 0) {
+            conta_id = _contas[0].id;
+        }
+
+        let forma_pagamento = 'dinheiro';
+        if (conta_id && typeof _contas !== 'undefined' && Array.isArray(_contas)) {
+            const account = _contas.find(c => c.id === conta_id);
+            if (account && account.tipo === 'credito') {
+                forma_pagamento = 'credito';
+            }
+        }
+
+        if (!categoria_id || !conta_id) {
+            showToast('Configure categorias e contas antes de usar o Magic Input.', 'error');
+            return;
+        }
 
     const transactionData = {
         descricao: parsed.descricao,
@@ -1170,8 +1223,17 @@ async function handleMagicInput(userId) {
         await loadTransactions(userId);
         if (typeof addXP === 'function') addXP(15);
     } else {
-        console.error('Erro no Magic Input:', error);
-        showToast('Erro ao processar comando.', 'error');
+        throw error;
+    }
+} catch (error) {
+        console.error('C.A.S.H. Unit: Erro crítico no Magic Input:', error);
+        showToast('Erro ao processar sua mágica. Tente novamente.', 'error');
+    } finally {
+        if (btn) {
+            btn.classList.remove('loading');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-wand-magic-sparkles"></i> <span>Processar</span>';
+        }
     }
 }
 

@@ -188,13 +188,11 @@ async function handleDeleteAccount() {
     const account = _contas.find(c => c.id === id);
     if (!account) return;
 
-    const confirmed = await confirmPremium(`Deseja realmente excluir a conta "${account.nome}"? Esta ação não excluirá as transações vinculadas, mas elas ficarão sem conta associada.`, {
+    const confirmed = await confirmPremium(`Deseja realmente excluir a conta "${account.nome}"? Esta ação removerá a conta, mas as transações vinculadas serão preservadas.`, {
         title: 'Excluir Conta',
         type: 'danger'
     });
-    if (!confirmed) {
-        return;
-    }
+    if (!confirmed) return;
 
     try {
         const btn = document.getElementById('btn-delete-account');
@@ -215,6 +213,7 @@ async function handleDeleteAccount() {
             const user = await getCurrentUser();
             if (user && typeof loadContas === 'function') {
                 await loadContas(user.id);
+                if (typeof loadTransactions === 'function') await loadTransactions(user.id);
             }
         } else {
             showToast('Erro ao excluir conta: ' + error.message, 'error');
@@ -320,10 +319,10 @@ function initBudgetEvents(userId) {
 }
 
 // Funções de Exclusão (Handlers Globais)
-async function handleDeleteAccount(id, name) {
-    const displayName = name || 'esta conta';
-    const confirmed = await confirmPremium(`ATENÇÃO: Deseja realmente excluir "${displayName}"? Todas as transações vinculadas a esta conta também serão excluídas.`, {
-        title: 'Excluir Conta Permanentemente',
+// handleDeleteAccount (legacy/grid) redireciona para a versão consolidada
+async function handleDeleteAccountGrid(id, name) {
+    const confirmed = await confirmPremium(`Deseja excluir a conta "${name}"?`, {
+        title: 'Confirmar Exclusão',
         type: 'danger'
     });
     if (!confirmed) return;
@@ -336,13 +335,12 @@ async function handleDeleteAccount(id, name) {
             if (user) {
                 if (typeof loadContas === 'function') await loadContas(user.id);
                 if (typeof loadTransactions === 'function') await loadTransactions(user.id);
-                if (typeof renderContas === 'function') renderContas();
             }
         } else {
-            showToast('Erro ao excluir conta: ' + error.message, 'error');
+            showToast('Erro ao excluir conta.', 'error');
         }
     } catch (err) {
-        console.error('Erro ao deletar conta:', err);
+        console.error(err);
     }
 }
 
@@ -371,7 +369,24 @@ async function handleDeleteOrcamento(id) {
 async function handleDeleteTransaction(id) {
     const confirmed = await confirmPremium('Deseja realmente excluir esta transação?', { type: 'danger', title: 'Excluir Transação' });
     if (!confirmed) return;
-    if (typeof triggerHaptic === 'function') triggerHaptic([30, 50, 30]); // Pattern de erro/exclusão
+    
+    if (typeof App !== 'undefined' && App.Utils.triggerHaptic) App.Utils.triggerHaptic([30, 50, 30]);
+
+    // Caso seja uma transação offline (ainda não sincronizada)
+    if (id && id.toString().startsWith('offline_')) {
+        if (window.OfflineSync && typeof window.OfflineSync.removeFromQueueByTxId === 'function') {
+            const removed = window.OfflineSync.removeFromQueueByTxId(id);
+            if (removed) {
+                showToast('Transação pendente removida.', 'info');
+                // Remover da memória local e re-renderizar
+                if (typeof _allTransactions !== 'undefined') {
+                    window._allTransactions = _allTransactions.filter(t => t.id !== id);
+                    if (typeof filterAndRenderData === 'function') filterAndRenderData();
+                }
+                return;
+            }
+        }
+    }
 
     const { error } = await supabase.from('transacoes').delete().eq('id', id);
     if (!error) {

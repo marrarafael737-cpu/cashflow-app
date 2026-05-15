@@ -53,10 +53,17 @@ async function addXP(amount) {
  * Avalia o desempenho financeiro e concede XP/Badges
  */
 function evaluateFinancialPerformance(summary) {
-    const { totalReceita, totalDespesa, saldoMes } = summary;
+    if (!summary) return;
+
+    // Phase 4 Logic Fix: Avoid premature badges for initial salary entries
+    // Require at least 5 transactions, presence of expenses, and a positive monthly balance > 1000
+    const allTxs = window._allTransactions || [];
+    const transactionCount = allTxs.length;
+    const hasExpenses = allTxs.some(t => t.tipo === 'saida');
+    const income = summary.receitas || 0;
+    const savingsRate = income > 0 ? (summary.saldoMes / income) : 0;
     
-    // 1. XP por Economia (Surplus)
-    if (saldoMes > 1000) {
+    if (summary.saldoMes > 1000 && transactionCount >= 5 && hasExpenses && savingsRate > 0.1) {
         if (!_badges.economyMaster) {
             unlockBadge('economyMaster');
         }

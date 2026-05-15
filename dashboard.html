@@ -11,7 +11,8 @@
         content="finanças, controle financeiro, economy, investimentos, dinheiro, dashboard financeiro">
 
     <!-- Security Headers -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://us.i.posthog.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; img-src 'self' data: https://*; connect-src 'self' https://wecvchpyutwjqxoeilgq.supabase.co https://us.i.posthog.com wss://wecvchpyutwjqxoeilgq.supabase.co; frame-ancestors 'none';">
+    <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://us.i.posthog.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; img-src 'self' data: https://*; connect-src 'self' https://wecvchpyutwjqxoeilgq.supabase.co https://us.i.posthog.com wss://wecvchpyutwjqxoeilgq.supabase.co; frame-ancestors 'none';">
     <meta http-equiv="X-Content-Type-Options" content="nosniff">
     <meta http-equiv="X-Frame-Options" content="DENY">
     <meta name="referrer" content="strict-origin-when-cross-origin">
@@ -58,17 +59,24 @@
     <link rel="stylesheet" href="css/views.css">
     <link rel="stylesheet" href="css/mascot.css">
     <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha384-iw3OoTErCYJJB9mCa8LNS2hbsQ7M3C0EpIsO/H5+EGAkPGc6rk+V8i04oW/K5xq0" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+        integrity="sha384-iw3OoTErCYJJB9mCa8LNS2hbsQ7M3C0EpIsO/H5+EGAkPGc6rk+V8i04oW/K5xq0" crossorigin="anonymous">
     <!-- Google Fonts -->
     <link
         href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;500;600;700;800&display=swap"
         rel="stylesheet">
     <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js" integrity="sha384-e6cc9LaIG7xZ3XD5B+jtr1NhTWPQGQdRCh6xiZ+ZFUtWCpg4ycv3Sh+SkZoopvUY" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"
+        integrity="sha384-e6cc9LaIG7xZ3XD5B+jtr1NhTWPQGQdRCh6xiZ+ZFUtWCpg4ycv3Sh+SkZoopvUY"
+        crossorigin="anonymous"></script>
     <!-- Supabase JS -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.43.2/dist/umd/supabase.min.js" integrity="sha384-3wUKeH0DH4hNxURtHPXhI66xVWrl+tDWOz20ylXdf6ph1BV3ylCCElOLZ83PH/kM" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.43.2/dist/umd/supabase.min.js"
+        integrity="sha384-3wUKeH0DH4hNxURtHPXhI66xVWrl+tDWOz20ylXdf6ph1BV3ylCCElOLZ83PH/kM"
+        crossorigin="anonymous"></script>
     <!-- GSAP & Draggable -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js" integrity="sha384-d+vyQ0dYcymoP8ndq2hW7FGC50nqGdXUEgoOUGxbbkAJwZqL7h+jKN0GGgn9hFDS" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"
+        integrity="sha384-d+vyQ0dYcymoP8ndq2hW7FGC50nqGdXUEgoOUGxbbkAJwZqL7h+jKN0GGgn9hFDS"
+        crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/Draggable.min.js" crossorigin="anonymous"></script>
     <link rel="icon" type="image/svg+xml" href="assets/mascot.svg">
 
@@ -81,9 +89,15 @@
     <link rel="apple-touch-icon" href="assets/mascot.svg">
 
     <!-- Reports Libs -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" integrity="sha384-JcnsjUPPylna1s1fvi1u12X5qjY5OL56iySh75FdtrwhO/SWXgMjoVqcKyIIWOLk" crossorigin="anonymous"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js" integrity="sha384-GbQVk5KsTZEMJtvSbtmGpderuiERKpKVVFucxROOKnIXvtg03h3pORjyyGlPD6UO" crossorigin="anonymous"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" integrity="sha384-vtjasyidUo0kW94K5MXDXntzOJpQgBKXmE7e2Ga4LG0skTTLeBi97eFAXsqewJjw" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"
+        integrity="sha384-JcnsjUPPylna1s1fvi1u12X5qjY5OL56iySh75FdtrwhO/SWXgMjoVqcKyIIWOLk"
+        crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"
+        integrity="sha384-GbQVk5KsTZEMJtvSbtmGpderuiERKpKVVFucxROOKnIXvtg03h3pORjyyGlPD6UO"
+        crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"
+        integrity="sha384-vtjasyidUo0kW94K5MXDXntzOJpQgBKXmE7e2Ga4LG0skTTLeBi97eFAXsqewJjw"
+        crossorigin="anonymous"></script>
     <script src="js/search.js"></script>
 </head>
 
@@ -125,141 +139,139 @@
         </style>
     </div>
 
-    <!-- Sidebar Navigation (Moved outside to prevent flow issues) -->
-    <aside class="sidebar-desktop">
-        <div class="sidebar-header">
-            <h2 class="brand">Cash<span>Flow</span></h2>
-            <button id="btn-close-sidebar-mobile" class="btn-close-premium mobile-only" onclick="closeSidebar()">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
-
-        <nav class="sidebar-nav">
-            <div class="nav-section-label">Geral</div>
-            <a href="#" class="nav-item active" data-target="dashboard">
-                <i class="fas fa-th-large"></i>
-                <span>Início</span>
-            </a>
-            <a href="#" class="nav-item" data-target="wallets">
-                <i class="fas fa-wallet"></i>
-                <span>Contas</span>
-            </a>
-
-            <div class="nav-section-label">Gestão</div>
-            <a href="#" class="nav-item" data-target="categories">
-                <i class="fas fa-list-ul"></i>
-                <span>Categorias</span>
-            </a>
-            <a href="#" class="nav-item" data-target="goals">
-                <i class="fas fa-bullseye"></i>
-                <span>Metas</span>
-            </a>
-            <a href="#" class="nav-item" data-target="subscriptions">
-                <i class="fas fa-sync"></i>
-                <span>Assinaturas</span>
-            </a>
-
-            <div class="nav-section-label">Análises</div>
-            <a href="#" class="nav-item" data-target="transactions">
-                <i class="fas fa-history"></i>
-                <span>Histórico</span>
-            </a>
-            <a href="#" class="nav-item" data-target="investments">
-                <i class="fas fa-chart-line"></i>
-                <span>Patrimônio</span>
-            </a>
-            <a href="#" class="nav-item" data-target="reports">
-                <i class="fas fa-file-invoice-dollar"></i>
-                <span>Relatórios</span>
-            </a>
-            <a href="#" class="nav-item" data-target="calendar">
-                <i class="fas fa-calendar-alt"></i>
-                <span>Calendário</span>
-            </a>
-
-            <div class="nav-section-label">Sistema</div>
-            <a href="#" class="nav-item" data-target="security">
-                <i class="fas fa-shield-alt"></i>
-                <span>Segurança</span>
-            </a>
-            <a href="#" class="nav-item" data-target="profile">
-                <i class="fas fa-user-circle"></i>
-                <span>Meu Perfil</span>
-            </a>
-        </nav>
-
-        <!-- Sidebar Footer: User Card -->
-        <div class="sidebar-footer" style="
-            margin-top: auto;
-            padding: 0.75rem;
-            border-top: 1px solid var(--color-border);
-        ">
-            <!-- User Row -->
-            <div style="display: flex; align-items: center; gap: 0.65rem; margin-bottom: 0.65rem;">
-                <div id="avatar-header"
-                    style="width: 38px; height: 38px; flex-shrink: 0; background: var(--color-primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; color: white; overflow: hidden; cursor: pointer; border: 2px solid rgba(255,122,0,0.35);"
-                    onclick="document.getElementById('btn-edit-profile')?.click()" title="Editar Perfil">
-                    <span id="avatar-initials" style="font-size:0.875rem;">R</span>
-                </div>
-                <div style="flex: 1; min-width: 0;">
-                    <div id="user-name-header"
-                        style="font-size: 0.82rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--color-text-main);">
-                        Rafael Marra</div>
-                    <div id="user-email-header" class="user-email"
-                        style="font-size: 0.7rem; color: var(--color-text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                    </div>
-                </div>
-                <button id="btn-logout" title="Sair"
-                    style="flex-shrink:0; background: transparent; border: none; color: var(--color-text-muted); cursor: pointer; padding: 0.25rem; border-radius: 6px; transition: color 0.2s;"
-                    onmouseover="this.style.color='var(--color-danger)'"
-                    onmouseout="this.style.color='var(--color-text-muted)'">
-                    <i class="fas fa-sign-out-alt" style="font-size: 0.85rem;"></i>
-                </button>
-            </div>
-
-            <!-- XP Bar -->
-            <div style="margin-bottom: 0.6rem;">
-                <div
-                    style="display: flex; justify-content: space-between; font-size: 0.65rem; color: var(--color-text-muted); margin-bottom: 0.3rem;">
-                    <span id="user-level-badge" style="font-weight: 600;">LVL 1</span>
-                    <span id="user-xp-text">0 XP</span>
-                </div>
-                <div style="height: 4px; background: rgba(255,255,255,0.07); border-radius: 2px; overflow: hidden;">
-                    <div id="user-xp-bar"
-                        style="height: 100%; width: 25%; background: var(--color-primary); border-radius: 2px; box-shadow: 0 0 8px var(--color-primary); transition: width 0.6s ease;">
-                    </div>
-                </div>
-            </div>
-
-            <!-- Icon Actions Row -->
-            <div style="display: flex; align-items: center; gap: 0.35rem;">
-                <button id="btn-toggle-privacy" title="Modo Privacidade"
-                    style="flex:1; background: var(--color-surface-secondary); border: 1px solid var(--color-border); color: var(--color-text-muted); border-radius: 8px; padding: 0.4rem; cursor: pointer; transition: all 0.2s; font-size:0.8rem;">
-                    <i class="fas fa-eye"></i>
-                </button>
-                <button id="btn-toggle-theme-sidebar" title="Trocar Tema"
-                    style="flex:1; background: var(--color-surface-secondary); border: 1px solid var(--color-border); color: var(--color-text-muted); border-radius: 8px; padding: 0.4rem; cursor: pointer; transition: all 0.2s; font-size:0.8rem;">
-                    <i class="fas fa-moon"></i>
-                </button>
-                <button id="btn-share-snapshot" title="Compartilhar Progresso"
-                    style="flex:1; background: var(--color-surface-secondary); border: 1px solid var(--color-border); color: var(--color-text-muted); border-radius: 8px; padding: 0.4rem; cursor: pointer; transition: all 0.2s; font-size:0.8rem;">
-                    <i class="fas fa-share-alt"></i>
-                </button>
-                <button id="pwa-install-btn" title="Instalar App"
-                    style="flex:1; background: var(--color-surface-secondary); border: 1px solid var(--color-border); color: var(--color-text-muted); border-radius: 8px; padding: 0.4rem; cursor: pointer; transition: all 0.2s; font-size:0.8rem;">
-                    <i class="fas fa-download"></i>
-                </button>
-                <button id="btn-start-tour-sidebar" title="Ajuda"
-                    style="flex:1; background: var(--color-surface-secondary); border: 1px solid var(--color-border); color: var(--color-text-muted); border-radius: 8px; padding: 0.4rem; cursor: pointer; transition: all 0.2s; font-size:0.8rem;">
-                    <i class="fas fa-question-circle"></i>
-                </button>
-            </div>
-        </div>
-    </aside>
-
-
     <div class="dashboard-layout">
-        <!-- Main Content Area -->
+        <!-- Sidebar Navigation (Inside layout for flex behavior) -->
+        <aside class="sidebar-desktop">
+            <div class="sidebar-header">
+                <h2 class="brand">Cash<span>Flow</span></h2>
+                <button id="btn-close-sidebar-mobile" class="btn-close-premium mobile-only" onclick="closeSidebar()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <nav class="sidebar-nav">
+                <div class="nav-section-label">Geral</div>
+                <a href="#" class="nav-item active" data-target="dashboard">
+                    <i class="fas fa-th-large"></i>
+                    <span>Início</span>
+                </a>
+                <a href="#" class="nav-item" data-target="wallets">
+                    <i class="fas fa-wallet"></i>
+                    <span>Contas</span>
+                </a>
+
+                <div class="nav-section-label">Gestão</div>
+                <a href="#" class="nav-item" data-target="categories">
+                    <i class="fas fa-list-ul"></i>
+                    <span>Categorias</span>
+                </a>
+                <a href="#" class="nav-item" data-target="goals">
+                    <i class="fas fa-bullseye"></i>
+                    <span>Metas</span>
+                </a>
+                <a href="#" class="nav-item" data-target="subscriptions">
+                    <i class="fas fa-sync"></i>
+                    <span>Assinaturas</span>
+                </a>
+
+                <div class="nav-section-label">Análises</div>
+                <a href="#" class="nav-item" data-target="transactions">
+                    <i class="fas fa-history"></i>
+                    <span>Histórico</span>
+                </a>
+                <a href="#" class="nav-item" data-target="investments">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Patrimônio</span>
+                </a>
+                <a href="#" class="nav-item" data-target="reports">
+                    <i class="fas fa-file-invoice-dollar"></i>
+                    <span>Relatórios</span>
+                </a>
+                <a href="#" class="nav-item" data-target="calendar">
+                    <i class="fas fa-calendar-alt"></i>
+                    <span>Calendário</span>
+                </a>
+
+                <div class="nav-section-label">Sistema</div>
+                <a href="#" class="nav-item" data-target="security">
+                    <i class="fas fa-shield-alt"></i>
+                    <span>Segurança</span>
+                </a>
+                <a href="#" class="nav-item" data-target="profile">
+                    <i class="fas fa-user-circle"></i>
+                    <span>Meu Perfil</span>
+                </a>
+            </nav>
+
+            <!-- Sidebar Footer: User Card -->
+            <div class="sidebar-footer" style="
+                margin-top: auto;
+                padding: 0.75rem;
+                border-top: 1px solid var(--color-border);
+            ">
+                <!-- User Row -->
+                <div style="display: flex; align-items: center; gap: 0.65rem; margin-bottom: 0.65rem;">
+                    <div id="avatar-header"
+                        style="width: 38px; height: 38px; flex-shrink: 0; background: var(--color-primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; color: white; overflow: hidden; cursor: pointer; border: 2px solid rgba(255,122,0,0.35);"
+                        onclick="document.getElementById('btn-edit-profile')?.click()" title="Editar Perfil">
+                        <span id="avatar-initials" style="font-size:0.875rem;">R</span>
+                    </div>
+                    <div style="flex: 1; min-width: 0;">
+                        <div id="user-name-header"
+                            style="font-size: 0.82rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--color-text-main);">
+                            Rafael Marra</div>
+                        <div id="user-email-header" class="user-email"
+                            style="font-size: 0.7rem; color: var(--color-text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                        </div>
+                    </div>
+                    <button id="btn-logout" title="Sair"
+                        style="flex-shrink:0; background: transparent; border: none; color: var(--color-text-muted); cursor: pointer; padding: 0.25rem; border-radius: 6px; transition: color 0.2s;"
+                        onmouseover="this.style.color='var(--color-danger)'"
+                        onmouseout="this.style.color='var(--color-text-muted)'">
+                        <i class="fas fa-sign-out-alt" style="font-size: 0.85rem;"></i>
+                    </button>
+                </div>
+
+                <!-- XP Bar -->
+                <div style="margin-bottom: 0.6rem;">
+                    <div
+                        style="display: flex; justify-content: space-between; font-size: 0.65rem; color: var(--color-text-muted); margin-bottom: 0.3rem;">
+                        <span id="user-level-badge" style="font-weight: 600;">LVL 1</span>
+                        <span id="user-xp-text">0 XP</span>
+                    </div>
+                    <div style="height: 4px; background: rgba(255,255,255,0.07); border-radius: 2px; overflow: hidden;">
+                        <div id="user-xp-bar"
+                            style="height: 100%; width: 25%; background: var(--color-primary); border-radius: 2px; box-shadow: 0 0 8px var(--color-primary); transition: width 0.6s ease;">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Icon Actions Row -->
+                <div style="display: flex; align-items: center; gap: 0.35rem;">
+                    <button id="btn-toggle-privacy" title="Modo Privacidade"
+                        style="flex:1; background: var(--color-surface-secondary); border: 1px solid var(--color-border); color: var(--color-text-muted); border-radius: 8px; padding: 0.4rem; cursor: pointer; transition: all 0.2s; font-size:0.8rem;">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                    <button id="btn-toggle-theme-sidebar" title="Trocar Tema"
+                        style="flex:1; background: var(--color-surface-secondary); border: 1px solid var(--color-border); color: var(--color-text-muted); border-radius: 8px; padding: 0.4rem; cursor: pointer; transition: all 0.2s; font-size:0.8rem;">
+                        <i class="fas fa-moon"></i>
+                    </button>
+                    <button id="btn-share-snapshot" title="Compartilhar Progresso"
+                        style="flex:1; background: var(--color-surface-secondary); border: 1px solid var(--color-border); color: var(--color-text-muted); border-radius: 8px; padding: 0.4rem; cursor: pointer; transition: all 0.2s; font-size:0.8rem;">
+                        <i class="fas fa-share-alt"></i>
+                    </button>
+                    <button id="pwa-install-btn" title="Instalar App"
+                        style="flex:1; background: var(--color-surface-secondary); border: 1px solid var(--color-border); color: var(--color-text-muted); border-radius: 8px; padding: 0.4rem; cursor: pointer; transition: all 0.2s; font-size:0.8rem;">
+                        <i class="fas fa-download"></i>
+                    </button>
+                    <button id="btn-start-tour-sidebar" title="Ajuda"
+                        style="flex:1; background: var(--color-surface-secondary); border: 1px solid var(--color-border); color: var(--color-text-muted); border-radius: 8px; padding: 0.4rem; cursor: pointer; transition: all 0.2s; font-size:0.8rem;">
+                        <i class="fas fa-question-circle"></i>
+                    </button>
+                </div>
+            </div>
+        </aside>
+
         <main class="dashboard-main-content" data-view="dashboard">
             <!-- Mobile Topbar -->
             <div class="topbar-mobile mobile-only">
@@ -361,14 +373,16 @@
                 <div id="view-dashboard" class="view-section active view-dashboard">
                     <!-- Dashboard Charts Section -->
                     <div class="charts-row">
-                        <div class="chart-container-card card-glass" style="min-height: 350px; display: flex; flex-direction: column;">
+                        <div class="chart-container-card card-glass"
+                            style="min-height: 350px; display: flex; flex-direction: column;">
                             <h3 class="section-title" style="font-size: 0.9rem; margin-bottom: 1rem;">Gastos por
                                 Categoria</h3>
                             <div style="flex: 1; min-height: 0;">
                                 <canvas id="chart-categorias" class="privacy-blur"></canvas>
                             </div>
                         </div>
-                        <div class="chart-container-card card-glass" style="min-height: 350px; display: flex; flex-direction: column;">
+                        <div class="chart-container-card card-glass"
+                            style="min-height: 350px; display: flex; flex-direction: column;">
                             <h3 class="section-title" style="font-size: 0.9rem; margin-bottom: 1rem;">Receitas vs
                                 Despesas</h3>
                             <div style="flex: 1; min-height: 0;">
@@ -385,7 +399,8 @@
                                 <h3 class="section-title" style="font-size: 0.9rem; margin: 0;">Perfil Financeiro</h3>
                                 <div id="health-score-badge" class="score-badge">--</div>
                             </div>
-                            <div class="oracle-chart-wrapper" style="min-height: 280px; display: flex; align-items: center; justify-content: center;">
+                            <div class="oracle-chart-wrapper"
+                                style="min-height: 280px; display: flex; align-items: center; justify-content: center;">
                                 <canvas id="chart-radar" class="privacy-blur"></canvas>
                             </div>
                         </div>
@@ -440,8 +455,7 @@
                     <div class="grid-layout grid-responsive-2-1">
                         <div class="data-column">
                             <!-- Magic Input -->
-                            <div class="magic-input-card card-glass"
-                                style="margin-bottom: 2rem; padding: 1.5rem;">
+                            <div class="magic-input-card card-glass" style="margin-bottom: 2rem; padding: 1.5rem;">
                                 <div
                                     style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
                                     <h3 style="margin: 0; font-size: 1rem;"><i class="fas fa-wand-magic-sparkles"
@@ -452,12 +466,55 @@
                                     </button>
                                 </div>
                                 <div id="budget-alerts-container" style="margin-bottom: 1rem;"></div>
-                                <div style="display: flex; gap: 1rem;">
+                                <div class="magic-input-wrapper" style="display: flex; gap: 1rem; position: relative;">
                                     <input type="text" id="magic-input" placeholder="Ex: Gastei 50 no almoço hoje..."
-                                        style="flex: 1; padding: 0.8rem; border-radius: 8px; background: var(--color-surface-secondary); border: 1px solid var(--color-border); color: white;">
+                                        style="flex: 1; padding: 1rem 1.2rem; border-radius: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white; font-size: 0.95rem; transition: all 0.3s ease; box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);">
                                     <button id="btn-magic-submit" class="btn-primary-action"
-                                        style="margin: 0; padding: 0 1.5rem;">Lançar</button>
+                                        style="margin: 0; padding: 0 1.8rem; border-radius: 12px; font-weight: 700; letter-spacing: 0.5px;">
+                                        <i class="fas fa-wand-magic-sparkles"></i> Processar
+                                    </button>
                                 </div>
+                                <div class="magic-suggestions"
+                                    style="margin-top: 1rem; display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                                    <span
+                                        style="font-size: 0.65rem; color: rgba(255,255,255,0.4); width: 100%; margin-bottom: 0.2rem; text-transform: uppercase; letter-spacing: 1px; font-weight: 700;">Tente
+                                        dizer:</span>
+                                    <div class="suggestion-chip"
+                                        onclick="document.getElementById('magic-input').value = 'Gastei 45 no iFood'; handleMagicInput();">
+                                        "Gastei 45 no iFood"</div>
+                                    <div class="suggestion-chip"
+                                        onclick="document.getElementById('magic-input').value = 'Recebi 1500 de salário'; handleMagicInput();">
+                                        "Recebi 1500 de salário"</div>
+                                    <div class="suggestion-chip"
+                                        onclick="document.getElementById('magic-input').value = 'Posso comprar um monitor por 1200?'; handleMagicInput();">
+                                        "Posso comprar um monitor por 1200?"</div>
+                                </div>
+                                <style>
+                                    #magic-input:focus {
+                                        outline: none;
+                                        border-color: var(--color-primary);
+                                        background: rgba(255, 255, 255, 0.08);
+                                        box-shadow: 0 0 0 4px rgba(var(--color-primary-rgb), 0.15);
+                                    }
+
+                                    .suggestion-chip {
+                                        font-size: 0.7rem;
+                                        padding: 0.4rem 0.8rem;
+                                        background: rgba(255, 255, 255, 0.05);
+                                        border: 1px solid rgba(255, 255, 255, 0.08);
+                                        border-radius: 20px;
+                                        color: rgba(255, 255, 255, 0.6);
+                                        cursor: pointer;
+                                        transition: all 0.2s ease;
+                                    }
+
+                                    .suggestion-chip:hover {
+                                        background: rgba(var(--color-primary-rgb), 0.1);
+                                        border-color: var(--color-primary);
+                                        color: white;
+                                        transform: translateY(-2px);
+                                    }
+                                </style>
                             </div>
 
                             <div id="invoice-alerts-container" style="margin-bottom: 1.5rem;"></div>
@@ -830,20 +887,33 @@
                             </div>
 
                             <!-- Zona de Perigo (Reset de Fábrica) -->
-                            <div class="security-card" style="margin-top: 2rem; border: 1px solid rgba(239, 68, 68, 0.2); background: rgba(239, 68, 68, 0.05); border-radius: 16px; overflow: hidden;">
-                                <div class="security-card-header" style="padding: 1.25rem; border-bottom: 1px solid rgba(239, 68, 68, 0.1); display: flex; align-items: center; gap: 1rem;">
-                                    <i class="fas fa-radiation" style="color: var(--color-danger); font-size: 1.2rem;"></i>
+                            <div class="security-card"
+                                style="margin-top: 2rem; border: 1px solid rgba(239, 68, 68, 0.2); background: rgba(239, 68, 68, 0.05); border-radius: 16px; overflow: hidden;">
+                                <div class="security-card-header"
+                                    style="padding: 1.25rem; border-bottom: 1px solid rgba(239, 68, 68, 0.1); display: flex; align-items: center; gap: 1rem;">
+                                    <i class="fas fa-radiation"
+                                        style="color: var(--color-danger); font-size: 1.2rem;"></i>
                                     <div>
-                                        <h3 style="color: var(--color-danger); margin: 0; font-size: 1rem; font-weight: 700;">Zona de Perigo</h3>
-                                        <p style="margin: 0; font-size: 0.75rem; color: var(--color-text-muted);">Ações críticas e irreversíveis.</p>
+                                        <h3
+                                            style="color: var(--color-danger); margin: 0; font-size: 1rem; font-weight: 700;">
+                                            Zona de Perigo</h3>
+                                        <p style="margin: 0; font-size: 0.75rem; color: var(--color-text-muted);">Ações
+                                            críticas e irreversíveis.</p>
                                     </div>
                                 </div>
-                                <div class="security-option" style="padding: 1.25rem; display: flex; justify-content: space-between; align-items: center; gap: 1rem;">
+                                <div class="security-option"
+                                    style="padding: 1.25rem; display: flex; justify-content: space-between; align-items: center; gap: 1rem;">
                                     <div style="flex: 1;">
-                                        <label class="security-label" style="color: #fff; font-weight: 600; display: block; margin-bottom: 0.25rem;">Reset de Fábrica</label>
-                                        <small class="security-hint" style="color: var(--color-text-muted); font-size: 0.8rem; line-height: 1.4;">Apaga todos os dados e limpa seu progresso. Gera um backup "Caixa Preta" antes de apagar.</small>
+                                        <label class="security-label"
+                                            style="color: #fff; font-weight: 600; display: block; margin-bottom: 0.25rem;">Reset
+                                            de Fábrica</label>
+                                        <small class="security-hint"
+                                            style="color: var(--color-text-muted); font-size: 0.8rem; line-height: 1.4;">Apaga
+                                            todos os dados e limpa seu progresso. Gera um backup "Caixa Preta" antes de
+                                            apagar.</small>
                                     </div>
-                                    <button id="btn-open-factory-reset" class="btn-danger" style="padding: 0.6rem 1rem; border-radius: 10px; font-weight: 700; font-size: 0.8rem; white-space: nowrap; cursor: pointer; border: none; background: var(--color-danger); color: #fff;">
+                                    <button id="btn-open-factory-reset" class="btn-danger"
+                                        style="padding: 0.6rem 1rem; border-radius: 10px; font-weight: 700; font-size: 0.8rem; white-space: nowrap; cursor: pointer; border: none; background: var(--color-danger); color: #fff;">
                                         <i class="fas fa-trash-alt"></i> Resetar
                                     </button>
                                 </div>
@@ -973,7 +1043,8 @@
                     <div class="section-header-row" style="margin-bottom: 2rem;">
                         <div style="display: flex; flex-direction: column; gap: 0.5rem;">
                             <h2 class="section-title" style="margin: 0;">Gestão de Patrimônio</h2>
-                            <p style="font-size: 0.8rem; color: var(--color-text-muted);">Acompanhe seus ativos e evolução da reserva de emergência.</p>
+                            <p style="font-size: 0.8rem; color: var(--color-text-muted);">Acompanhe seus ativos e
+                                evolução da reserva de emergência.</p>
                         </div>
                         <div style="display: flex; gap: 0.75rem;">
                             <button id="btn-open-modal-asset" class="btn-primary-action">
@@ -982,54 +1053,78 @@
                         </div>
                     </div>
 
-                    <div class="investments-summary-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; margin-bottom: 2.5rem;">
+                    <div class="investments-summary-grid"
+                        style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; margin-bottom: 2.5rem;">
                         <!-- Card: Patrimônio Total -->
-                        <div class="card-glass premium-border-blue" style="padding: 1.5rem; position: relative; overflow: hidden; border: 1px solid rgba(0, 210, 255, 0.2);">
-                            <div style="position: absolute; top: -10px; right: -10px; font-size: 5rem; opacity: 0.03; color: #00D2FF;">
+                        <div class="card-glass premium-border-blue"
+                            style="padding: 1.5rem; position: relative; overflow: hidden; border: 1px solid rgba(0, 210, 255, 0.2);">
+                            <div
+                                style="position: absolute; top: -10px; right: -10px; font-size: 5rem; opacity: 0.03; color: #00D2FF;">
                                 <i class="fas fa-vault"></i>
                             </div>
-                            <span style="font-size: 0.75rem; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 0.05em;">Patrimônio Acumulado</span>
-                            <h2 id="total-investments-value" class="privacy-blur" style="margin: 0.5rem 0; font-size: 2.2rem; font-weight: 850; background: linear-gradient(to right, #fff, #00D2FF); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">R$ 0,00</h2>
+                            <span
+                                style="font-size: 0.75rem; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 0.05em;">Patrimônio
+                                Acumulado</span>
+                            <h2 id="total-investments-value" class="privacy-blur"
+                                style="margin: 0.5rem 0; font-size: 2.2rem; font-weight: 850; background: linear-gradient(to right, #fff, #00D2FF); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+                                R$ 0,00</h2>
                             <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem;">
-                                <span class="badge-success" id="investments-delta" style="padding: 2px 8px; border-radius: 4px; background: rgba(16, 185, 129, 0.1); color: #10B981;">+0.0%</span>
+                                <span class="badge-success" id="investments-delta"
+                                    style="padding: 2px 8px; border-radius: 4px; background: rgba(16, 185, 129, 0.1); color: #10B981;">+0.0%</span>
                                 <span style="color: var(--color-text-muted);">em relação ao mês anterior</span>
                             </div>
                         </div>
 
                         <!-- Card: Reserva de Emergência -->
                         <div class="card-glass" style="padding: 1.5rem; border-left: 4px solid #00D2FF;">
-                            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
+                            <div
+                                style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
                                 <div>
-                                    <span style="font-size: 0.75rem; color: var(--color-text-muted); text-transform: uppercase;">Reserva de Emergência</span>
-                                    <h3 id="emergency-fund-value" class="privacy-blur" style="margin: 0.25rem 0; font-size: 1.5rem; font-weight: 700;">R$ 0,00</h3>
+                                    <span
+                                        style="font-size: 0.75rem; color: var(--color-text-muted); text-transform: uppercase;">Reserva
+                                        de Emergência</span>
+                                    <h3 id="emergency-fund-value" class="privacy-blur"
+                                        style="margin: 0.25rem 0; font-size: 1.5rem; font-weight: 700;">R$ 0,00</h3>
                                 </div>
-                                <div id="emergency-fund-percent" style="font-size: 1.25rem; font-weight: 800; color: #00D2FF;">0%</div>
+                                <div id="emergency-fund-percent"
+                                    style="font-size: 1.25rem; font-weight: 800; color: #00D2FF;">0%</div>
                             </div>
-                            <div class="progress-container-premium" style="height: 8px; background: rgba(255,255,255,0.05); border-radius: 4px; overflow: hidden; margin-bottom: 0.5rem;">
-                                <div id="emergency-fund-bar" style="height: 100%; width: 0%; background: linear-gradient(90deg, #00D2FF, #007AFF); border-radius: 4px; transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);"></div>
+                            <div class="progress-container-premium"
+                                style="height: 8px; background: rgba(255,255,255,0.05); border-radius: 4px; overflow: hidden; margin-bottom: 0.5rem;">
+                                <div id="emergency-fund-bar"
+                                    style="height: 100%; width: 0%; background: linear-gradient(90deg, #00D2FF, #007AFF); border-radius: 4px; transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);">
+                                </div>
                             </div>
-                            <small id="emergency-fund-target" style="font-size: 0.7rem; color: var(--color-text-muted);">Meta: R$ 0,00 (6 meses de gastos)</small>
+                            <small id="emergency-fund-target"
+                                style="font-size: 0.7rem; color: var(--color-text-muted);">Meta: R$ 0,00 (6 meses de
+                                gastos)</small>
                         </div>
                     </div>
 
-                    <div class="investments-main-grid" style="display: flex; flex-direction: row; flex-wrap: wrap; gap: 1.5rem;">
+                    <div class="investments-main-grid"
+                        style="display: flex; flex-direction: row; flex-wrap: wrap; gap: 1.5rem;">
                         <!-- Meus Ativos (Principal) -->
-                        <div class="assets-list-container card-glass" style="padding: 1.5rem; flex: 1; min-width: 320px;">
+                        <div class="assets-list-container card-glass"
+                            style="padding: 1.5rem; flex: 1; min-width: 320px;">
                             <div class="section-header-inline" style="margin-bottom: 1.5rem;">
                                 <h3 style="font-size: 1.1rem; margin: 0;"><i class="fas fa-shapes"></i> Meus Ativos</h3>
                             </div>
-                            <div id="assets-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1rem;">
+                            <div id="assets-grid"
+                                style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1rem;">
                                 <!-- Preenchido via JS -->
                             </div>
                         </div>
 
                         <!-- Alocação (Lateral/Fixo) -->
-                        <div class="allocation-container card-glass" style="padding: 1.5rem; width: 350px; min-width: 300px; flex-shrink: 0;">
-                            <h3 style="font-size: 1.1rem; margin-bottom: 1.5rem;"><i class="fas fa-chart-pie"></i> Alocação</h3>
+                        <div class="allocation-container card-glass"
+                            style="padding: 1.5rem; width: 350px; min-width: 300px; flex-shrink: 0;">
+                            <h3 style="font-size: 1.1rem; margin-bottom: 1.5rem;"><i class="fas fa-chart-pie"></i>
+                                Alocação</h3>
                             <div style="height: 250px; position: relative; margin-bottom: 1rem;">
                                 <canvas id="chart-allocation"></canvas>
                             </div>
-                            <div id="allocation-legend" style="margin-top: 1.5rem; display: flex; flex-direction: column; gap: 0.6rem;">
+                            <div id="allocation-legend"
+                                style="margin-top: 1.5rem; display: flex; flex-direction: column; gap: 0.6rem;">
                                 <!-- Preenchido via JS -->
                             </div>
                         </div>
@@ -1209,16 +1304,19 @@
                             </select>
                         </div>
                     </div>
-                    
+
                     <div class="form-field" style="margin: 1rem 0;">
-                        <div style="display: flex; align-items: center; gap: 0.75rem; background: rgba(0, 210, 255, 0.03); padding: 0.75rem; border-radius: 10px; border: 1px solid rgba(0, 210, 255, 0.1);">
+                        <div
+                            style="display: flex; align-items: center; gap: 0.75rem; background: rgba(0, 210, 255, 0.03); padding: 0.75rem; border-radius: 10px; border: 1px solid rgba(0, 210, 255, 0.1);">
                             <label class="switch">
                                 <input type="checkbox" id="account-is-reserva">
                                 <span class="slider round"></span>
                             </label>
                             <div style="display: flex; flex-direction: column;">
-                                <label style="margin: 0; cursor: pointer; font-weight: 600; font-size: 0.85rem;" for="account-is-reserva">Reserva de Emergência</label>
-                                <small style="color: var(--color-text-muted); font-size: 0.7rem;">Contabilizar saldo como reserva de segurança.</small>
+                                <label style="margin: 0; cursor: pointer; font-weight: 600; font-size: 0.85rem;"
+                                    for="account-is-reserva">Reserva de Emergência</label>
+                                <small style="color: var(--color-text-muted); font-size: 0.7rem;">Contabilizar saldo
+                                    como reserva de segurança.</small>
                             </div>
                         </div>
                     </div>
@@ -1346,8 +1444,8 @@
                         <p>Assinatura ou Gasto Fixo</p>
                     </div>
                 </div>
-                <button class="btn-close-premium"
-                    onclick="this.closest('.modal-premium').classList.remove('active')"><i class="fas fa-times"></i></button>
+                <button class="btn-close-premium" onclick="this.closest('.modal-premium').classList.remove('active')"><i
+                        class="fas fa-times"></i></button>
             </div>
             <div class="modal-body">
                 <form id="recurring-form" class="modern-form">
@@ -1462,29 +1560,6 @@
 
 
 
-    <!-- Footer Ultra-Minimalista -->
-    <footer style="
-        padding: 0.6rem 2rem;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 1rem;
-        border-top: 1px solid var(--color-border);
-        opacity: 0.45;
-        font-size: 0.65rem;
-        color: var(--color-text-muted);
-        letter-spacing: 0.03em;
-    ">
-        <span><i class="fas fa-shield-halved"
-                style="color: var(--color-success); margin-right: 0.3rem;"></i>256-bit</span>
-        <span style="opacity:0.4;">|</span>
-        <span>© 2024 CashFlow</span>
-        <span style="opacity:0.4;">|</span>
-        <span>v9.4.2 Premium</span>
-    </footer>
-
-    </div> <!-- Fim da dashboard-layout (linha 28) -->
-
     <div id="toast-container"></div>
     <div id="onboarding-overlay" class="onboarding-overlay"></div>
 
@@ -1555,7 +1630,19 @@
     <script src="js/mascot.js?v=9" defer></script>
     <script src="js/offline-db.js?v=9"></script>
     <script src="js/sync-engine.js?v=9"></script>
-    <script src="js/ui.js?v=9" defer></script>
+    <script src="js/ui/utils.js?v=10" defer></script>
+    <script src="js/ui/navigation.js?v=10" defer></script>
+    <script src="js/ui/modals.js?v=10" defer></script>
+    <script src="js/ui/dropdowns.js?v=10" defer></script>
+    <script src="js/ui/transactions.js?v=10" defer></script>
+    <script src="js/ui/accounts.js?v=10" defer></script>
+    <script src="js/ui/credit-cards.js?v=10" defer></script>
+    <script src="js/ui/goals.js?v=10" defer></script>
+    <script src="js/ui/calendar.js?v=10" defer></script>
+    <script src="js/ui/recurring.js?v=10" defer></script>
+    <script src="js/ui/oracle.js?v=10" defer></script>
+    <script src="js/ui/orchestrator.js?v=10" defer></script>
+
     <script src="js/finance.js?v=9" defer></script>
     <script src="js/transactions.js?v=9" defer></script>
     <script src="js/reports.js?v=9" defer></script>
@@ -1780,7 +1867,7 @@
             <span>Perfil</span>
         </a>
     </nav>
-    
+
     <!-- Modal de Confirmação Premium -->
     <div id="modal-confirm" class="modal-premium modal-confirm">
         <div class="modal-content">
@@ -1846,25 +1933,31 @@
                             <input type="number" id="asset-valor-atual" step="0.01" required placeholder="0,00">
                         </div>
                     </div>
-                    <button type="submit" class="btn-primary-action" style="width: 100%; margin-top: 1rem;">Salvar Ativo</button>
+                    <button type="submit" class="btn-primary-action" style="width: 100%; margin-top: 1rem;">Salvar
+                        Ativo</button>
                 </form>
             </div>
         </div>
     </div>
     <!-- Modal: Reset de Fábrica (Caixa Preta) -->
     <div id="modal-factory-reset" class="modal-overlay" style="display: none; z-index: 9999;">
-        <div class="modal-content card-glass" style="max-width: 480px; padding: 0; overflow: hidden; border: 1px solid rgba(239, 68, 68, 0.3);">
-            <div class="modal-header" style="padding: 1.5rem; background: rgba(239, 68, 68, 0.1); border-bottom: 1px solid rgba(239, 68, 68, 0.1);">
+        <div class="modal-content card-glass"
+            style="max-width: 480px; padding: 0; overflow: hidden; border: 1px solid rgba(239, 68, 68, 0.3);">
+            <div class="modal-header"
+                style="padding: 1.5rem; background: rgba(239, 68, 68, 0.1); border-bottom: 1px solid rgba(239, 68, 68, 0.1);">
                 <div style="display: flex; align-items: center; gap: 1rem;">
-                    <div style="width: 45px; height: 45px; background: rgba(239, 68, 68, 0.2); color: var(--color-danger); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">
+                    <div
+                        style="width: 45px; height: 45px; background: rgba(239, 68, 68, 0.2); color: var(--color-danger); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">
                         <i class="fas fa-radiation"></i>
                     </div>
                     <div>
                         <h2 style="margin: 0; font-size: 1.25rem; color: #fff;">Reset de Fábrica</h2>
-                        <p style="margin: 0; font-size: 0.8rem; color: rgba(239, 68, 68, 0.8);">Operação de limpeza total do núcleo</p>
+                        <p style="margin: 0; font-size: 0.8rem; color: rgba(239, 68, 68, 0.8);">Operação de limpeza
+                            total do núcleo</p>
                     </div>
                 </div>
-                <button class="btn-close" onclick="closeModal('modal-factory-reset')" style="background: none; border: none; color: rgba(255,255,255,0.4); cursor: pointer; font-size: 1.2rem;">
+                <button class="btn-close" onclick="closeModal('modal-factory-reset')"
+                    style="background: none; border: none; color: rgba(255,255,255,0.4); cursor: pointer; font-size: 1.2rem;">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
@@ -1872,15 +1965,25 @@
             <div class="modal-body" style="padding: 1.5rem;">
                 <!-- Step 1: Warning & Backup -->
                 <div id="reset-step-1" class="reset-step">
-                    <div style="background: rgba(239, 68, 68, 0.1); border-left: 4px solid var(--color-danger); padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; display: flex; gap: 1rem; align-items: flex-start;">
-                        <i class="fas fa-exclamation-triangle" style="color: var(--color-danger); margin-top: 0.25rem;"></i>
-                        <p style="margin: 0; font-size: 0.85rem; color: #ff9b9b; line-height: 1.5;">Esta ação é <strong>irreversível</strong>. Todos os seus registros financeiros, investimentos e progresso serão permanentemente apagados do núcleo.</p>
+                    <div
+                        style="background: rgba(239, 68, 68, 0.1); border-left: 4px solid var(--color-danger); padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; display: flex; gap: 1rem; align-items: flex-start;">
+                        <i class="fas fa-exclamation-triangle"
+                            style="color: var(--color-danger); margin-top: 0.25rem;"></i>
+                        <p style="margin: 0; font-size: 0.85rem; color: #ff9b9b; line-height: 1.5;">Esta ação é
+                            <strong>irreversível</strong>. Todos os seus registros financeiros, investimentos e
+                            progresso serão permanentemente apagados do núcleo.
+                        </p>
                     </div>
 
-                    <div style="background: rgba(255,255,255,0.03); border: 1px dashed rgba(255,255,255,0.1); border-radius: 16px; padding: 1.25rem; margin-bottom: 1.5rem;">
-                        <h4 style="margin: 0 0 0.5rem; color: var(--color-primary); font-size: 0.95rem;"><i class="fas fa-box-open"></i> Caixa Preta de Emergência</h4>
-                        <p style="font-size: 0.8rem; color: var(--color-text-muted); margin: 0 0 1rem; line-height: 1.4;">Geraremos um arquivo JSON com todos os seus dados antes da exclusão definitiva.</p>
-                        <button id="btn-generate-backup" class="btn-primary-action" style="width: 100%; border-radius: 12px; padding: 0.8rem; background: var(--color-primary); color: #000; border: none; font-weight: 700; cursor: pointer;">
+                    <div
+                        style="background: rgba(255,255,255,0.03); border: 1px dashed rgba(255,255,255,0.1); border-radius: 16px; padding: 1.25rem; margin-bottom: 1.5rem;">
+                        <h4 style="margin: 0 0 0.5rem; color: var(--color-primary); font-size: 0.95rem;"><i
+                                class="fas fa-box-open"></i> Caixa Preta de Emergência</h4>
+                        <p
+                            style="font-size: 0.8rem; color: var(--color-text-muted); margin: 0 0 1rem; line-height: 1.4;">
+                            Geraremos um arquivo JSON com todos os seus dados antes da exclusão definitiva.</p>
+                        <button id="btn-generate-backup" class="btn-primary-action"
+                            style="width: 100%; border-radius: 12px; padding: 0.8rem; background: var(--color-primary); color: #000; border: none; font-weight: 700; cursor: pointer;">
                             <i class="fas fa-download"></i> Gerar Backup e Prosseguir
                         </button>
                     </div>
@@ -1888,37 +1991,52 @@
 
                 <!-- Step 2: Verification -->
                 <div id="reset-step-2" class="reset-step" style="display: none;">
-                    <p style="text-align: center; margin-bottom: 1.5rem; color: var(--color-text-muted); font-size: 0.85rem;">Confirme sua identidade para liberar o protocolo de destruição.</p>
-                    
+                    <p
+                        style="text-align: center; margin-bottom: 1.5rem; color: var(--color-text-muted); font-size: 0.85rem;">
+                        Confirme sua identidade para liberar o protocolo de destruição.</p>
+
                     <div class="modern-form">
                         <div class="form-field">
-                            <label style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; color: rgba(255,255,255,0.5);">Senha ou PIN de Acesso</label>
-                            <input type="password" id="reset-password-confirm" placeholder="••••••••" style="width: 100%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); padding: 1rem; border-radius: 12px; color: #fff; font-size: 1.1rem; text-align: center; letter-spacing: 0.2em;">
+                            <label
+                                style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; color: rgba(255,255,255,0.5);">Senha
+                                ou PIN de Acesso</label>
+                            <input type="password" id="reset-password-confirm" placeholder="••••••••"
+                                style="width: 100%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); padding: 1rem; border-radius: 12px; color: #fff; font-size: 1.1rem; text-align: center; letter-spacing: 0.2em;">
                         </div>
                     </div>
 
                     <div style="display: flex; gap: 1rem; margin-top: 2rem;">
-                        <button class="btn-secondary" style="flex: 1; border-radius: 12px; padding: 0.8rem; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #fff; cursor: pointer;" onclick="goToResetStep(1)">Voltar</button>
-                        <button id="btn-verify-reset-auth" class="btn-primary-action" style="flex: 2; border-radius: 12px; padding: 0.8rem; background: var(--color-primary); color: #000; border: none; font-weight: 700; cursor: pointer;">Verificar Acesso</button>
+                        <button class="btn-secondary"
+                            style="flex: 1; border-radius: 12px; padding: 0.8rem; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #fff; cursor: pointer;"
+                            onclick="goToResetStep(1)">Voltar</button>
+                        <button id="btn-verify-reset-auth" class="btn-primary-action"
+                            style="flex: 2; border-radius: 12px; padding: 0.8rem; background: var(--color-primary); color: #000; border: none; font-weight: 700; cursor: pointer;">Verificar
+                            Acesso</button>
                     </div>
                 </div>
 
                 <!-- Step 3: Final Confirmation -->
                 <div id="reset-step-3" class="reset-step" style="display: none;">
                     <div style="text-align: center; margin-bottom: 1.5rem;">
-                        <div style="width: 60px; height: 60px; background: rgba(239, 68, 68, 0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; color: var(--color-danger); font-size: 1.5rem;">
+                        <div
+                            style="width: 60px; height: 60px; background: rgba(239, 68, 68, 0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; color: var(--color-danger); font-size: 1.5rem;">
                             <i class="fas fa-skull-crossbones"></i>
                         </div>
                         <h3 style="color: var(--color-danger); margin: 0 0 0.5rem; font-size: 1.1rem;">Último Aviso</h3>
-                        <p style="color: var(--color-text-muted); font-size: 0.85rem; margin: 0;">Para apagar TUDO permanentemente, digite a palavra abaixo:</p>
-                        <div style="background: rgba(255,255,255,0.05); padding: 0.5rem 1.5rem; border-radius: 8px; font-weight: 800; letter-spacing: 0.2em; display: inline-block; margin-top: 0.75rem; color: #fff; font-size: 1.1rem; border: 1px solid rgba(239, 68, 68, 0.3);">DELETAR</div>
+                        <p style="color: var(--color-text-muted); font-size: 0.85rem; margin: 0;">Para apagar TUDO
+                            permanentemente, digite a palavra abaixo:</p>
+                        <div
+                            style="background: rgba(255,255,255,0.05); padding: 0.5rem 1.5rem; border-radius: 8px; font-weight: 800; letter-spacing: 0.2em; display: inline-block; margin-top: 0.75rem; color: #fff; font-size: 1.1rem; border: 1px solid rgba(239, 68, 68, 0.3);">
+                            DELETAR</div>
                     </div>
 
                     <div class="modern-form">
-                        <input type="text" id="reset-final-word" placeholder="Digite aqui" style="width: 100%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); padding: 1rem; border-radius: 12px; color: #fff; font-size: 1rem; text-align: center; font-weight: 800; text-transform: uppercase;">
+                        <input type="text" id="reset-final-word" placeholder="Digite aqui"
+                            style="width: 100%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); padding: 1rem; border-radius: 12px; color: #fff; font-size: 1rem; text-align: center; font-weight: 800; text-transform: uppercase;">
                     </div>
 
-                    <button id="btn-final-factory-reset" class="btn-danger" style="width: 100%; margin-top: 2rem; padding: 1.25rem; border-radius: 16px; font-weight: 800; border: none; background: var(--color-danger); color: #fff; cursor: pointer; box-shadow: 0 10px 20px rgba(239, 68, 68, 0.3);">
+                    <button id="btn-final-factory-reset" class="btn-danger"
+                        style="width: 100%; margin-top: 2rem; padding: 1.25rem; border-radius: 16px; font-weight: 800; border: none; background: var(--color-danger); color: #fff; cursor: pointer; box-shadow: 0 10px 20px rgba(239, 68, 68, 0.3);">
                         EXECUTAR RESET DE FÁBRICA
                     </button>
                 </div>

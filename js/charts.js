@@ -300,17 +300,33 @@ function renderTrendChart(transactions) {
     
     const initialBalance = (typeof _contas !== 'undefined' && _contas) ? _contas.reduce((acc, c) => acc + parseFloat(c.saldo_inicial || 0), 0) : 0;
 
-    for (let i = 29; i >= 0; i--) {
+    // Optimized calculation: One pass over transactions instead of O(30*N)
+    const dailyDelta = {};
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(now.getDate() - 30);
+    const thirtyDaysAgoStr = thirtyDaysAgo.toLocaleDateString('en-CA');
+
+    // Total balance today (sum of all transactions + initial balance)
+    let currentBalance = initialBalance + transactions.reduce((acc, t) => 
+        acc + (t.tipo === 'entrada' ? parseFloat(t.valor) : -parseFloat(t.valor)), 0);
+
+    // Group transactions by date for the last 30 days
+    transactions.forEach(t => {
+        if (t.data > thirtyDaysAgoStr) {
+            dailyDelta[t.data] = (dailyDelta[t.data] || 0) + (t.tipo === 'entrada' ? parseFloat(t.valor) : -parseFloat(t.valor));
+        }
+    });
+
+    for (let i = 0; i < 30; i++) {
         const d = new Date();
         d.setDate(now.getDate() - i);
         const dateStr = d.toLocaleDateString('en-CA');
         
-        // Saldo até aquele dia
-        const balanceAtDay = initialBalance + 
-            transactions.filter(t => t.data <= dateStr).reduce((acc, t) => acc + (t.tipo === 'entrada' ? parseFloat(t.valor) : -parseFloat(t.valor)), 0);
-        
-        dailyBalances.push(balanceAtDay);
-        labels.push(d.getDate());
+        dailyBalances.unshift(currentBalance);
+        labels.unshift(d.getDate());
+
+        // Move one day back: subtract the delta of the day we just processed
+        currentBalance -= (dailyDelta[dateStr] || 0);
     }
 
     // Phase 3: Dynamic Colors

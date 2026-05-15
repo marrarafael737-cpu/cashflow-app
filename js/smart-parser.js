@@ -63,10 +63,12 @@ const SmartParser = {
     parse(text) {
         if (!text || text.trim().length < 5) return null;
 
-        const cleanText = text.toLowerCase();
+        let workingText = text.trim();
+        const cleanText = workingText.toLowerCase();
         
-        // 1. Extract Value (Enhanced Regex)
-        const amountMatch = text.match(/(?:R\$|r\$|\$)?\s?(\d{1,3}(?:\.\d{3})*(?:,\d{2})|\d+(?:\.\d{2})?)/);
+        // 1. Extract Value (Enhanced Regex with date protection)
+        const amountRegex = /(?:R\$|r\$|\$)?\s?(\d{1,3}(?:\.\d{3})*(?:,\d{2})|\d+(?:\.\d{2})?)(?!\/)/i;
+        const amountMatch = workingText.match(amountRegex);
         let valor = 0;
         if (amountMatch) {
             let rawValue = amountMatch[1];
@@ -76,38 +78,36 @@ const SmartParser = {
                 rawValue = rawValue.replace(',', '.');
             }
             valor = parseFloat(rawValue);
+            workingText = workingText.replace(amountMatch[0], '').trim();
         }
 
         // 2. Identify Type (Entry vs Exit vs Transfer)
         let tipo = 'saida';
-        if (this.keywords.income.some(k => cleanText.includes(k))) {
-            tipo = 'entrada';
-        } else if (this.keywords.transfer.some(k => cleanText.includes(k))) {
+        const isTransfer = this.keywords.transfer.some(k => cleanText.includes(k));
+        const isIncome = this.keywords.income.some(k => cleanText.includes(k)) || 
+                         (cleanText.includes('recebi') && !cleanText.includes('não recebi')) ||
+                         (cleanText.includes('pix') && (cleanText.includes('recebido') || cleanText.includes('crédito')));
+
+        if (isTransfer) {
             tipo = 'transferencia';
+        } else if (isIncome) {
+            tipo = 'entrada';
         }
 
         // 3. Extract Description (Advanced Heuristic)
         let descricao = "Nova Transação";
-        const stopWords = ['no valor', 'em', 'da', 'do', 'na', 'no', 'para', 'com', 'realizada', 'aprovada', 'recebido'];
+        const stopWords = ['no valor de', 'no valor', 'valor', 'em', 'da', 'do', 'de', 'na', 'no', 'para', 'com', 'realizada', 'realizado', 'aprovada', 'recebido', 'paguei', 'gastei', 'recebi', 'um', 'uma', 'compra', 'venda', 'pagamento', 'estabelecimento', 'sucesso', 'comprovante', 'autorizado', 'mensagem', 'alerta', 'banco', 'agencia', 'conta', 'cartão', 'final', 'vencimento', 'transação', 'efetuada', 'via', 'pix'];
         
         const patterns = [
-            /(?:em|no|na|no estabelecimento|para|de)\s+([^,.:;()0-9]+)/i,
+            /(?:em|no|na|estabelecimento|para|de)\s+([^,.:;()0-9]+)/i,
             /aprovada\s+(?:no|na|em)\s+([^,.:;()0-9]+)/i,
-            /recebido\s+de\s+([^,.:;()0-9]+)/i,
-            /^([^,.:;()0-9]+)\s+(?:valor|no valor|no valor de)/i, // New: "Almoço no valor de..."
-            /^([^,.:;()0-9]+)\s+[0-9]/i // New: "Supermercado 50.00"
+            /recebido\s+de\s+([^,.:;()0-9]+)/i
         ];
 
         for (const pattern of patterns) {
-            const match = text.match(pattern);
+            const match = workingText.match(pattern);
             if (match && match[1]) {
                 let candidate = match[1].trim();
-                // Clean up trailing/leading stop words
-                stopWords.forEach(sw => {
-                    if (candidate.toLowerCase().startsWith(sw + ' ')) candidate = candidate.slice(sw.length + 1);
-                    if (candidate.toLowerCase().endsWith(' ' + sw)) candidate = candidate.slice(0, -(sw.length + 1));
-                });
-                
                 if (candidate.length > 2) {
                     descricao = candidate;
                     break;
@@ -115,21 +115,44 @@ const SmartParser = {
             }
         }
 
-        // If still fallback, use the first 4 words of the text
         if (descricao === "Nova Transação") {
-            descricao = text.split(' ').slice(0, 4).join(' ');
+            const words = workingText.split(/\s+/);
+            if (words.length > 0 && !stopWords.includes(words[0].toLowerCase())) {
+                const potentialVendor = words[0];
+                if (potentialVendor.length > 2) {
+                    descricao = potentialVendor;
+                    if (words[1] && !stopWords.includes(words[1].toLowerCase()) && words[1].length > 2) {
+                        descricao += ' ' + words[1];
+                    }
+                }
+            }
         }
+
+        // Cleanup Description
+        stopWords.forEach(sw => {
+            const regexStart = new RegExp('^' + sw + '\\b\\s*', 'i');
+            const regexEnd = new RegExp('\\s*\\b' + sw + '$', 'i');
+            descricao = descricao.replace(regexStart, '').replace(regexEnd, '').trim();
+        });
+
+        if (descricao.length < 3 || descricao === "Nova Transação") {
+            descricao = workingText.split(/\s+/).slice(0, 3).join(' ') || "Nova Transação";
+        }
+
+        descricao = descricao
+            .replace(/\b(hoje|ontem|amanhã|cedo|tarde|noite|agora|dia)\b/gi, '')
+            .replace(/\b\d{1,2}\/\d{1,2}(\/\d{2,4})?\b/g, '')
+            .replace(/\s+/g, ' ')
+            .trim();
 
         // 4. Contextual Category Scoring (Simulated AI)
         let bestCategory = 'Geral';
         let highestScore = 0;
 
-        // Check Learning Cache (Phase 3)
         for (const [vendor, category] of Object.entries(this.vendorCache)) {
             if (descricao.toLowerCase().includes(vendor.toLowerCase())) {
-                console.log(`C.A.S.H. Unit: Pattern recognized! Vendor: ${vendor} -> ${category}`);
                 bestCategory = category;
-                highestScore = 100; // Force top confidence
+                highestScore = 100;
                 break;
             }
         }
@@ -137,47 +160,34 @@ const SmartParser = {
         if (highestScore < 100) {
             for (const [catName, data] of Object.entries(this.categoryMappings)) {
                 let score = 0;
-                
-                // Check direct keywords (High weight)
-            data.keywords.forEach(k => {
-                if (cleanText.includes(k)) score += 10;
-            });
+                data.keywords.forEach(k => { if (cleanText.includes(k)) score += 10; });
+                data.keywords.forEach(k => { if (descricao.toLowerCase().includes(k)) score += 15; });
+                data.context.forEach(c => { if (cleanText.includes(c)) score += 5; });
 
-            // Check description (Medium weight)
-            data.keywords.forEach(k => {
-                if (descricao.toLowerCase().includes(k)) score += 15;
-            });
-
-            // Check context words (Low weight)
-            data.context.forEach(c => {
-                if (cleanText.includes(c)) score += 5;
-            });
-
-            if (score > highestScore) {
-                highestScore = score;
-                bestCategory = catName;
+                if (score > highestScore) {
+                    highestScore = score;
+                    bestCategory = catName;
+                }
             }
         }
 
-        // 4. Resolve Category
+        // 5. Resolve Category
         let categoryId = null;
         let categoria_nome = bestCategory;
-        if (typeof _categories !== 'undefined') {
+        if (typeof _categories !== 'undefined' && Array.isArray(_categories)) {
             const cat = _categories.find(c => c.nome.toLowerCase().includes(bestCategory.toLowerCase()));
             if (cat) categoryId = cat.id;
         }
 
-        // Fallback for Category ID
-        if (!categoryId && typeof _categories !== 'undefined') {
+        if (!categoryId && typeof _categories !== 'undefined' && Array.isArray(_categories)) {
             const fallbackCat = _categories.find(c => c.tipo === tipo) || _categories[0];
             categoryId = fallbackCat ? fallbackCat.id : null;
         }
 
-        // 5. Detect Account (Zero-Click)
+        // 6. Detect Account (Zero-Click)
         let detectedAccountId = null;
         let detectedAccountName = null;
-        if (typeof _contas !== 'undefined' && _contas) {
-            // Tentar match exato primeiro, depois parcial
+        if (typeof _contas !== 'undefined' && Array.isArray(_contas)) {
             const accMatch = _contas.find(c => {
                 const accName = c.nome.toLowerCase();
                 return cleanText.includes(accName) || accName.includes(cleanText.replace('cartão', '').replace('conta', '').trim());
@@ -190,7 +200,7 @@ const SmartParser = {
             }
         }
 
-        // 6. Detect Date (Zero-Click)
+        // 7. Detect Date (Zero-Click)
         const d = new Date();
         let transDate = d.toLocaleDateString('en-CA');
 
@@ -198,15 +208,26 @@ const SmartParser = {
             const yesterday = new Date();
             yesterday.setDate(yesterday.getDate() - 1);
             transDate = yesterday.toLocaleDateString('en-CA');
-            highestScore += 10;
         } else if (cleanText.includes('amanhã')) {
             const tomorrow = new Date();
             tomorrow.setDate(tomorrow.getDate() + 1);
             transDate = tomorrow.toLocaleDateString('en-CA');
-            highestScore += 10;
+        } else {
+            const dayMatch = cleanText.match(/\bdia\s+(\d{1,2})\b/i);
+            if (dayMatch) {
+                const targetDay = parseInt(dayMatch[1]);
+                if (targetDay >= 1 && targetDay <= 31) {
+                    const targetDate = new Date();
+                    targetDate.setDate(targetDay);
+                    if (targetDay > d.getDate()) {
+                        targetDate.setMonth(targetDate.getMonth() - 1);
+                    }
+                    transDate = targetDate.toLocaleDateString('en-CA');
+                }
+            }
         }
 
-        // 7. Final Description Cleanup (Remove detected account, dates, and extra words)
+        // 8. Final Description Cleanup
         let finalDesc = descricao;
         if (detectedAccountName) {
             const accRegex = new RegExp(detectedAccountName, 'gi');
@@ -241,8 +262,6 @@ const SmartParser = {
 
         transactions.forEach(t => {
             if (!t.descricao || !t.categoria_nome) return;
-            
-            // Clean description to find the vendor (first 2 words usually)
             const vendor = t.descricao.split(' ').slice(0, 2).join(' ').toLowerCase();
             if (vendor.length < 3) return;
 
@@ -250,7 +269,6 @@ const SmartParser = {
             frequencyMap[vendor][t.categoria_nome] = (frequencyMap[vendor][t.categoria_nome] || 0) + 1;
         });
 
-        // Pick the most frequent category for each vendor
         for (const [vendor, categories] of Object.entries(frequencyMap)) {
             let topCat = null;
             let topCount = 0;
@@ -265,9 +283,6 @@ const SmartParser = {
             }
         }
         
-        console.log(`C.A.S.H. Unit: Learning complete. ${Object.keys(this.vendorCache).length} vendor patterns stored.`);
-        
-        // Persistir aprendizado
         localStorage.setItem('cashflow_vendor_cache', JSON.stringify(this.vendorCache));
     },
 
@@ -279,7 +294,6 @@ const SmartParser = {
         if (saved) {
             try {
                 this.vendorCache = JSON.parse(saved);
-                console.log(`C.A.S.H. Unit: ${Object.keys(this.vendorCache).length} vendor patterns loaded from cache.`);
             } catch (e) {
                 console.error('Erro ao carregar cache do parser:', e);
             }
@@ -287,7 +301,12 @@ const SmartParser = {
     },
 
     capitalize(str) {
-        return str.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
+        if (!str) return '';
+        const lowerPrepositions = ['de', 'da', 'do', 'das', 'dos', 'em', 'para', 'com'];
+        return str.toLowerCase().split(/\s+/).map((word, index) => {
+            if (index > 0 && lowerPrepositions.includes(word)) return word;
+            return word.charAt(0).toUpperCase() + word.slice(1);
+        }).join(' ');
     }
 };
 

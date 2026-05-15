@@ -57,15 +57,28 @@ const SecurityVault = {
     },
 
     // 2. Criptografia de Campos (AES-GCM)
-    async generateKey(pin) {
+    async generateKey(pin, saltHex = 'cashflow-v1-salt') {
         const encoder = new TextEncoder();
-        const data = encoder.encode(pin);
-        const hash = await window.crypto.subtle.digest('SHA-256', data);
-        
-        return await window.crypto.subtle.importKey(
+        const pinData = encoder.encode(pin);
+        const saltData = encoder.encode(saltHex);
+
+        const baseKey = await window.crypto.subtle.importKey(
             'raw',
-            hash,
-            { name: 'AES-GCM' },
+            pinData,
+            'PBKDF2',
+            false,
+            ['deriveBits', 'deriveKey']
+        );
+
+        return await window.crypto.subtle.deriveKey(
+            {
+                name: 'PBKDF2',
+                salt: saltData,
+                iterations: 100000,
+                hash: 'SHA-256'
+            },
+            baseKey,
+            { name: 'AES-GCM', length: 256 },
             false,
             ['encrypt', 'decrypt']
         );
