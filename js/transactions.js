@@ -269,6 +269,7 @@ async function loadTransactions(userId) {
 
         filterAndRenderData();
         if (typeof updateSummary === 'function') updateSummary();
+        if (typeof updateVisionHighlight === 'function') updateVisionHighlight();
     } catch (err) { 
         console.error('Erro ao carregar transações:', err); 
     }

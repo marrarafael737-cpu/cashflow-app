@@ -298,7 +298,7 @@ async function initDashboard() {
 
         // 4.1 Histórico de Segurança - Registrar acesso e renderizar log
         logSecurityAccess(user.id);
-        renderSessions(user.id);
+        loadSecuritySessions(user.id);
 
         // Disparo inicial da projeção avançada
         if (typeof calculateProjection === 'function') calculateProjection();
@@ -1089,7 +1089,32 @@ function initPrivacyMode() {
     });
 }
 
-async function renderSessions(userId) {
+/**
+ * Atualiza o painel de visão futura com previsões inteligentes (Item 1)
+ */
+function updateVisionHighlight() {
+    const heroProjected = document.getElementById('projected-balance-hero');
+    const heroInsight = document.getElementById('projection-insight-hero');
+    const heroPace = document.getElementById('daily-pace-hero');
+
+    if (!heroProjected || !heroInsight) return;
+
+    // A função calculateProjection no finance.js já faz todo o trabalho pesado
+    // e atualiza os IDs projected-balance-hero, etc.
+    // Aqui apenas garantimos que ela seja chamada se houver transações.
+    if (typeof calculateProjection === 'function') {
+        const projection = calculateProjection(window._allTransactions || []);
+        
+        // Adicionar um brilho premium se a projeção for positiva
+        if (window._projectedBalance > 0) {
+            heroProjected.parentElement.classList.add('premium-glow');
+        } else {
+            heroProjected.parentElement.classList.remove('premium-glow');
+        }
+    }
+}
+
+async function loadSecuritySessions(userId) {
     const sessionList = document.getElementById('session-list');
     if (!sessionList) return;
 
@@ -1211,20 +1236,41 @@ window.handleMagicInput = async function(userId) {
     }
 
     try {
-        // Usar o novo SmartParser (Phase 4)
-        if (typeof SmartParser === 'undefined') {
-            console.error('C.A.S.H. Unit: SmartParser não encontrado.');
-            showToast('Erro: Motor de processamento não carregado.', 'error');
-            return;
+        // --- MULTI-COMMAND SPLITTING (Phase 5) ---
+        // Separadores comuns: " e ", ". ", "; ", " também "
+        const rawParts = text.split(/\s+e\s+|\s*;\s*|\s*\.\s+|\s+também\s+/i);
+        const parts = rawParts.map(p => p.trim()).filter(p => p.length > 3);
+
+        console.log(`🚀 C.A.S.H. Unit: Processando ${parts.length} comandos com SmartNLP...`);
+
+        for (const partText of parts) {
+            await processSingleMagicCommand(partText, userId, input);
         }
 
-        // --- DETECÇÃO DE SIMULAÇÃO (Oráculo Phase 11) ---
-        const simulationKeywords = ['posso comprar', 'consigo comprar', 'vale a pena comprar', 'simular compra', 'devo comprar', 'poso compra'];
-        const isSimulation = simulationKeywords.some(k => text.includes(k) || (window.NLP && window.NLP.isSimilar(text, k, 2)));
+        // Resumo final do Mascote se houver múltiplos
+        if (parts.length > 1 && typeof showMascotMessage === 'function') {
+            const msg = `Mágica múltipla! Processei ${parts.length} comandos para você. ✨`;
+            showMascotMessage(msg, 'happy', '', 'happy');
+        }
 
-        if (isSimulation) {
-            console.log('C.A.S.H. Unit: Detectada intenção de simulação financeira.');
-            // Match amount using enhanced logic (handles reais, reias, etc)
+    } catch (error) {
+        console.error('C.A.S.H. Unit: Erro crítico no Magic Input:', error);
+        showToast('Eita! Minha varinha quebrou. Tente novamente.', 'error');
+    } finally {
+        setMagicButtonState(false);
+    }
+}
+
+/**
+ * Função auxiliar para processar um único comando (extraída da lógica original)
+ */
+async function processSingleMagicCommand(text, userId, inputElement) {
+    try {
+        const nlpAnalysis = SmartNLP.analyze(text);
+        console.log('🧠 C.A.S.H. Unit: Análise NLP:', nlpAnalysis);
+
+        // --- 1. WORKFLOW DE SIMULAÇÃO ---
+        if (nlpAnalysis.intent === SmartNLP.intents.SIMULATION) {
             const amountRegex = /(?:R\$|r\$|\$|reais|reias|conto|pila)?\s?(\d{1,3}(?:\.\d{3})*(?:,\d{2})|\d+(?:\.\d{2})?)(?!\/)(?:\s?(?:reais|reias|conto|pila))?/i;
             const amountMatch = text.match(amountRegex);
             
@@ -1232,80 +1278,73 @@ window.handleMagicInput = async function(userId) {
                 let valStr = amountMatch[1].replace(/\./g, '').replace(',', '.');
                 const valorSimulado = parseFloat(valStr);
                 
-                if (!isNaN(valorSimulado)) {
-                    if (window.OracleEngine && typeof window.OracleEngine.simulatePurchase === 'function') {
-                        console.log('C.A.S.H. Unit: Disparando simulação para R$', valorSimulado);
-                        window.OracleEngine.simulatePurchase(valorSimulado);
-                        input.value = '';
-                        showToast('O Oráculo está analisando sua compra...', 'info');
-                        return; // Sair após simulação (finally will handle button reset)
-                    } else {
-                        console.warn('C.A.S.H. Unit: OracleEngine ou simulatePurchase não disponíveis.');
-                        showToast('O Oráculo está meditando... tente novamente em breve.', 'warning');
-                    }
+                if (window.OracleEngine?.simulatePurchase) {
+                    window.OracleEngine.simulatePurchase(valorSimulado);
+                    if (inputElement) inputElement.value = '';
+                    return;
                 }
             } else {
-                showToast('Para simular, inclua o valor (ex: "Posso comprar um monitor por 1200?")', 'warning');
+                if (typeof showMascotMessage === 'function') {
+                    showMascotMessage('Para simular, eu preciso saber o valor. Quanto custaria isso?', 'eyes', '', 'neutral');
+                } else {
+                    showToast('Inclua o valor para simular.', 'warning');
+                }
                 return;
             }
         }
 
+        // --- 2. WORKFLOW DE DÍVIDA / EMPRÉSTIMO ---
+        if (nlpAnalysis.intent === SmartNLP.intents.DEBT) {
+            console.log('💸 C.A.S.H. Unit: Detectada intenção de dívida/empréstimo.');
+            // Lógica futura para criar transação em 'Contas a Receber/Pagar'
+        }
+
         if (!userId) {
             console.error('❌ C.A.S.H. Unit: Usuário não autenticado.');
-            showToast('Por favor, faça login para usar o Magic Input.', 'error');
+            showToast('Por favor, faça login.', 'error');
             return;
         }
 
         const parsed = SmartParser.parse(text);
-        if (!parsed || (!parsed.valor && !isSimulation)) {
-            console.warn('⚠️ C.A.S.H. Unit: SmartParser não entendeu o texto.', { text });
-            showToast('Não entendi bem. Tente: "Gastei 50 no café" ou "Posso comprar um PS5 por 4000?"', 'warning');
-            if (typeof showMascotMessage === 'function') {
-                showMascotMessage('Hã? Não entendi direito. Pode repetir de outro jeito?', 'alert', '', 'angry');
+        if (!parsed || !parsed.valor) {
+            // Tentativa final via LLM Simulado se o parser falhar totalmente
+            const llmFallback = await SmartNLP.callLLM(text);
+            if (!llmFallback) {
+                showToast('Não entendi: "' + text + '"', 'warning');
+                return;
             }
-            return;
         }
-
-        console.log('✅ C.A.S.H. Unit: Texto processado com sucesso:', parsed);
 
         const valor = parsed.valor;
         const tipo = parsed.tipo;
         
-        // --- RESOLUÇÃO DE CATEGORIA ---
+        // --- LÓGICA DE SPLIT (Divisão Inteligente) ---
+        let isSplit = nlpAnalysis.intent === SmartNLP.intents.SPLIT;
+        let splitWith = text.match(/(?:metade|dividir|split)\s+(?:com|do|da|pro)\s+(\w+)/i)?.[1] || 'Alguém';
+
         let categoria_id = parsed.categoria_id;
-        
-        // Se o parser não achou ID mas achou nome, tenta buscar novamente nos globais
         if (!categoria_id && parsed.categoria_nome && typeof _categories !== 'undefined') {
             const catMatch = _categories.find(c => 
-                c.nome.toLowerCase().includes(parsed.categoria_nome.toLowerCase()) ||
-                (window.NLP && window.NLP.isSimilar(c.nome, parsed.categoria_nome, 1))
+                c.nome.toLowerCase().includes(parsed.categoria_nome.toLowerCase())
             );
             if (catMatch) categoria_id = catMatch.id;
         }
 
-        // --- RESOLUÇÃO DE CONTA ---
         let conta_id = parsed.conta_id;
         if (!conta_id && typeof _contas !== 'undefined' && Array.isArray(_contas) && _contas.length > 0) {
-            // Tenta pegar a primeira conta ativa ou 'Carteira'
             const defaultAcc = _contas.find(c => c.nome.toLowerCase().includes('carteira')) || _contas[0];
             conta_id = defaultAcc.id;
         }
 
         if (!categoria_id || !conta_id) {
-            console.warn('⚠️ C.A.S.H. Unit: Falha ao mapear Categoria ou Conta.', { categoria_id, conta_id });
-            showToast('Configure categorias e contas antes de usar o Magic Input.', 'error');
-            if (typeof showMascotMessage === 'function') {
-                showMascotMessage('Ei! Você precisa criar suas categorias e contas primeiro para eu saber onde anotar.', 'alert', '', 'neutral');
-            }
+            showToast('Configure categorias e contas primeiro.', 'error');
             return;
         }
 
         let forma_pagamento = 'dinheiro';
         if (conta_id && typeof _contas !== 'undefined' && Array.isArray(_contas)) {
             const account = _contas.find(c => c.id === conta_id);
-            if (account && account.tipo === 'credito') {
-                forma_pagamento = 'credito';
-            }
+            if (account && account.tipo === 'credito') forma_pagamento = 'credito';
         }
 
         const transactionData = {
@@ -1315,48 +1354,463 @@ window.handleMagicInput = async function(userId) {
             categoria_id: categoria_id,
             conta_id: conta_id,
             forma_pagamento: forma_pagamento,
-            data: parsed.data || new Date().toLocaleDateString('en-CA'),
+            data: parsed.data || new Date().toISOString().split('T')[0],
+            is_split_loan: isSplit,
+            split_contact: isSplit ? splitWith : null,
             user_id: userId
         };
 
-        // --- PHASE 4: OFFLINE SYNC ENGINE ---
         if (typeof OfflineSync !== 'undefined' && !OfflineSync.isOnline()) {
             OfflineSync.addToQueue(transactionData);
-            showToast('Comando Mágico em fila offline! 🪄', 'info');
-            input.value = '';
-            if (typeof showMascotMessage === 'function') {
-                showMascotMessage('Salvo no meu caderninho offline! Sincronizo logo mais. ✨', 'wink', '', 'happy');
-            }
+            showToast('Salvo offline! 🪄', 'info');
+            if (inputElement) inputElement.value = '';
             return;
         }
 
-        const { error } = await supabase.from('transacoes').insert([transactionData]);
+        const transactionsToInsert = [];
+        const valorOriginal = parsed.valor;
+
+        if (parsed.split) {
+            // Caso de Split: Dividir o valor
+            const userShare = valorOriginal - parsed.split.value;
+            const friendShare = parsed.split.value;
+
+            // 1. Sua parte (Despesa real)
+            transactionsToInsert.push({
+                ...transactionData,
+                descricao: `${parsed.descricao} (Minha parte)`,
+                valor: userShare
+            });
+
+            // 2. Parte do Amigo (A Receber / Empréstimo)
+            transactionsToInsert.push({
+                ...transactionData,
+                descricao: `${parsed.descricao} (A receber de ${parsed.split.with})`,
+                valor: friendShare,
+                tipo: 'saida', // Saiu do bolso agora
+                categoria_id: (typeof _categories !== 'undefined' && _categories.find(c => c.nome.toLowerCase().includes('geral') || c.nome.toLowerCase().includes('outros'))?.id) || transactionData.categoria_id,
+                is_split_loan: true // Flag interna
+            });
+            
+            showMascotMessage(`Entendido! Registrei sua parte (${window.formatar(userShare)}) e marquei que o(a) ${parsed.split.with} te deve ${window.formatar(friendShare)}. 🤝`, 'happy');
+        } else {
+            transactionsToInsert.push(transactionData);
+        }
+
+        const { data: insertedData, error } = await supabase.from('transacoes').insert(transactionsToInsert).select('id');
 
         if (!error) {
-            showToast('Mágica realizada com sucesso! ✨', 'success');
-            input.value = '';
+            const transactionId = insertedData && insertedData.length > 0 ? insertedData[0].id : null;
+            
+            showToast('Mágica realizada: ' + parsed.descricao, 'success', {
+                label: 'Trocar Categoria',
+                callback: () => {
+                    if (transactionId) window.showExpressCategoryPicker(transactionId, parsed.categoria_nome);
+                }
+            });
+
+            if (inputElement) {
+                inputElement.value = '';
+                const preview = document.getElementById('magic-intelligence-preview');
+                if (preview) preview.style.display = 'none';
+            }
             await loadTransactions(userId);
+            if (typeof initSankeyFlow === 'function') initSankeyFlow();
             if (typeof addXP === 'function') addXP(15);
             
-            if (typeof showMascotMessage === 'function') {
-                showMascotMessage(`Prontinho! Registrei R$ ${valor.toFixed(2)} em ${parsed.categoria_nome}. Mágica! ✨`, 'happy', '', 'happy');
+            if (typeof showMascotMessage === 'function' && !text.includes('?')) {
+                showMascotMessage(`Anotei R$ ${valor.toFixed(2)} em ${parsed.categoria_nome}. ✨`, 'happy', '', 'happy');
             }
         } else {
             throw error;
         }
     } catch (error) {
-        console.error('C.A.S.H. Unit: Erro crítico no Magic Input:', error);
-        showToast('Eita! Minha varinha quebrou. Tente novamente.', 'error');
-        if (typeof showMascotMessage === 'function') {
-            showMascotMessage('Ops! Tive um curto-circuito tentando processar isso.', 'alert', '', 'angry');
-        }
-    } finally {
-        setMagicButtonState(false);
+        console.error('C.A.S.H. Unit Error:', error);
+        showToast('Erro ao processar comando.', 'error');
     }
 }
+
+/**
+ * Abre um mini-seletor de categorias para correção expressa
+ */
+window.showExpressCategoryPicker = async function(transactionId, currentCategoryName) {
+    if (typeof _categories === 'undefined') return;
+
+    // Criar o overlay do seletor
+    const picker = document.createElement('div');
+    picker.className = 'express-category-picker';
+    picker.innerHTML = `
+        <div class="express-picker-content glass-card">
+            <h4>Trocar Categoria</h4>
+            <p>Selecione a categoria correta para esta transação:</p>
+            <div class="express-categories-grid">
+                ${_categories.map(cat => `
+                    <button class="express-cat-btn ${cat.nome === currentCategoryName ? 'active' : ''}" data-id="${cat.id}">
+                        <span class="cat-icon">${cat.icone || '📁'}</span>
+                        <span class="cat-name">${cat.nome}</span>
+                    </button>
+                `).join('')}
+            </div>
+            <button class="btn-cancel-express">Cancelar</button>
+        </div>
+    `;
+
+    document.body.appendChild(picker);
+    setTimeout(() => picker.classList.add('active'), 10);
+
+    const cleanup = () => {
+        picker.classList.remove('active');
+        setTimeout(() => picker.remove(), 300);
+    };
+
+    picker.querySelector('.btn-cancel-express').onclick = cleanup;
+
+    const buttons = picker.querySelectorAll('.express-cat-btn');
+    buttons.forEach(btn => {
+        btn.onclick = async () => {
+            const newCatId = btn.dataset.id;
+            const newCatName = btn.querySelector('.cat-name').textContent;
+
+            try {
+                const { error } = await supabase
+                    .from('transacoes')
+                    .update({ categoria_id: newCatId })
+                    .eq('id', transactionId);
+
+                if (!error) {
+                    showToast('Categoria atualizada para ' + newCatName, 'success');
+                    // Recarregar dados para refletir no dashboard
+                    const user = await supabase.auth.getUser();
+                    if (user.data.user) loadTransactions(user.data.user.id);
+                } else {
+                    throw error;
+                }
+            } catch (err) {
+                console.error('Erro ao atualizar categoria:', err);
+                showToast('Erro ao atualizar.', 'error');
+            }
+            cleanup();
+        };
+    });
+};
 
 function triggerHaptic(duration = 50) {
     if (window.navigator && window.navigator.vibrate) {
         window.navigator.vibrate(duration);
     }
 }
+
+/**
+ * Inicializa as funcionalidades avançadas do Magic Input (Voz e Preview)
+ */
+function initMagicFeatures() {
+    const magicInput = document.getElementById('magic-input');
+    const voiceBtn = document.getElementById('btn-magic-voice');
+    const previewContainer = document.getElementById('magic-intelligence-preview');
+    const alertContainer = document.getElementById('budget-alerts-container');
+
+    if (!magicInput) return;
+
+    console.log('🚀 C.A.S.H. Unit: Inicializando Recursos Avançados do Magic Input...');
+
+    // --- 1. VOICE INPUT ---
+    if (voiceBtn) {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (SpeechRecognition) {
+            if (!window._cashflowRecognition) {
+                window._cashflowRecognition = new SpeechRecognition();
+                window._cashflowRecognition.lang = 'pt-BR';
+                window._cashflowRecognition.interimResults = true;
+            }
+            const recognition = window._cashflowRecognition;
+            let isListening = false;
+
+            voiceBtn.onclick = () => {
+                if (isListening) {
+                    recognition.stop();
+                } else {
+                    recognition.start();
+                }
+            };
+
+            recognition.onstart = () => {
+                isListening = true;
+                voiceBtn.classList.add('listening');
+                magicInput.placeholder = "Ouvindo sua mágica...";
+            };
+
+            recognition.onresult = (event) => {
+                const transcript = Array.from(event.results).map(r => r[0].transcript).join('');
+                magicInput.value = transcript;
+                magicInput.dispatchEvent(new Event('input')); 
+            };
+
+            recognition.onend = () => {
+                isListening = false;
+                voiceBtn.classList.remove('listening');
+                magicInput.placeholder = "Ex: Gastei 50 no almoço hoje...";
+            };
+        } else {
+            voiceBtn.style.display = 'none';
+        }
+    }
+
+    // --- 2. MAGIC SCAN (OCR) ---
+    const scanBtn = document.getElementById('btn-magic-scan');
+    const scanInput = document.getElementById('magic-scan-input');
+    if (scanBtn && scanInput) {
+        scanBtn.onclick = () => scanInput.click();
+        scanInput.onchange = async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            if (typeof handleOCR === 'function') {
+                await handleOCR(file);
+            }
+        };
+    }
+
+    // --- 3. PREVIEW & PREVENTIVE ALERTS ---
+    let lastAlertTime = 0;
+    magicInput.addEventListener('input', () => {
+        const text = magicInput.value.trim();
+        if (text.length < 3 || text.includes('?')) {
+            if (previewContainer) previewContainer.style.display = 'none';
+            if (alertContainer) alertContainer.innerHTML = '';
+            return;
+        }
+
+        const parsed = SmartParser.parse(text);
+        if (parsed && parsed.valor > 0) {
+            if (previewContainer) {
+                previewContainer.style.display = 'flex';
+                const amountEl = document.getElementById('preview-amount');
+                const categoryEl = document.getElementById('preview-category');
+                const typeIconEl = document.getElementById('preview-type-icon');
+
+                if (amountEl) amountEl.textContent = formatCurrency(parsed.valor);
+                if (typeIconEl) typeIconEl.innerHTML = `<i class="fas ${parsed.tipo === 'saida' ? 'fa-arrow-down val-neg' : 'fa-arrow-up val-pos'}"></i>`;
+                
+                if (categoryEl) {
+                    const catConfig = typeof getCategoryConfig === 'function' ? getCategoryConfig(parsed.categoria_nome) : { icon: 'fa-tags', color: '#ccc' };
+                    categoryEl.innerHTML = `<i class="fas ${catConfig.icon}" style="color:${catConfig.color}; margin-right: 4px;"></i> ${parsed.categoria_nome}`;
+                }
+            }
+
+            // Alerta Preventivo (Orçamento)
+            if (parsed.tipo === 'saida' && typeof _budgets !== 'undefined') {
+                const budget = _budgets.find(b => {
+                    const cat = _categories.find(c => c.nome === parsed.categoria_nome);
+                    return b.categoria_id === (cat ? cat.id : null);
+                });
+
+                if (budget) {
+                    const spent = (_allTransactions || [])
+                        .filter(t => t.categoria_id === budget.categoria_id && t.tipo === 'saida')
+                        .reduce((acc, t) => acc + parseFloat(t.valor), 0);
+                    
+                    const total = spent + parsed.valor;
+                    const percent = (total / budget.valor_limite) * 100;
+
+                    if (alertContainer && percent >= 80) {
+                        alertContainer.innerHTML = `
+                            <div class="premium-alert warning pulse-border" style="margin-bottom: 1rem; background: rgba(255, 122, 0, 0.1); border: 1px solid var(--color-primary); padding: 0.8rem; border-radius: 12px; display: flex; align-items: center; gap: 0.8rem;">
+                                <i class="fas fa-exclamation-triangle" style="color: var(--color-primary); font-size: 1.2rem;"></i>
+                                <div style="font-size: 0.8rem; color: #fff;">
+                                    <strong>Alerta de Orçamento!</strong> Este gasto comprometerá ${percent.toFixed(0)}% do seu limite de ${parsed.categoria_nome}.
+                                </div>
+                            </div>`;
+                        
+                        if (Date.now() - lastAlertTime > 10000 && typeof showMascotMessage === 'function') {
+                            showMascotMessage(`Opa! Isso vai comprometer seu orçamento de ${parsed.categoria_nome}. 🧐`, 'warning');
+                            lastAlertTime = Date.now();
+                        }
+                    } else if (alertContainer) {
+                        alertContainer.innerHTML = '';
+                    }
+                }
+            }
+        } else {
+            if (previewContainer) previewContainer.style.display = 'none';
+            if (alertContainer) alertContainer.innerHTML = '';
+        }
+    });
+
+    // --- 4. SUBMIT ---
+    const submitBtn = document.getElementById('btn-magic-submit');
+    if (submitBtn) {
+        submitBtn.onclick = async () => {
+            const userId = window.App?.State?.user?.id;
+            if (userId) await handleMagicInput(userId);
+        };
+    }
+}
+
+/**
+ * Atualiza os chips de sugestão do Magic Input baseados em Tempo e Localização
+ */
+/**
+ * Objeto de Inteligência Linguística (Smart NLP)
+ * Gerencia a compreensão de intenções complexas sem depender apenas de Regex
+ */
+const SmartNLP = {
+    intents: {
+        SIMULATION: 'simulation',
+        TRANSACTION: 'transaction',
+        DEBT: 'debt',
+        SPLIT: 'split'
+    },
+
+    /**
+     * Analisa a frase e retorna a intenção provável e os dados extraídos
+     */
+    analyze: function(text) {
+        const normalized = text.toLowerCase().trim();
+        let result = { intent: this.intents.TRANSACTION, confidence: 0.5, data: {} };
+
+        // 1. Detecção de Intenção de Simulação (Compra)
+        if (normalized.includes('posso comprar') || normalized.includes('consigo comprar') || normalized.includes('vale a pena')) {
+            result.intent = this.intents.SIMULATION;
+            result.confidence = 0.9;
+        }
+
+        // 2. Detecção de Dívida / Empréstimo
+        if (normalized.includes('devo') || normalized.includes('emprestei') || normalized.includes('pagar para')) {
+            result.intent = this.intents.DEBT;
+            result.confidence = 0.8;
+        }
+
+        // 3. Detecção de Divisão (Split)
+        if (normalized.includes('metade') || normalized.includes('dividir') || normalized.includes('split')) {
+            result.intent = this.intents.SPLIT;
+            result.confidence = 0.85;
+        }
+
+        return result;
+    },
+
+    /**
+     * Gateway para futura integração com LLM (OpenAI/Gemini)
+     */
+    callLLM: async function(prompt) {
+        console.log('🤖 C.A.S.H. Unit: Encaminhando para processamento neural (Simulado)...');
+        // Aqui entraria a chamada de API real
+        return null; 
+    }
+};
+
+/**
+ * Atualiza os chips de sugestão do Magic Input baseados em Tempo e Localização REAL
+ */
+function updateMagicSuggestions() {
+    const container = document.querySelector('.magic-suggestions');
+    if (!container) return;
+
+    const now = new Date();
+    const hour = now.getHours();
+    
+    let suggestions = [];
+
+    // 1. Sugestões Baseadas no Tempo (Default)
+    if (hour >= 5 && hour < 11) {
+        suggestions = [
+            { text: 'Café R$ 12', icon: 'fa-coffee' },
+            { text: 'Padaria R$ 25', icon: 'fa-bread-slice' }
+        ];
+    } else if (hour >= 11 && hour < 15) {
+        suggestions = [
+            { text: 'Almoço R$ 40', icon: 'fa-utensils' },
+            { text: 'Uber R$ 15', icon: 'fa-car' }
+        ];
+    } else {
+        suggestions = [
+            { text: 'Jantar R$ 60', icon: 'fa-pizza-slice' },
+            { text: 'Mercado R$ 200', icon: 'fa-shopping-cart' }
+        ];
+    }
+
+    // 2. Tentar Localização Real
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(async (pos) => {
+            const { latitude, longitude } = pos.coords;
+            console.log(`📍 C.A.S.H. Unit: Localização real ativa (${latitude.toFixed(4)}, ${longitude.toFixed(4)})`);
+            
+            // Simulação de busca de estabelecimentos próximos baseado em coordenadas reais
+            // Em produção, isso chamaria uma API de Places (Google/Mapbox)
+            const nearby = getNearbyEstablishments(latitude, longitude);
+            
+            if (nearby && nearby.length > 0) {
+                // Adicionar sugestão geo-localizada no início
+                const geoSuggestion = { 
+                    text: `Gastei no ${nearby[0].name}`, 
+                    icon: 'fa-location-dot',
+                    isGeo: true 
+                };
+                
+                // Atualizar UI com a nova sugestão de destaque
+                renderSuggestions([geoSuggestion, ...suggestions]);
+            }
+        }, (err) => {
+            console.warn('📍 C.A.S.H. Unit: GPS Negado ou indisponível. Usando contexto temporal.');
+            renderSuggestions(suggestions);
+        }, { timeout: 3000 });
+    } else {
+        renderSuggestions(suggestions);
+    }
+
+    function renderSuggestions(list) {
+        container.innerHTML = `
+            <span style="font-size: 0.65rem; color: rgba(255,255,255,0.4); width: 100%; margin-bottom: 0.2rem; text-transform: uppercase; letter-spacing: 1px; font-weight: 700;">
+                Sugestões Sugeridas:
+            </span>
+            ${list.map(s => `
+                <div class="suggestion-chip ${s.isGeo ? 'geo-active' : ''}" data-text="${s.text}">
+                    <i class="fas ${s.icon}"></i>
+                    <span>${s.text}</span>
+                </div>
+            `).join('')}
+        `;
+
+        // Rebind clicks
+        container.querySelectorAll('.suggestion-chip').forEach(chip => {
+            chip.addEventListener('click', () => {
+                const magicInput = document.getElementById('magic-input');
+                const text = chip.getAttribute('data-text');
+                if (magicInput && text) {
+                    magicInput.value = text;
+                    const userId = window.App?.State?.user?.id;
+                    handleMagicInput(userId);
+                }
+            });
+        });
+    }
+}
+
+/**
+ * Simula a busca de estabelecimentos próximos
+ */
+function getNearbyEstablishments(lat, lng) {
+    // Mock de lógica espacial: em um app real, faríamos um fetch para API de Places
+    const establishments = [
+        { name: 'Supermercado Central', type: 'market' },
+        { name: 'Posto Ipê', type: 'gas' },
+        { name: 'Farmácia Vida', type: 'health' },
+        { name: 'Restaurante Sabor', type: 'food' }
+    ];
+    // Retorna um baseado na "proximidade" (aleatório para o mock)
+    return [establishments[Math.floor(Math.random() * establishments.length)]];
+}
+
+
+// Inicialização Global
+document.addEventListener('DOMContentLoaded', () => {
+    // Pequeno delay para garantir que outras libs (Supabase, etc) inicializaram
+    setTimeout(() => {
+        updateMagicSuggestions();
+        // Atualizar a cada 10 minutos para mudar sugestões de horário
+        setInterval(updateMagicSuggestions, 600000);
+        
+        // Inicializar Sankey se possível
+        if (typeof initSankeyFlow === 'function') initSankeyFlow();
+    }, 500);
+});
+

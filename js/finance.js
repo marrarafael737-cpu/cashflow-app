@@ -790,3 +790,125 @@ function getProactiveAlerts() {
 }
 
 window.getProactiveAlerts = getProactiveAlerts;
+
+/**
+ * Inicializa e renderiza o Diagrama de Sankey (Fluxo de Caixa Inteligente)
+ */
+/**
+ * Inicializa e renderiza o Diagrama de Sankey (Fluxo de Caixa Inteligente)
+ */
+let sankeyChartInstance = null;
+let isGoogleChartsLoaded = false;
+
+async function initSankeyFlow() {
+    const container = document.getElementById('sankey-flow-container');
+    if (!container || typeof google === 'undefined') return;
+
+    // Se já houver um gráfico, limpamos para evitar vazamento de memória
+    if (sankeyChartInstance) {
+        try {
+            sankeyChartInstance.clearChart();
+        } catch (e) {
+            console.warn('Erro ao limpar gráfico anterior:', e);
+        }
+        sankeyChartInstance = null;
+    }
+    
+    // Limpar o container fisicamente também
+    container.innerHTML = '<div style="display:flex; justify-content:center; align-items:center; height:100%;"><i class="fas fa-circle-notch fa-spin" style="color:var(--color-primary);"></i></div>';
+
+    if (!isGoogleChartsLoaded) {
+        google.charts.load('current', { 'packages': ['sankey'] });
+        google.charts.setOnLoadCallback(() => {
+            isGoogleChartsLoaded = true;
+            drawSankey();
+        });
+    } else {
+        drawSankey();
+    }
+
+    function drawSankey() {
+        const data = new google.visualization.DataTable();
+        data.addColumn('string', 'Origem');
+        data.addColumn('string', 'Destino');
+        data.addColumn('number', 'Valor');
+
+        const rows = [];
+        const transactions = window._allTransactions || [];
+        
+        // Filtrar apenas o mês atual para o Sankey ser relevante e performático
+        const now = new Date();
+        const currentMonthTransactions = transactions.filter(t => {
+            const d = new Date(t.data + 'T00:00:00');
+            return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+        });
+
+        const incomes = currentMonthTransactions.filter(t => t.tipo === 'entrada');
+        const expenses = currentMonthTransactions.filter(t => t.tipo === 'saida');
+        const contas = window._contas || [];
+        const categories = window._categories || [];
+
+        // 1. Mapear Receitas -> Contas
+        const incomeMap = {};
+        incomes.forEach(t => {
+            const accName = contas.find(c => c.id === t.conta_id)?.nome || 'Conta Principal';
+            const source = t.descricao.split(' ')[0] || 'Receita'; 
+            const key = `${source} -> ${accName}`;
+            incomeMap[key] = (incomeMap[key] || 0) + Number(t.valor);
+        });
+
+        for (const [key, val] of Object.entries(incomeMap)) {
+            const [from, to] = key.split(' -> ');
+            if (val > 0) rows.push([from, to, val]);
+        }
+
+        // 2. Mapear Contas -> Categorias
+        const expenseMap = {};
+        expenses.forEach(t => {
+            const accName = contas.find(c => c.id === t.conta_id)?.nome || 'Conta Principal';
+            const catName = categories.find(c => c.id === t.categoria_id)?.nome || 'Geral';
+            const key = `${accName} -> ${catName}`;
+            expenseMap[key] = (expenseMap[key] || 0) + Number(t.valor);
+        });
+
+        for (const [key, val] of Object.entries(expenseMap)) {
+            const [from, to] = key.split(' -> ');
+            if (val > 0) rows.push([from, to, val]);
+        }
+
+        if (rows.length === 0) {
+            container.innerHTML = `
+                <div style="height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; color:var(--color-text-muted); font-size:0.8rem; gap:10px;">
+                    <i class="fas fa-project-diagram" style="font-size:2rem; opacity:0.3;"></i>
+                    <span>Sem dados de fluxo para este mês.</span>
+                </div>`;
+            return;
+        }
+
+        data.addRows(rows);
+
+        const options = {
+            height: 350,
+            sankey: {
+                node: {
+                    colors: ['#10B981', '#3B82F6', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#06B6D4'],
+                    label: { color: '#ffffff', fontSize: 11, bold: true },
+                    interactivity: true,
+                    width: 8,
+                    nodePadding: 30
+                },
+                link: {
+                    colorMode: 'gradient',
+                    colors: ['#10B981', '#3B82F6', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#06B6D4']
+                }
+            },
+            backgroundColor: 'transparent'
+        };
+
+        container.innerHTML = '';
+        sankeyChartInstance = new google.visualization.Sankey(container);
+        sankeyChartInstance.draw(data, options);
+    }
+}
+window.initSankeyFlow = initSankeyFlow;
+

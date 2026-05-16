@@ -63,6 +63,9 @@ const SmartParser = {
     parse(text) {
         if (!text || text.trim().length < 2) return null;
 
+        // Safety: If it's a question, it should be handled by Oracle, not as a transaction
+        if (text.includes('?')) return null;
+
         let workingText = text.trim();
         const cleanText = workingText.toLowerCase();
         
@@ -141,7 +144,6 @@ const SmartParser = {
         });
 
         if (descricao.length < 3 || descricao === "Nova Transação") {
-            // Remove the value from the text to get a better fallback description
             let textWithoutValue = workingText;
             if (amountMatch) textWithoutValue = textWithoutValue.replace(amountMatch[0], '');
             
@@ -154,7 +156,53 @@ const SmartParser = {
             .replace(/\s+/g, ' ')
             .trim();
 
-        // 4. Contextual Category Scoring (Simulated AI with Fuzzy Matching)
+        // 4. Temporal Intelligence (Phase 5) - Retroactive Dates
+        let dataFinal = new Date().toLocaleDateString('en-CA');
+        const temporalPatterns = [
+            { regex: /ontem/i, offset: -1 },
+            { regex: /anteontem/i, offset: -2 },
+            { regex: /sábado passado/i, day: 6 },
+            { regex: /domingo passado/i, day: 0 },
+            { regex: /sexta passada/i, day: 5 },
+            { regex: /quinta passada/i, day: 4 },
+            { regex: /quarta passada/i, day: 3 },
+            { regex: /terça passada/i, day: 2 },
+            { regex: /segunda passada/i, day: 1 }
+        ];
+
+        for (const p of temporalPatterns) {
+            if (cleanText.match(p.regex)) {
+                const d = new Date();
+                if (p.offset !== undefined) {
+                    d.setDate(d.getDate() + p.offset);
+                } else if (p.day !== undefined) {
+                    const currentDay = d.getDay();
+                    let distance = currentDay - p.day;
+                    if (distance <= 0) distance += 7;
+                    d.setDate(d.getDate() - distance);
+                }
+                dataFinal = d.toLocaleDateString('en-CA');
+                break;
+            }
+        }
+
+        // 5. Split Intelligence (Phase 5) - Expense Splitting
+        let splitInfo = null;
+        const splitRegex = /(?:metade|divide|dividir|meio|parte)\s+(?:é|com|pro|pra|do|da|de)?\s+([A-Z][a-zà-ÿ]+)/i;
+        const splitMatch = workingText.match(splitRegex);
+        
+        if (splitMatch && valor > 0) {
+            const friendName = splitMatch[1];
+            splitInfo = {
+                friend: friendName,
+                userShare: valor / 2,
+                friendShare: valor / 2
+            };
+            valor = splitInfo.userShare;
+            descricao = `${descricao} (Divisão com ${friendName})`;
+        }
+
+        // 6. Contextual Category Scoring (Simulated AI with Fuzzy Matching)
         let bestCategory = 'Geral';
         let highestScore = 0;
 
@@ -190,17 +238,15 @@ const SmartParser = {
             }
         }
 
-        // 5. Resolve Category
+        // 7. Resolve Category
         let categoryId = null;
         let categoria_nome = bestCategory;
         if (typeof _categories !== 'undefined' && Array.isArray(_categories)) {
             const cat = _categories.find(c => c.nome.toLowerCase().includes(bestCategory.toLowerCase()));
-            if (cat) categoryId = cat.id;
-        }
-
-        if (!categoryId && typeof _categories !== 'undefined' && Array.isArray(_categories)) {
-            const fallbackCat = _categories.find(c => c.tipo === tipo) || _categories[0];
-            categoryId = fallbackCat ? fallbackCat.id : null;
+            if (cat) {
+                categoryId = cat.id;
+                categoria_nome = cat.nome;
+            }
         }
 
         // 6. Detect Account (Zero-Click)
@@ -219,47 +265,105 @@ const SmartParser = {
             }
         }
 
-        // 7. Detect Date (Zero-Click)
+        // 7. Detect Date (Zero-Click - Enhanced Temporal Intelligence)
         const d = new Date();
         let transDate = d.toLocaleDateString('en-CA');
+        const weekdays = { 'domingo': 0, 'segunda': 1, 'terça': 2, 'quarta': 3, 'quinta': 4, 'sexta': 5, 'sábado': 6, 'sabado': 6 };
 
-        if (cleanText.includes('ontem')) {
-            const yesterday = new Date();
-            yesterday.setDate(yesterday.getDate() - 1);
-            transDate = yesterday.toLocaleDateString('en-CA');
-        } else if (cleanText.includes('amanhã')) {
-            const tomorrow = new Date();
-            tomorrow.setDate(tomorrow.getDate() + 1);
-            transDate = tomorrow.toLocaleDateString('en-CA');
+        const getRelativeDate = (offset) => {
+            const date = new Date();
+            date.setDate(date.getDate() + offset);
+            return date.toLocaleDateString('en-CA');
+        };
+
+        if (cleanText.includes('anteontem')) {
+            transDate = getRelativeDate(-2);
+        } else if (cleanText.includes('ontem')) {
+            transDate = getRelativeDate(-1);
+        } else if (cleanText.includes('amanhã') || cleanText.includes('amanha')) {
+            transDate = getRelativeDate(1);
+        } else if (cleanText.includes('semana passada')) {
+            transDate = getRelativeDate(-7);
         } else {
-            const dayMatch = cleanText.match(/\bdia\s+(\d{1,2})\b/i);
-            if (dayMatch) {
-                const targetDay = parseInt(dayMatch[1]);
-                if (targetDay >= 1 && targetDay <= 31) {
-                    const targetDate = new Date();
-                    targetDate.setDate(targetDay);
-                    if (targetDay > d.getDate()) {
-                        targetDate.setMonth(targetDate.getMonth() - 1);
+            // Detect specific Weekdays (e.g., "sábado passado")
+            let weekdayFound = false;
+            for (const [name, dayNum] of Object.entries(weekdays)) {
+                if (cleanText.includes(name)) {
+                    const currentDay = d.getDay();
+                    let diff = currentDay - dayNum;
+                    
+                    // If it's "passado" or if the day hasn't happened yet this week, go back
+                    if (cleanText.includes('passado') || cleanText.includes('passada') || diff <= 0) {
+                        if (diff <= 0) diff += 7;
+                        if (cleanText.includes('passado') || cleanText.includes('passada')) {
+                            // If user says "sábado passado" and today is Friday, they mean 6 days ago + 7
+                            // But usually they mean the most recent Saturday.
+                        }
                     }
+                    
+                    const targetDate = new Date();
+                    targetDate.setDate(d.getDate() - diff);
                     transDate = targetDate.toLocaleDateString('en-CA');
+                    weekdayFound = true;
+                    break;
+                }
+            }
+
+            if (!weekdayFound) {
+                const dayMatch = cleanText.match(/\bdia\s+(\d{1,2})\b/i);
+                if (dayMatch) {
+                    const targetDay = parseInt(dayMatch[1]);
+                    if (targetDay >= 1 && targetDay <= 31) {
+                        const targetDate = new Date();
+                        targetDate.setDate(targetDay);
+                        if (targetDay > d.getDate()) {
+                            targetDate.setMonth(targetDate.getMonth() - 1);
+                        }
+                        transDate = targetDate.toLocaleDateString('en-CA');
+                    }
                 }
             }
         }
 
-        // 8. Final Description Cleanup
+        // 8. Detect Split (Item 3 - Split Intelligence)
+        let splitWith = null;
+        let splitValue = null;
+        
+        const splitPatterns = [
+            /(?:metade|dividi|rachei)\s+(?:com|do|da|pro|pra)?\s+([a-zA-Záàâãéèêíïóôõöúçñ]+)/i,
+            /([a-zA-Záàâãéèêíïóôõöúçñ]+)\s+(?:me deve|vai pagar|paga metade)/i
+        ];
+
+        for (const pattern of splitPatterns) {
+            const match = cleanText.match(pattern);
+            if (match && match[1]) {
+                const name = match[1].toLowerCase();
+                if (!['reais', 'conto', 'pila', 'hoje', 'ontem'].includes(name)) {
+                    splitWith = this.capitalize(name);
+                    splitValue = valor / 2; // Default to half
+                    break;
+                }
+            }
+        }
+
+        // 9. Final Description Cleanup
         let finalDesc = descricao;
         if (detectedAccountName) {
             const accRegex = new RegExp(detectedAccountName, 'gi');
             finalDesc = finalDesc.replace(accRegex, '');
         }
-        ['ontem', 'hoje', 'amanhã', 'no valor de'].forEach(word => {
+        ['ontem', 'hoje', 'amanhã', 'no valor de', 'metade', 'dividi', 'rachei'].forEach(word => {
             const wordRegex = new RegExp('\\b' + word + '\\b', 'gi');
             finalDesc = finalDesc.replace(wordRegex, '');
         });
+        if (splitWith) {
+            const nameRegex = new RegExp('\\b' + splitWith + '\\b', 'gi');
+            finalDesc = finalDesc.replace(nameRegex, '');
+        }
         finalDesc = finalDesc.replace(/\s+/g, ' ').trim();
 
         return {
-            valor,
+            valor: splitValue ? splitValue : valor,
             descricao: this.capitalize(finalDesc || descricao),
             tipo,
             categoria_id: categoryId,
@@ -267,7 +371,8 @@ const SmartParser = {
             conta_id: detectedAccountId,
             conta_nome: detectedAccountName,
             data: transDate,
-            confidence: highestScore 
+            confidence: highestScore,
+            split: splitWith ? { with: splitWith, value: splitValue, original_total: valor } : null
         };
     },
 

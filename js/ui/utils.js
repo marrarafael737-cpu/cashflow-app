@@ -25,7 +25,7 @@ window.triggerConfetti = function() {
     }
 };
 
-window.showToast = function(message, type = 'info') {
+window.showToast = function(message, type = 'info', action = null) {
     const container = document.getElementById('toast-container');
     if (!container) return;
 
@@ -35,6 +35,7 @@ window.showToast = function(message, type = 'info') {
 
     const toast = document.createElement('div');
     toast.className = `toast toast-${type}`;
+    if (action) toast.classList.add('has-action');
     
     const icons = {
         success: '✅',
@@ -45,16 +46,32 @@ window.showToast = function(message, type = 'info') {
 
     toast.innerHTML = `
         <span class="toast-icon">${icons[type] || '🔔'}</span>
-        <span class="toast-message">${window.escapeHTML(message)}</span>
+        <div class="toast-content">
+            <span class="toast-message">${window.escapeHTML(message)}</span>
+            ${action ? `<button class="toast-action-btn" id="toast-action-${Date.now()}">${action.label}</button>` : ''}
+        </div>
     `;
 
     container.appendChild(toast);
+    
+    if (action) {
+        const btn = toast.querySelector('.toast-action-btn');
+        btn.onclick = (e) => {
+            e.stopPropagation();
+            action.callback();
+            toast.remove();
+        };
+    }
+
     setTimeout(() => toast.classList.add('active'), 10);
 
+    const duration = action ? 8000 : 4000; // Mais tempo se tiver ação
     setTimeout(() => {
-        toast.classList.remove('active');
-        setTimeout(() => toast.remove(), 400);
-    }, 4000);
+        if (toast.parentNode) {
+            toast.classList.remove('active');
+            setTimeout(() => toast.remove(), 400);
+        }
+    }, duration);
 };
 
 window.confirmPremium = function(message, options = {}) {

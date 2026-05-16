@@ -1,4 +1,4 @@
-/* js/gamification.js - Level System, Badges & Financial Oracle */
+/* js/gamification.js - Persistent Level System, Badges & Financial Oracle */
 
 let _userXP = 0;
 let _userLevel = 1;
@@ -9,18 +9,50 @@ let _badges = {
     level5: false
 };
 
+/**
+ * Inicializa o sistema de gamificação buscando dados no Supabase.
+ * Se não encontrar, tenta migrar do localStorage.
+ */
 async function initGamification(userId) {
-    try {
-        const savedXP = localStorage.getItem(`xp_${userId}`);
-        if (savedXP) {
-            _userXP = parseInt(savedXP);
-            calculateLevel();
-        }
+    if (!userId) return;
 
-        // Carregar conquistas salvas
-        const savedBadges = localStorage.getItem(`badges_${userId}`);
-        if (savedBadges) {
-            _badges = JSON.parse(savedBadges);
+    try {
+        console.log('C.A.S.H. Unit: Inicializando Gamificação Persistente...');
+        
+        // 1. Tentar carregar do Supabase (user_profiles)
+        const { data: profile, error: pError } = await supabase
+            .from('user_profiles')
+            .select('xp, level, import_count, predict_count')
+            .eq('id', userId)
+            .single();
+
+        // 2. Tentar carregar conquistas (user_badges)
+        const { data: badgeRows, error: bError } = await supabase
+            .from('user_badges')
+            .select('badge_id')
+            .eq('user_id', userId);
+
+        if (pError || bError) {
+            console.warn('C.A.S.H. Unit: Tabelas de gamificação não encontradas ou inacessíveis. Usando modo offline/local.');
+            loadFromLocalStorage(userId);
+        } else if (!profile) {
+            // Usuário novo no banco, tentar migrar se houver algo local
+            console.log('C.A.S.H. Unit: Perfil não encontrado no banco. Iniciando migração...');
+            await migrateToSupabase(userId);
+        } else {
+            // Dados carregados com sucesso do Supabase
+            _userXP = profile.xp || 0;
+            _userLevel = profile.level || 1;
+            
+            // Marcar badges desbloqueadas
+            if (badgeRows) {
+                badgeRows.forEach(row => {
+                    if (_badges.hasOwnProperty(row.badge_id)) {
+                        _badges[row.badge_id] = true;
+                    }
+                });
+            }
+            console.log('C.A.S.H. Unit: Dados de gamificação carregados da nuvem.');
         }
 
         updateMascotEvolutionUI();
@@ -29,19 +61,82 @@ async function initGamification(userId) {
         setupShareSnapshot(userId);
     } catch (error) {
         console.error('Erro na gamificação:', error);
+        loadFromLocalStorage(userId); // Fallback de emergência
+    }
+}
+
+function loadFromLocalStorage(userId) {
+    const savedXP = localStorage.getItem(`xp_${userId}`);
+    if (savedXP) {
+        _userXP = parseInt(savedXP);
+        calculateLevel();
+    }
+
+    const savedBadges = localStorage.getItem(`badges_${userId}`);
+    if (savedBadges) {
+        _badges = JSON.parse(savedBadges);
+    }
+}
+
+async function migrateToSupabase(userId) {
+    // Pegar dados locais
+    const localXP = parseInt(localStorage.getItem(`xp_${userId}`) || '0');
+    const localBadges = JSON.parse(localStorage.getItem(`badges_${userId}`) || '{}');
+    const localImports = parseInt(localStorage.getItem(`import_count_${userId}`) || '0');
+    const localPredicts = parseInt(localStorage.getItem(`predict_count_${userId}`) || '0');
+
+    _userXP = localXP;
+    calculateLevel();
+    Object.assign(_badges, localBadges);
+
+    try {
+        // Criar perfil
+        await supabase.from('user_profiles').upsert({
+            id: userId,
+            xp: localXP,
+            level: _userLevel,
+            import_count: localImports,
+            predict_count: localPredicts,
+            updated_at: new Date().toISOString()
+        });
+
+        // Criar badges
+        const badgesToInsert = Object.keys(_badges)
+            .filter(id => _badges[id])
+            .map(id => ({ user_id: userId, badge_id: id }));
+
+        if (badgesToInsert.length > 0) {
+            await supabase.from('user_badges').insert(badgesToInsert);
+        }
+        
+        console.log('C.A.S.H. Unit: Migração concluída com sucesso.');
+    } catch (err) {
+        console.error('Falha na migração para Supabase:', err);
     }
 }
 
 async function addXP(amount) {
     if (amount <= 0) return;
     _userXP += amount;
+    
+    const leveledUp = calculateLevel();
+    updateMascotEvolutionUI();
+    
+    // Persistência Híbrida
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
         localStorage.setItem(`xp_${user.id}`, _userXP);
+        
+        // Update Supabase in background
+        supabase.from('user_profiles')
+            .update({ xp: _userXP, level: _userLevel, updated_at: new Date().toISOString() })
+            .eq('id', user.id)
+            .then(({error}) => {
+                if (error) console.warn('Erro ao persistir XP na nuvem:', error.message);
+            });
+            
+        checkBadges(user.id);
     }
-    const leveledUp = calculateLevel();
-    updateMascotEvolutionUI();
-    checkBadges(user?.id);
     
     if (leveledUp && typeof showToast === 'function') {
         showToast(`Nível UP! C.A.S.H. Unit evoluiu para o Nível ${_userLevel}!`, 'success');
@@ -55,8 +150,6 @@ async function addXP(amount) {
 function evaluateFinancialPerformance(summary) {
     if (!summary) return;
 
-    // Phase 4 Logic Fix: Avoid premature badges for initial salary entries
-    // Require at least 5 transactions, presence of expenses, and a positive monthly balance > 1000
     const allTxs = window._allTransactions || [];
     const transactionCount = allTxs.length;
     const hasExpenses = allTxs.some(t => t.tipo === 'saida');
@@ -68,9 +161,6 @@ function evaluateFinancialPerformance(summary) {
             unlockBadge('economyMaster');
         }
     }
-
-    // 2. XP por Disciplina (Cumprir Orçamentos)
-    // ... lógica existente ...
 }
 
 function calculateLevel() {
@@ -79,18 +169,25 @@ function calculateLevel() {
     return _userLevel > oldLevel;
 }
 
-function unlockBadge(badgeId) {
+async function unlockBadge(badgeId) {
     if (_badges[badgeId]) return;
     _badges[badgeId] = true;
     
-    const userId = supabase.auth.getUser().then(({data}) => {
-        if (data.user) {
-            localStorage.setItem(`badges_${data.user.id}`, JSON.stringify(_badges));
-            updateBadgesUI();
-            showToast(`Conquista Desbloqueada!`, 'success');
-            if (typeof confetti === 'function') confetti();
-        }
-    });
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+        localStorage.setItem(`badges_${user.id}`, JSON.stringify(_badges));
+        
+        // Persistir na nuvem
+        supabase.from('user_badges')
+            .insert([{ user_id: user.id, badge_id: badgeId }])
+            .then(({error}) => {
+                if (error) console.warn('Erro ao salvar conquista na nuvem:', error.message);
+            });
+
+        updateBadgesUI();
+        showToast(`Conquista Desbloqueada: ${badgeId}!`, 'success');
+        if (typeof confetti === 'function') confetti();
+    }
 }
 
 function updateBadgesUI() {
@@ -110,19 +207,35 @@ function updateBadgesUI() {
     if (countEl) countEl.textContent = `${unlockedCount}/${Object.keys(_badges).length}`;
 }
 
-function checkBadges(userId) {
+async function checkBadges(userId) {
     if (_userLevel >= 5 && !_badges.level5) {
-        unlockBadge('level5');
+        await unlockBadge('level5');
     }
 
-    const importCount = parseInt(localStorage.getItem(`import_count_${userId}`) || '0');
+    // Buscar contadores para badges de ação
+    let importCount = 0;
+    let predictCount = 0;
+
+    const { data: profile } = await supabase
+        .from('user_profiles')
+        .select('import_count, predict_count')
+        .eq('id', userId)
+        .single();
+
+    if (profile) {
+        importCount = profile.import_count;
+        predictCount = profile.predict_count;
+    } else {
+        importCount = parseInt(localStorage.getItem(`import_count_${userId}`) || '0');
+        predictCount = parseInt(localStorage.getItem(`predict_count_${userId}`) || '0');
+    }
+
     if (importCount >= 3 && !_badges.serialImporter) {
-        unlockBadge('serialImporter');
+        await unlockBadge('serialImporter');
     }
 
-    const predictCount = parseInt(localStorage.getItem(`predict_count_${userId}`) || '0');
     if (predictCount >= 5 && !_badges.oracleApprentice) {
-        unlockBadge('oracleApprentice');
+        await unlockBadge('oracleApprentice');
     }
 }
 
@@ -187,11 +300,11 @@ function showSnapshotModal() {
             
             <div class="snapshot-stat" style="background: rgba(255,255,255,0.05); padding: 1rem; border-radius: 12px; margin-bottom: 1rem;">
                 <div style="font-size: 0.7rem; color: var(--color-text-muted);">Sobra Projetada</div>
-                <div style="font-size: 1.5rem; font-weight: 800; color: var(--color-success);">${formatar(balance)}</div>
+                <div style="font-size: 1.5rem; font-weight: 800; color: var(--color-success);">${typeof formatar === 'function' ? formatar(balance) : balance}</div>
             </div>
 
             <div style="font-size: 0.8rem; color: var(--color-text-muted); font-style: italic; margin-bottom: 2rem;">
-                "O Oráculo previu um futuro próspero para mim. E o seu?"
+                "O Oráculo previu um futuro próspero para mi. E o seu?"
             </div>
 
             <div style="display: flex; gap: 1rem;">
@@ -212,7 +325,7 @@ function setupPredictor(userId) {
     const form = document.getElementById('predictor-form');
     if (!form) return;
 
-    form.addEventListener('submit', (e) => {
+    form.addEventListener('submit', async (e) => {
         e.preventDefault();
         const item = document.getElementById('predict-item').value;
         const value = parseFloat(document.getElementById('predict-value').value);
@@ -221,8 +334,20 @@ function setupPredictor(userId) {
         if (!value || isNaN(value)) return;
 
         // Incrementar contador de predições
-        const count = parseInt(localStorage.getItem(`predict_count_${userId}`) || '0') + 1;
+        let count = parseInt(localStorage.getItem(`predict_count_${userId}`) || '0') + 1;
         localStorage.setItem(`predict_count_${userId}`, count);
+        
+        // Update Supabase
+        supabase.rpc('increment_predict_count', { user_id: userId })
+            .catch(() => {
+                // Fallback if RPC doesn't exist
+                supabase.from('user_profiles').select('predict_count').eq('id', userId).single()
+                    .then(({data}) => {
+                        const newCount = (data?.predict_count || 0) + 1;
+                        supabase.from('user_profiles').update({ predict_count: newCount }).eq('id', userId);
+                    });
+            });
+
         checkBadges(userId);
 
         const balance = window._projectedBalance || calculateGlobalBalance();
@@ -234,7 +359,7 @@ function setupPredictor(userId) {
 
         const escapedItem = window.escapeHTML ? window.escapeHTML(item) : item;
         if (remaining < 0) {
-            message = `Análise crítica: Comprar <strong>${escapedItem}</strong> destruirá sua reserva e te deixará com saldo NEGATIVO de ${formatar(Math.abs(remaining))}. Não recomendo.`;
+            message = `Análise crítica: Comprar <strong>${escapedItem}</strong> destruirá sua reserva e te deixará com saldo NEGATIVO de ${typeof formatar === 'function' ? formatar(Math.abs(remaining)) : remaining}. Não recomendo.`;
             type = "danger";
             mood = "angry";
         } else if (value > (balance * 0.3)) {
@@ -242,7 +367,7 @@ function setupPredictor(userId) {
             type = "warning";
             mood = "alert";
         } else {
-            message = `Compra de <strong>${escapedItem}</strong> aprovada. Seu saldo projetado continuará saudável em ${formatar(remaining)}.`;
+            message = `Compra de <strong>${escapedItem}</strong> aprovada. Seu saldo projetado continuará saudável em ${typeof formatar === 'function' ? formatar(remaining) : remaining}.`;
             type = "success";
             mood = "happy";
             addXP(10); // XP por simular compras seguras
@@ -260,6 +385,7 @@ function setupPredictor(userId) {
 
 function calculateGlobalBalance() {
     if (typeof _contas === 'undefined') return 0;
+    const txs = window._allTransactions || [];
     return _contas.reduce((acc, c) => acc + (parseFloat(c.saldo_inicial) || 0), 0) + 
-           _allTransactions.reduce((acc, t) => acc + (t.tipo === 'entrada' ? parseFloat(t.valor) : -parseFloat(t.valor)), 0);
+           txs.reduce((acc, t) => acc + (t.tipo === 'entrada' ? parseFloat(t.valor) : -parseFloat(t.valor)), 0);
 }

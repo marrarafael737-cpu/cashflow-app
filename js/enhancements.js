@@ -9,10 +9,12 @@ async function handleOCR(file) {
     showToast('Iniciando escaneamento... 🤖', 'info');
     
     // Feedback visual de carregamento no botão
-    const btn = document.getElementById('btn-ocr-trigger');
-    const originalContent = btn.innerHTML;
-    btn.innerHTML = '⌛';
-    btn.disabled = true;
+    const btn = document.getElementById('btn-magic-scan');
+    const originalContent = btn ? btn.innerHTML : '';
+    if (btn) {
+        btn.classList.add('loading-ocr');
+        btn.disabled = true;
+    }
 
     try {
         const worker = await Tesseract.createWorker('por'); // Português
@@ -20,31 +22,34 @@ async function handleOCR(file) {
         await worker.terminate();
 
         console.log('Texto extraído:', text);
-
+        const linhas = text.split('\n').filter(l => l.trim().length > 0);
+ 
         // Lógica simples de extração de valor (Regex para R$ ou números com vírgula)
-        const valorRegex = /(?:R\$|TOTAL|VALOR)\s*[:\s]*([\d.,]+)/i;
+        const valorRegex = /(?:R\$|TOTAL|VALOR|PAGAR)\s*[:\s]*([\d.,]+)/i;
         const match = text.match(valorRegex);
 
         if (match) {
             let valor = match[1].replace(/\./g, '').replace(',', '.');
-            document.getElementById('valor').value = valor;
-            showToast('Valor extraído com sucesso!', 'success');
+            const magicInput = document.getElementById('magic-input');
+            if (magicInput) {
+                magicInput.value = `Gastei ${valor} em ${linhas[0]?.substring(0, 20) || 'Compra'}`;
+                magicInput.focus();
+                // Disparar input para o preview atualizar
+                magicInput.dispatchEvent(new Event('input'));
+            }
+            showToast('Dados extraídos para o Magic Input!', 'success');
         } else {
             showToast('Não consegui ler o valor, mas tentei! 😅', 'warning');
-        }
-
-        // Tentar extrair descrição (primeira linha ou palavra chave)
-        const linhas = text.split('\n').filter(l => l.trim().length > 3);
-        if (linhas.length > 0) {
-            document.getElementById('descricao').value = linhas[0].substring(0, 30);
         }
 
     } catch (error) {
         console.error('Erro no OCR:', error);
         showToast('Falha ao processar imagem.', 'error');
     } finally {
-        btn.innerHTML = originalContent;
-        btn.disabled = false;
+        if (btn) {
+            btn.classList.remove('loading-ocr');
+            btn.disabled = false;
+        }
     }
 }
 
@@ -95,11 +100,47 @@ function renderHeatmap(transactions) {
     });
 }
 
+/**
+ * Configura os ouvintes de eventos para as melhorias (OCR e Geo)
+ */
+function setupEnhancementListeners(userId) {
+    // 1. Ouvinte para o botão de Magic Scan (OCR)
+    const btnScan = document.getElementById('btn-magic-scan');
+    const fileInput = document.getElementById('magic-scan-input');
+
+    if (btnScan && fileInput) {
+        btnScan.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) handleOCR(file);
+        });
+    }
+
+    // 2. Ouvinte para Geolocalização (Sugestões de Contexto)
+    if ("geolocation" in navigator) {
+        navigator.geolocation.getCurrentPosition(async (position) => {
+            const { latitude, longitude } = position.coords;
+            console.log(`C.A.S.H. Unit: Localização detectada (${latitude}, ${longitude})`);
+            
+            // Aqui poderíamos chamar uma API de Reverse Geocoding ou buscar estabelecimentos próximos salvos
+            // Por enquanto, vamos apenas atualizar o estado para o SmartParser usar
+            window._currentLocation = { lat: latitude, lon: longitude };
+            
+            // Se o SmartParser estiver disponível, atualizamos as sugestões
+            if (typeof updateMagicSuggestions === 'function') {
+                updateMagicSuggestions();
+            }
+        }, (error) => {
+            console.warn('C.A.S.H. Unit: Permissão de GPS negada ou falhou.', error.message);
+        });
+    }
+}
+
 // Hook na inicialização do dashboard (main.js chamará isso)
 function initEnhancements(userId) {
     setupEnhancementListeners(userId);
     // Renderizar heatmap inicial se houver dados
     if (window._allTransactions) {
-        renderHeatmap(_allTransactions);
+        renderHeatmap(window._allTransactions);
     }
 }

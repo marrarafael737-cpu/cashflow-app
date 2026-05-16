@@ -100,6 +100,60 @@
         crossorigin="anonymous"></script>
     <script src="js/search.js"></script>
     <script src="js/utils/nlp.js"></script>
+    <!-- Google Charts for Sankey Flow -->
+    <script src="https://www.gstatic.com/charts/loader.js"></script>
+    <!-- Tesseract.js for Magic Scan OCR -->
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+    <style>
+        /* Sankey Flow Styles */
+        .sankey-section {
+            animation: slideInUp 0.6s ease-out;
+        }
+        #sankey-flow-container svg {
+            filter: drop-shadow(0 0 5px rgba(255,255,255,0.05));
+        }
+        
+        /* Premium Alert Styles */
+        .premium-alert {
+            animation: bounceIn 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            transition: transform 0.3s ease;
+        }
+        .premium-alert:hover {
+            transform: translateY(-2px);
+        }
+        
+        /* Loading States for OCR */
+        .scanning {
+            position: relative;
+            overflow: hidden;
+        }
+        .scanning::after {
+            content: "";
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(to bottom, transparent, rgba(255,122,0,0.2), transparent);
+            animation: scanLine 2s linear infinite;
+        }
+        @keyframes scanLine {
+            0% { transform: translateY(-30%); }
+            100% { transform: translateY(30%); }
+        }
+        
+        /* Pulse Border for Alerts */
+        .pulse-border {
+            box-shadow: 0 0 0 0 rgba(255, 122, 0, 0.4);
+            animation: pulse-orange 2s infinite;
+        }
+        @keyframes pulse-orange {
+            0% { box-shadow: 0 0 0 0 rgba(255, 122, 0, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(255, 122, 0, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 122, 0, 0); }
+        }
+    </style>
 </head>
 
 <body class="dashboard-body">
@@ -107,37 +161,6 @@
     <div id="loading-overlay" class="premium-loader-overlay">
         <div class="brand">Cash<span>Flow</span></div>
         <div class="loader-v4"></div>
-        <style>
-            .premium-loader-overlay {
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background: #09090B;
-                z-index: 9999;
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                justify-content: center;
-                transition: opacity 0.5s ease;
-            }
-
-            .loader-v4 {
-                width: 40px;
-                height: 40px;
-                border: 3px solid rgba(255, 122, 0, 0.1);
-                border-top-color: #FF7A00;
-                border-radius: 50%;
-                animation: spin 0.8s linear infinite;
-            }
-
-            @keyframes spin {
-                to {
-                    transform: rotate(360deg);
-                }
-            }
-        </style>
     </div>
 
     <div class="dashboard-layout">
@@ -392,6 +415,27 @@
                         </div>
                     </div>
 
+                    <!-- Visualização de Fluxo (Sankey Diagram - Item 5) -->
+                    <section class="sankey-section" style="margin-bottom: 2rem;">
+                        <div class="card-glass" style="padding: 1.5rem; min-height: 400px; display: flex; flex-direction: column;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                                <div>
+                                    <h3 class="section-title" style="margin: 0;">Fluxo Inteligente de Capital</h3>
+                                    <p style="font-size: 0.75rem; color: var(--color-text-muted); margin: 0.2rem 0 0;">Visualização de onde seu dinheiro vem e para onde ele vai</p>
+                                </div>
+                                <div class="badge-premium" style="background: rgba(255, 122, 0, 0.1); color: var(--color-primary); padding: 4px 12px; border-radius: 20px; font-size: 0.7rem; font-weight: 700;">
+                                    Sankey Flow v1.0
+                                </div>
+                            </div>
+                            <div id="sankey-flow-container" style="flex: 1; min-height: 300px; width: 100%;">
+                                <!-- Carregado via JS -->
+                                <div class="premium-loader-mini" style="height: 100%; display: flex; align-items: center; justify-content: center; color: var(--color-text-muted);">
+                                    <i class="fas fa-spinner fa-spin" style="margin-right: 10px;"></i> Orquestrando fluxos...
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
                     <!-- Oráculo & Análise Avançada (Fase 11-13) -->
                     <div id="oracle-section" class="oracle-grid">
                         <div class="oracle-card card-glass">
@@ -467,14 +511,50 @@
                                     </button>
                                 </div>
                                 <div id="budget-alerts-container" style="margin-bottom: 1rem;"></div>
-                                <div class="magic-input-wrapper" style="display: flex; gap: 1rem; position: relative;">
-                                    <input type="text" id="magic-input" placeholder="Ex: Gastei 50 no almoço hoje..."
-                                        style="flex: 1; padding: 1rem 1.2rem; border-radius: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white; font-size: 0.95rem; transition: all 0.3s ease; box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);">
+                                <div class="magic-input-wrapper" style="display: flex; gap: 0.75rem; position: relative; align-items: center;">
+                                    <div style="position: relative; flex: 1; display: flex; align-items: center;">
+                                        <input type="text" id="magic-input" placeholder="Ex: Gastei 50 no almoço hoje..."
+                                            style="width: 100%; padding: 1rem 3.5rem 1rem 1.2rem; border-radius: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white; font-size: 0.95rem; transition: all 0.3s ease; box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);">
+                                        
+                                        <!-- Magic Scan (OCR) Button -->
+                                        <button id="btn-magic-scan" type="button" class="btn-scan-input" title="Escanear Comprovante" 
+                                            style="position: absolute; right: 42px; background: transparent; border: none; color: rgba(255,255,255,0.4); cursor: pointer; padding: 8px; font-size: 1.1rem; transition: all 0.3s ease; z-index: 100;">
+                                            <i class="fas fa-camera"></i>
+                                        </button>
+
+                                        <input type="file" id="magic-scan-input" accept="image/*" capture="environment" style="display: none;">
+
+                                        <!-- Voice Button Inside Input -->
+                                        <button id="btn-magic-voice" type="button" class="btn-voice-input" title="Falar comando" 
+                                            style="position: absolute; right: 10px; background: transparent; border: none; color: rgba(255,255,255,0.4); cursor: pointer; padding: 8px; font-size: 1.1rem; transition: all 0.3s ease; z-index: 100;">
+                                            <i class="fas fa-microphone"></i>
+                                        </button>
+                                    </div>
+
                                     <button id="btn-magic-submit" class="btn-primary-action"
-                                        style="margin: 0; padding: 0 1.8rem; border-radius: 12px; font-weight: 700; letter-spacing: 0.5px;">
+                                        style="margin: 0; padding: 0 1.8rem; border-radius: 12px; font-weight: 700; letter-spacing: 0.5px; height: 50px;">
                                         <i class="fas fa-wand-magic-sparkles"></i> Processar
                                     </button>
                                 </div>
+
+                                <!-- Intelligence Preview Container -->
+                                <div id="magic-intelligence-preview" class="intelligence-preview" style="display: none; margin-top: 0.75rem; padding: 0.6rem 1rem; background: rgba(var(--color-primary-rgb), 0.05); border-radius: 10px; border: 1px dashed rgba(var(--color-primary-rgb), 0.3); align-items: center; gap: 1rem; animation: slideInUp 0.3s ease;">
+                                    <div class="preview-item">
+                                        <span class="preview-label">Detectado:</span>
+                                        <span id="preview-type-icon" class="preview-icon"></span>
+                                        <span id="preview-amount" class="preview-value"></span>
+                                    </div>
+                                    <div class="preview-divider" style="width: 1px; height: 15px; background: rgba(255,255,255,0.1);"></div>
+                                    <div class="preview-item">
+                                        <i class="fas fa-tag" style="font-size: 0.7rem; opacity: 0.5;"></i>
+                                        <span id="preview-category" class="preview-text"></span>
+                                    </div>
+                                    <div class="preview-item">
+                                        <i class="fas fa-wallet" style="font-size: 0.7rem; opacity: 0.5;"></i>
+                                        <span id="preview-account" class="preview-text"></span>
+                                    </div>
+                                </div>
+
                                 <div class="magic-suggestions"
                                     style="margin-top: 1rem; display: flex; flex-wrap: wrap; gap: 0.5rem;">
                                     <span
@@ -484,32 +564,6 @@
                                     <div class="suggestion-chip" data-text="Recebi 1500 de salário">"Recebi 1500 de salário"</div>
                                     <div class="suggestion-chip" data-text="Posso comprar um monitor por 1200?">"Posso comprar um monitor por 1200?"</div>
                                 </div>
-                                <style>
-                                    #magic-input:focus {
-                                        outline: none;
-                                        border-color: var(--color-primary);
-                                        background: rgba(255, 255, 255, 0.08);
-                                        box-shadow: 0 0 0 4px rgba(var(--color-primary-rgb), 0.15);
-                                    }
-
-                                    .suggestion-chip {
-                                        font-size: 0.7rem;
-                                        padding: 0.4rem 0.8rem;
-                                        background: rgba(255, 255, 255, 0.05);
-                                        border: 1px solid rgba(255, 255, 255, 0.08);
-                                        border-radius: 20px;
-                                        color: rgba(255, 255, 255, 0.6);
-                                        cursor: pointer;
-                                        transition: all 0.2s ease;
-                                    }
-
-                                    .suggestion-chip:hover {
-                                        background: rgba(var(--color-primary-rgb), 0.1);
-                                        border-color: var(--color-primary);
-                                        color: white;
-                                        transform: translateY(-2px);
-                                    }
-                                </style>
                             </div>
 
                             <div id="invoice-alerts-container" style="margin-bottom: 1.5rem;"></div>
@@ -1895,6 +1949,7 @@
     <script src="js/offline-sync.js?v=13" defer></script>
     <script src="js/investments.js?v=13" defer></script>
     <script src="js/account-reset.js?v=13" defer></script>
+    <script src="js/gamification.js?v=13" defer></script>
     <script src="main.js?v=13" defer></script>
     <!-- Modal de Ativos -->
     <div id="modal-asset" class="modal-overlay">
@@ -2047,6 +2102,7 @@
             </div>
         </div>
     </div>
+
 </body>
 
 </html>
