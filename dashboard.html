@@ -470,7 +470,7 @@
                                 <div class="magic-input-wrapper" style="display: flex; gap: 1rem; position: relative;">
                                     <input type="text" id="magic-input" placeholder="Ex: Gastei 50 no almoço hoje..."
                                         style="flex: 1; padding: 1rem 1.2rem; border-radius: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white; font-size: 0.95rem; transition: all 0.3s ease; box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);">
-                                    <button id="btn-magic-submit" class="btn-primary-action" onclick="handleMagicInput()"
+                                    <button id="btn-magic-submit" class="btn-primary-action"
                                         style="margin: 0; padding: 0 1.8rem; border-radius: 12px; font-weight: 700; letter-spacing: 0.5px;">
                                         <i class="fas fa-wand-magic-sparkles"></i> Processar
                                     </button>
@@ -480,15 +480,9 @@
                                     <span
                                         style="font-size: 0.65rem; color: rgba(255,255,255,0.4); width: 100%; margin-bottom: 0.2rem; text-transform: uppercase; letter-spacing: 1px; font-weight: 700;">Tente
                                         dizer:</span>
-                                    <div class="suggestion-chip"
-                                        onclick="document.getElementById('magic-input').value = 'Gastei 45 no iFood'; handleMagicInput();">
-                                        "Gastei 45 no iFood"</div>
-                                    <div class="suggestion-chip"
-                                        onclick="document.getElementById('magic-input').value = 'Recebi 1500 de salário'; handleMagicInput();">
-                                        "Recebi 1500 de salário"</div>
-                                    <div class="suggestion-chip"
-                                        onclick="document.getElementById('magic-input').value = 'Posso comprar um monitor por 1200?'; handleMagicInput();">
-                                        "Posso comprar um monitor por 1200?"</div>
+                                    <div class="suggestion-chip" data-text="Gastei 45 no iFood">"Gastei 45 no iFood"</div>
+                                    <div class="suggestion-chip" data-text="Recebi 1500 de salário">"Recebi 1500 de salário"</div>
+                                    <div class="suggestion-chip" data-text="Posso comprar um monitor por 1200?">"Posso comprar um monitor por 1200?"</div>
                                 </div>
                                 <style>
                                     #magic-input:focus {

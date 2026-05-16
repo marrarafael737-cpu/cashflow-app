@@ -195,7 +195,7 @@ async function initDashboard() {
         try { setupModalLogic(); } catch (e) { console.error('Erro ModalLogic:', e); }
         try { setupMobileInteractions(); } catch (e) { console.error('Erro MobileInteractions:', e); }
         try { setupDynamicDropdowns(); } catch (e) { console.error('Erro Dropdowns:', e); }
-        try { setupPrivacyAndSecurity(user.id); } catch (e) { console.error('Erro Security:', e); }
+        try { setupSecurity(user.id); } catch (e) { console.error('Erro Security:', e); }
         try { setupNavigation(); } catch (e) { console.error('Erro Navigation:', e); }
         try { setupEventListeners(user.id); } catch (e) { console.error('Erro EventListeners:', e); }
         try { if (window.Investments) window.Investments.init(); } catch (e) { console.error('Erro InvestmentsInit:', e); }
@@ -748,6 +748,17 @@ function setupSecurity(userId) {
         magicInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') handleMagicInput(userId);
         });
+
+        // Click nos chips de sugestão
+        document.querySelectorAll('.suggestion-chip').forEach(chip => {
+            chip.addEventListener('click', () => {
+                const text = chip.getAttribute('data-text');
+                if (text) {
+                    magicInput.value = text;
+                    handleMagicInput(userId);
+                }
+            });
+        });
     }
 
     renderSessions(userId);
@@ -1163,8 +1174,20 @@ window.handleMagicInput = async function(userId) {
             userId = App.State.user.id;
         } else if (window.supabase) {
             // Tenta obter da sessão atual do Supabase de forma síncrona/rápida
-            const session = JSON.parse(localStorage.getItem('sb-yiduasujytzsqjyrjytm-auth-token'));
-            if (session && session.user) userId = session.user.id;
+            // Correção: Usando o ID do projeto atual (wecvchpyutwjqxoeilgq)
+            const sessionStr = localStorage.getItem('sb-wecvchpyutwjqxoeilgq-auth-token');
+            if (sessionStr) {
+                try {
+                    const session = JSON.parse(sessionStr);
+                    if (session && session.user) userId = session.user.id;
+                } catch (e) { console.warn('Falha ao parsear sessão Supabase:', e); }
+            }
+
+            // Fallback final: Tentar via API se as outras falharem
+            if (!userId && typeof supabase !== 'undefined' && supabase.auth) {
+                const { data } = await supabase.auth.getSession();
+                if (data?.session?.user) userId = data.session.user.id;
+            }
         }
     }
 
