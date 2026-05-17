@@ -3,13 +3,14 @@
 /**
  * OCR: Processamento de Comprovantes
  */
-async function handleOCR(file) {
+async function handleOCR(file, target = 'magic') {
     if (!file) return;
 
     showToast('Iniciando escaneamento... 🤖', 'info');
     
     // Feedback visual de carregamento no botão
-    const btn = document.getElementById('btn-magic-scan');
+    const btnId = target === 'modal' ? 'btn-ocr-trigger' : 'btn-magic-scan';
+        const btn = document.getElementById(btnId);
     const originalContent = btn ? btn.innerHTML : '';
     if (btn) {
         btn.classList.add('loading-ocr');
@@ -34,7 +35,14 @@ async function handleOCR(file) {
             
             if (result && result.type === 'transaction') {
                 const parsed = result.data;
-                const magicInput = document.getElementById('magic-input');
+                if (target === 'modal') {
+                    const descInput = document.getElementById('descricao');
+                    const valInput = document.getElementById('valor');
+                    if (descInput) descInput.value = parsed.descricao || '';
+                    if (valInput) valInput.value = parsed.valor || '';
+                    if (typeof window.showToast === 'function') window.showToast('Comprovante lido! Verifique os dados.', 'success');
+                } else {
+                    const magicInput = document.getElementById('magic-input');
                 
                 if (magicInput) {
                     // Preenche o input para visibilidade
@@ -48,6 +56,7 @@ async function handleOCR(file) {
                 }
                 
                 showToast('Mágica! Dados extraídos do comprovante. 📸', 'success');
+                }
                 
                 // Feedback de voz opcional se habilitado
                 if (window.VoiceEngine) {

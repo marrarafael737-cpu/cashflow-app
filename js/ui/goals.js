@@ -75,6 +75,6 @@ window.handleEditMeta = function(id) {
     const modal = document.getElementById('modal-goal');
     if (modal) {
         modal.querySelector('h2').innerHTML = '<i class="fas fa-edit"></i> Editar Meta';
-        modal.classList.add('active');
+        if(window.openModal) window.openModal('modal-goal'); else { modal.style.display='flex'; setTimeout(()=>modal.classList.add('active'), 10); }
     }
 };

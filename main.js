@@ -692,7 +692,7 @@ function setupSecurity(userId) {
             mutations.forEach((mutation) => {
                 if (mutation.type === 'attributes' && mutation.attributeName === 'data-view') {
                     const view = mainContent.getAttribute('data-view');
-                    if (view === 'security') renderSessions(userId);
+                    if (view === 'security') loadSecuritySessions(userId);
                 }
             });
         });
@@ -736,7 +736,7 @@ function setupSecurity(userId) {
                 try {
                     await SecurityVault.logoutAllOtherSessions(supabase);
                     showToast('Outras sessões encerradas.', 'success');
-                    renderSessions(userId);
+                    loadSecuritySessions(userId);
                 } catch (e) {
                     showToast('Erro ao encerrar sessões.', 'error');
                 }
@@ -774,7 +774,7 @@ function setupSecurity(userId) {
         });
     }
 
-    renderSessions(userId);
+    loadSecuritySessions(userId);
     setupPrivacyAndSecurity(userId);
     // initOnboarding(userId);
 
@@ -784,6 +784,15 @@ function setupSecurity(userId) {
             navigator.serviceWorker.register('./sw.js')
                 .then(reg => console.log('C.A.S.H. Unit: Service Worker Ativo (Offline Mode Ready)', reg))
                 .catch(err => console.log('C.A.S.H. Unit: Erro ao carregar Service Worker', err));
+        });
+
+        // Força o reload da página quando o novo Service Worker assume o controle
+        let refreshing = false;
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+            if (!refreshing) {
+                refreshing = true;
+                window.location.reload();
+            }
         });
     }
 

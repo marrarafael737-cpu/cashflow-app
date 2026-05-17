@@ -1,6 +1,6 @@
 /* sw.js - Service Worker for CashFlow */
 
-const CACHE_NAME = 'cashflow-v3';
+const CACHE_NAME = 'cashflow-v11';
 const ASSETS_TO_CACHE = [
   './',
   './dashboard.html',
@@ -28,6 +28,7 @@ const ASSETS_TO_CACHE = [
   './js/ui/oracle.js',
   './js/ui/orchestrator.js',
   './js/finance.js',
+  './js/account-reset.js',
 
   './js/transactions.js',
   './js/mascot.js',
@@ -49,6 +50,8 @@ self.addEventListener('install', (event) => {
     caches.open(CACHE_NAME).then((cache) => {
       console.log('C.A.S.H. Unit: Caching Shell Assets');
       return cache.addAll(ASSETS_TO_CACHE);
+    }).then(() => {
+      return self.skipWaiting();
     })
   );
 });
@@ -60,6 +63,8 @@ self.addEventListener('activate', (event) => {
       return Promise.all(
         keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))
       );
+    }).then(() => {
+      return self.clients.claim();
     })
   );
 });
@@ -72,7 +77,7 @@ self.addEventListener('fetch', (event) => {
   }
 
   event.respondWith(
-    caches.match(event.request).then((response) => {
+    caches.match(event.request, { ignoreSearch: true }).then((response) => {
       return response || fetch(event.request);
     })
   );

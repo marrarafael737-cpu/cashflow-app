@@ -966,7 +966,7 @@
                                             todos os dados e limpa seu progresso. Gera um backup "Caixa Preta" antes de
                                             apagar.</small>
                                     </div>
-                                    <button id="btn-open-factory-reset" class="btn-danger"
+                                    <button id="btn-open-factory-reset" class="btn-danger" onclick="if(window.openModal) window.openModal('modal-factory-reset'); else document.getElementById('modal-factory-reset').style.display='flex'; goToResetStep(1);"
                                         style="padding: 0.6rem 1rem; border-radius: 10px; font-weight: 700; font-size: 0.8rem; white-space: nowrap; cursor: pointer; border: none; background: var(--color-danger); color: #fff;">
                                         <i class="fas fa-trash-alt"></i> Resetar
                                     </button>
@@ -2048,6 +2048,7 @@
                             style="font-size: 0.8rem; color: var(--color-text-muted); margin: 0 0 1rem; line-height: 1.4;">
                             Geraremos um arquivo JSON com todos os seus dados antes da exclusão definitiva.</p>
                         <button id="btn-generate-backup" class="btn-primary-action"
+                            onclick="if(typeof AccountReset !== 'undefined') { const uid = window.App?.State?.user?.id; AccountReset.exportData(uid).then(s => { if(s) goToResetStep(2); }); } else { alert('Módulo de reset ainda não carregou completamente. Por favor, tente um hard refresh (Ctrl + F5).'); }"
                             style="width: 100%; border-radius: 12px; padding: 0.8rem; background: var(--color-primary); color: #000; border: none; font-weight: 700; cursor: pointer;">
                             <i class="fas fa-download"></i> Gerar Backup e Prosseguir
                         </button>

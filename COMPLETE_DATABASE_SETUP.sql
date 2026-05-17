@@ -49,6 +49,8 @@ CREATE TABLE IF NOT EXISTS transacoes (
     parcela_atual INTEGER DEFAULT 1,
     is_recurring_origin BOOLEAN DEFAULT FALSE,
     is_piggy BOOLEAN DEFAULT FALSE,
+    is_split_loan BOOLEAN DEFAULT FALSE,
+    split_contact TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
 );
 
@@ -98,6 +100,24 @@ CREATE TABLE IF NOT EXISTS historico_acesso (
     data_hora TIMESTAMP WITH TIME ZONE DEFAULT now()
 );
 
+-- 8.5. TABELA: user_profiles (Gamificação)
+CREATE TABLE IF NOT EXISTS user_profiles (
+    id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+    xp INTEGER DEFAULT 0,
+    level INTEGER DEFAULT 1,
+    import_count INTEGER DEFAULT 0,
+    predict_count INTEGER DEFAULT 0,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
+);
+
+-- 8.6. TABELA: user_badges (Conquistas da Gamificação)
+CREATE TABLE IF NOT EXISTS user_badges (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE DEFAULT auth.uid(),
+    badge_id TEXT NOT NULL,
+    unlocked_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
+);
+
 -- 9. HABILITAR RLS EM TUDO
 ALTER TABLE categorias ENABLE ROW LEVEL SECURITY;
 ALTER TABLE subcategorias ENABLE ROW LEVEL SECURITY;
@@ -107,6 +127,8 @@ ALTER TABLE metas ENABLE ROW LEVEL SECURITY;
 ALTER TABLE orcamentos ENABLE ROW LEVEL SECURITY;
 ALTER TABLE recorrencias ENABLE ROW LEVEL SECURITY;
 ALTER TABLE historico_acesso ENABLE ROW LEVEL SECURITY;
+ALTER TABLE user_profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE user_badges ENABLE ROW LEVEL SECURITY;
 
 -- 10. POLÍTICAS DE ACESSO (POLICIES)
 DO $$ 
@@ -137,5 +159,13 @@ BEGIN
 
     IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Users can only access their own history') THEN
         CREATE POLICY "Users can only access their own history" ON historico_acesso FOR ALL USING (auth.uid() = user_id);
+    END IF;
+
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Users can only access their own profile') THEN
+        CREATE POLICY "Users can only access their own profile" ON user_profiles FOR ALL USING (auth.uid() = id);
+    END IF;
+
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Users can only access their own badges') THEN
+        CREATE POLICY "Users can only access their own badges" ON user_badges FOR ALL USING (auth.uid() = user_id);
     END IF;
 END $$;

@@ -70,18 +70,18 @@ async function renderCategories() {
 }
 
 async function handleDeleteCategory(id) {
-    const confirmed = await confirmPremium('Excluir esta categoria? Transações vinculadas serão preservadas (ficarão sem categoria).', {
+    const confirmed = await confirmPremium('Excluir esta categoria? TransaÃ§Ãµes vinculadas serÃ£o preservadas (ficarÃ£o sem categoria).', {
         title: 'Excluir Categoria',
         type: 'danger'
     });
     if (!confirmed) return;
     try {
         const { error: moveError } = await supabase.from('transacoes').update({ categoria_id: null }).eq('categoria_id', id);
-        if (moveError) console.warn('Falha ao desvincular transações, mas prosseguindo...', moveError);
+        if (moveError) console.warn('Falha ao desvincular transaÃ§Ãµes, mas prosseguindo...', moveError);
 
         const { error } = await supabase.from('categorias').delete().eq('id', id);
         if (!error) {
-            showToast('Categoria excluída.', 'info');
+            showToast('Categoria excluÃ­da.', 'info');
             const user = await getCurrentUser();
             if (user) {
                 if (typeof initializeCategories === 'function') await initializeCategories(user.id);
@@ -113,7 +113,7 @@ function setupAccountFormEvents(userId) {
             const is_reserva_emergencia = document.getElementById('account-is-reserva').checked;
 
             if (!nome) {
-                showToast('O nome da conta é obrigatório.', 'alert');
+                showToast('O nome da conta Ã© obrigatÃ³rio.', 'alert');
                 return;
             }
 
@@ -164,7 +164,7 @@ async function handleEditAccount(id) {
         modal.style.display = 'flex';
         setTimeout(() => modal.classList.add('active'), 10);
 
-        // Preencher formulário
+        // Preencher formulÃ¡rio
         document.getElementById('edit-account-id').value = account.id;
         document.getElementById('account-nome').value = account.nome;
         document.getElementById('account-saldo').value = account.saldo_inicial;
@@ -176,12 +176,12 @@ async function handleEditAccount(id) {
         document.getElementById('account-is-reserva').checked = account.is_reserva_emergencia || false;
         document.getElementById('credit-card-settings').style.display = account.tipo === 'credito' ? 'block' : 'none';
 
-        // Configurar botões do modal
+        // Configurar botÃµes do modal
         const deleteBtn = document.getElementById('btn-delete-account');
         if (deleteBtn) deleteBtn.style.display = 'block';
 
         const submitBtn = document.getElementById('btn-account-submit');
-        if (submitBtn) submitBtn.textContent = 'Salvar Alterações';
+        if (submitBtn) submitBtn.textContent = 'Salvar AlteraÃ§Ãµes';
 
         const modalTitle = modal.querySelector('h2');
         if (modalTitle) modalTitle.innerHTML = '<i class="fas fa-wallet"></i> Editar Conta';
@@ -198,7 +198,7 @@ async function handleDeleteAccount() {
     const account = _contas.find(c => c.id === id);
     if (!account) return;
 
-    const confirmed = await confirmPremium(`Deseja realmente excluir a conta "${account.nome}"? Esta ação removerá a conta, mas as transações vinculadas serão preservadas.`, {
+    const confirmed = await confirmPremium(`Deseja realmente excluir a conta "${account.nome}"? Esta aÃ§Ã£o removerÃ¡ a conta, mas as transaÃ§Ãµes vinculadas serÃ£o preservadas.`, {
         title: 'Excluir Conta',
         type: 'danger'
     });
@@ -214,7 +214,7 @@ async function handleDeleteAccount() {
         const { error } = await supabase.from('contas').delete().eq('id', id);
 
         if (!error) {
-            showToast('Conta excluída com sucesso!', 'info');
+            showToast('Conta excluÃ­da com sucesso!', 'info');
             document.getElementById('modal-account').classList.remove('active');
             setTimeout(() => {
                 document.getElementById('modal-account').style.display = 'none';
@@ -310,7 +310,7 @@ function initBudgetEvents(userId) {
             const now = new Date();
 
             if (!catId || isNaN(valor) || valor <= 0) {
-                showToast('Selecione uma categoria e um valor limite válido.', 'alert');
+                showToast('Selecione uma categoria e um valor limite vÃ¡lido.', 'alert');
                 return;
             }
 
@@ -325,7 +325,7 @@ function initBudgetEvents(userId) {
             if (btn) { btn.classList.remove('loading'); btn.disabled = false; }
 
             if (!error) {
-                showToast('Orçamento salvo!', 'success');
+                showToast('OrÃ§amento salvo!', 'success');
                 await loadOrcamentos(userId);
                 document.getElementById('modal-budget').classList.remove('active');
                 if (typeof addXP === 'function') addXP(10); // XP por planejamento
@@ -334,11 +334,11 @@ function initBudgetEvents(userId) {
     }
 }
 
-// Funções de Exclusão (Handlers Globais)
-// handleDeleteAccount (legacy/grid) redireciona para a versão consolidada
+// FunÃ§Ãµes de ExclusÃ£o (Handlers Globais)
+// handleDeleteAccount (legacy/grid) redireciona para a versÃ£o consolidada
 async function handleDeleteAccountGrid(id, name) {
     const confirmed = await confirmPremium(`Deseja excluir a conta "${name}"?`, {
-        title: 'Confirmar Exclusão',
+        title: 'Confirmar ExclusÃ£o',
         type: 'danger'
     });
     if (!confirmed) return;
@@ -346,7 +346,7 @@ async function handleDeleteAccountGrid(id, name) {
     try {
         const { error } = await supabase.from('contas').delete().eq('id', id);
         if (!error) {
-            showToast('Conta excluída.', 'info');
+            showToast('Conta excluÃ­da.', 'info');
             const user = await getCurrentUser();
             if (user) {
                 if (typeof loadContas === 'function') await loadContas(user.id);
@@ -372,29 +372,29 @@ async function handleDeleteMeta(id) {
 }
 
 async function handleDeleteOrcamento(id) {
-    const confirmed = await confirmPremium('Excluir este orçamento?', { type: 'danger', title: 'Excluir Orçamento' });
+    const confirmed = await confirmPremium('Excluir este orÃ§amento?', { type: 'danger', title: 'Excluir OrÃ§amento' });
     if (!confirmed) return;
     const { error } = await supabase.from('orcamentos').delete().eq('id', id);
     if (!error) {
-        showToast('Orçamento excluído.', 'info');
+        showToast('OrÃ§amento excluÃ­do.', 'info');
         const user = await getCurrentUser();
         if (user && typeof loadOrcamentos === 'function') await loadOrcamentos(user.id);
     }
 }
 
 async function handleDeleteTransaction(id) {
-    const confirmed = await confirmPremium('Deseja realmente excluir esta transação?', { type: 'danger', title: 'Excluir Transação' });
+    const confirmed = await confirmPremium('Deseja realmente excluir esta transaÃ§Ã£o?', { type: 'danger', title: 'Excluir TransaÃ§Ã£o' });
     if (!confirmed) return;
     
     if (typeof App !== 'undefined' && App.Utils.triggerHaptic) App.Utils.triggerHaptic([30, 50, 30]);
 
-    // Caso seja uma transação offline (ainda não sincronizada)
+    // Caso seja uma transaÃ§Ã£o offline (ainda nÃ£o sincronizada)
     if (id && id.toString().startsWith('offline_')) {
         if (window.OfflineSync && typeof window.OfflineSync.removeFromQueueByTxId === 'function') {
             const removed = window.OfflineSync.removeFromQueueByTxId(id);
             if (removed) {
-                showToast('Transação pendente removida.', 'info');
-                // Remover da memória local e re-renderizar
+                showToast('TransaÃ§Ã£o pendente removida.', 'info');
+                // Remover da memÃ³ria local e re-renderizar
                 if (typeof _allTransactions !== 'undefined') {
                     window._allTransactions = _allTransactions.filter(t => t.id !== id);
                     if (typeof filterAndRenderData === 'function') filterAndRenderData();
@@ -406,22 +406,22 @@ async function handleDeleteTransaction(id) {
 
     const { error } = await supabase.from('transacoes').delete().eq('id', id);
     if (!error) {
-        showToast('Transação excluída com sucesso.', 'success');
+        showToast('TransaÃ§Ã£o excluÃ­da com sucesso.', 'success');
         const user = await getCurrentUser();
         if (user) await loadTransactions(user.id);
     } else {
-        showToast('Erro ao excluir transação.', 'error');
+        showToast('Erro ao excluir transaÃ§Ã£o.', 'error');
     }
 }
 
 function setupCalendarLogic(userId) {
-    // Implementação básica de navegação de calendário se necessário
-    console.log('Calendário operacional.');
+    // ImplementaÃ§Ã£o bÃ¡sica de navegaÃ§Ã£o de calendÃ¡rio se necessÃ¡rio
+    console.log('CalendÃ¡rio operacional.');
 }
 
 // Novos listeners para Faturas, Parcelamentos e OCR
 function setupEnhancementListeners(userId) {
-    // Toggle Parcelas no Form de Transação
+    // Toggle Parcelas no Form de TransaÃ§Ã£o
     const formaPagamento = document.getElementById('forma-pagamento');
     const fieldParcelas = document.getElementById('field-parcelas');
     if (formaPagamento && fieldParcelas) {
@@ -430,7 +430,7 @@ function setupEnhancementListeners(userId) {
         });
     }
 
-    // Toggle Configurações de Cartão no Modal de Conta
+    // Toggle ConfiguraÃ§Ãµes de CartÃ£o no Modal de Conta
     const accountTipo = document.getElementById('account-tipo');
     const creditSettings = document.getElementById('credit-card-settings');
     if (accountTipo && creditSettings) {
@@ -447,24 +447,24 @@ function setupEnhancementListeners(userId) {
         inputOcr.addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (file && typeof handleOCR === 'function') {
-                handleOCR(file);
+                handleOCR(file, 'modal');
             }
         });
     }
 }
 
 async function handleDeleteRecurrence(id) {
-    const confirmed = await confirmPremium('Deseja realmente cancelar esta recorrência?', { type: 'danger', title: 'Cancelar Recorrência' });
+    const confirmed = await confirmPremium('Deseja realmente cancelar esta recorrÃªncia?', { type: 'danger', title: 'Cancelar RecorrÃªncia' });
     if (!confirmed) return;
 
     try {
         const { error } = await supabase.from('recorrencias').delete().eq('id', id);
         if (!error) {
-            showToast('Recorrência removida.', 'info');
+            showToast('RecorrÃªncia removida.', 'info');
             const user = await getCurrentUser();
             if (user) await loadRecorrencias(user.id);
         } else {
-            showToast('Erro ao remover recorrência.', 'error');
+            showToast('Erro ao remover recorrÃªncia.', 'error');
         }
     } catch (err) {
         console.error(err);
@@ -472,12 +472,12 @@ async function handleDeleteRecurrence(id) {
 }
 
 function setupRecurringEvents(userId) {
-    console.log('Configurando eventos de recorrência para usuário:', userId);
+    console.log('Configurando eventos de recorrÃªncia para usuÃ¡rio:', userId);
     const form = document.getElementById('recurring-form');
     if (form) {
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
-            console.log('Formulário de recorrência enviado!');
+            console.log('FormulÃ¡rio de recorrÃªncia enviado!');
             if (typeof triggerHaptic === 'function') triggerHaptic(50);
 
             const btn = form.querySelector('button[type="submit"]');
@@ -487,15 +487,15 @@ function setupRecurringEvents(userId) {
                 if (typeof handleAddRecurrence === 'function') {
                     await handleAddRecurrence(userId);
                 } else {
-                    console.error('Função handleAddRecurrence não encontrada!');
+                    console.error('FunÃ§Ã£o handleAddRecurrence nÃ£o encontrada!');
                 }
             } else {
-                console.error('userId não fornecido para setupRecurringEvents!');
-                showToast('Erro de autenticação ao salvar.', 'error');
+                console.error('userId nÃ£o fornecido para setupRecurringEvents!');
+                showToast('Erro de autenticaÃ§Ã£o ao salvar.', 'error');
             }
         });
     } else {
-        console.warn('Formulário recurring-form não encontrado no DOM.');
+        console.warn('FormulÃ¡rio recurring-form nÃ£o encontrado no DOM.');
     }
 }
 
@@ -545,15 +545,15 @@ function setupParserEvents(userId) {
                 if (confTag && confVal) {
                     const score = parsed.confidence || 0;
                     if (score >= 25) {
-                        confVal.textContent = 'Confiança Alta';
+                        confVal.textContent = 'ConfianÃ§a Alta';
                         confTag.style.background = 'rgba(16, 185, 129, 0.1)';
                         confTag.style.color = '#10B981';
                     } else if (score >= 10) {
-                        confVal.textContent = 'Confiança Média';
+                        confVal.textContent = 'ConfianÃ§a MÃ©dia';
                         confTag.style.background = 'rgba(245, 158, 11, 0.1)';
                         confTag.style.color = '#F59E0B';
                     } else {
-                        confVal.textContent = 'Confiança Baixa (Revisão Sugerida)';
+                        confVal.textContent = 'ConfianÃ§a Baixa (RevisÃ£o Sugerida)';
                         confTag.style.background = 'rgba(239, 68, 68, 0.1)';
                         confTag.style.color = '#EF4444';
                     }
@@ -577,15 +577,15 @@ function setupParserEvents(userId) {
         const text = textarea.value.trim();
         const parsed = SmartParser.parse(text);
         if (!parsed || !parsed.valor) {
-            showToast('Não foi possível identificar dados nesta mensagem.', 'alert');
+            showToast('NÃ£o foi possÃ­vel identificar dados nesta mensagem.', 'alert');
             return;
         }
 
-        btnConfirm.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Lançando...';
+        btnConfirm.innerHTML = '<i class="fas fa-spinner fa-spin"></i> LanÃ§ando...';
         btnConfirm.disabled = true;
         btnConfirm.classList.add('loading');
 
-        // Usar a conta selecionada pelo usuário no dropdown (ou a detectada)
+        // Usar a conta selecionada pelo usuÃ¡rio no dropdown (ou a detectada)
         const accSelect = document.getElementById('parser-account-select');
         let final_conta_id = accSelect ? accSelect.value : parsed.conta_id;
         let isCredit = false;
@@ -594,7 +594,7 @@ function setupParserEvents(userId) {
             final_conta_id = _contas[0].id;
         }
 
-        // Detectar se é crédito para setar forma_pagamento
+        // Detectar se Ã© crÃ©dito para setar forma_pagamento
         const selectedAcc = (typeof _contas !== 'undefined') ? _contas.find(c => c.id === final_conta_id) : null;
         if (selectedAcc && selectedAcc.tipo === 'credito') isCredit = true;
 
@@ -613,13 +613,13 @@ function setupParserEvents(userId) {
 
             OfflineSync.addToQueue(transactionData);
 
-            showToast('Lançamento via Oráculo em fila offline! 🧠', 'info');
+            showToast('LanÃ§amento via OrÃ¡culo em fila offline! ð§ ', 'info');
             textarea.value = '';
             preview.style.display = 'none';
             modal.classList.remove('active');
             setTimeout(() => modal.style.display = 'none', 300);
 
-            btnConfirm.innerHTML = 'Confirmar Lançamento';
+            btnConfirm.innerHTML = 'Confirmar LanÃ§amento';
             btnConfirm.disabled = false;
             btnConfirm.classList.remove('loading');
             return;
@@ -637,7 +637,7 @@ function setupParserEvents(userId) {
         }]);
 
         if (!error) {
-            showToast('Lançamento via Oráculo realizado com sucesso! 🧠', 'success');
+            showToast('LanÃ§amento via OrÃ¡culo realizado com sucesso! ð§ ', 'success');
             textarea.value = '';
             preview.style.display = 'none';
             modal.classList.remove('active');
@@ -646,10 +646,10 @@ function setupParserEvents(userId) {
             if (typeof loadTransactions === 'function') await loadTransactions(userId);
             if (typeof filterAndRenderData === 'function') filterAndRenderData();
         } else {
-            showToast('Erro ao lançar: ' + error.message, 'error');
+            showToast('Erro ao lanÃ§ar: ' + error.message, 'error');
         }
 
-        btnConfirm.innerHTML = 'Confirmar Lançamento';
+        btnConfirm.innerHTML = 'Confirmar LanÃ§amento';
         btnConfirm.disabled = false;
         btnConfirm.classList.remove('loading');
     });
@@ -670,7 +670,7 @@ async function handlePayRecurrenceEarly(id) {
     const r = _recorrencias.find(item => item.id === id);
     if (!r) return;
 
-    const confirmed = await confirmPremium(`Deseja registrar o pagamento de "${r.descricao}" para este mês agora?`, {
+    const confirmed = await confirmPremium(`Deseja registrar o pagamento de "${r.descricao}" para este mÃªs agora?`, {
         title: 'Pagamento Antecipado',
         type: 'info',
         confirmText: 'Registrar Agora'
@@ -680,7 +680,7 @@ async function handlePayRecurrenceEarly(id) {
     try {
         const todayStr = new Date().toLocaleDateString('en-CA');
 
-        // 1. Criar a transação
+        // 1. Criar a transaÃ§Ã£o
         const { error: transError } = await supabase.from('transacoes').insert([{
             user_id: r.user_id,
             descricao: `[MANUAL] ${r.descricao}`,
@@ -694,7 +694,7 @@ async function handlePayRecurrenceEarly(id) {
 
         if (transError) throw transError;
 
-        // 2. Atualizar data do último pagamento
+        // 2. Atualizar data do Ãºltimo pagamento
         const { error: updateError } = await supabase.from('recorrencias')
             .update({ ultimo_pagamento: todayStr })
             .eq('id', id);
@@ -722,20 +722,20 @@ window.injectDefaultCategories = async function() {
     const user = await getCurrentUser();
     if (!user) return;
     const defaultCats = [
-        { nome: 'Alimenta��o', tipo: 'saida', user_id: user.id },
+        { nome: 'Alimentação', tipo: 'saida', user_id: user.id },
         { nome: 'Moradia', tipo: 'saida', user_id: user.id },
         { nome: 'Lazer', tipo: 'saida', user_id: user.id },
-        { nome: 'Sa�de', tipo: 'saida', user_id: user.id },
+        { nome: 'Saúde', tipo: 'saida', user_id: user.id },
         { nome: 'Transporte', tipo: 'saida', user_id: user.id },
-        { nome: 'Sal�rio', tipo: 'entrada', user_id: user.id }
+        { nome: 'Salário', tipo: 'entrada', user_id: user.id }
     ];
     const { data, error } = await supabase.from('categorias').insert(defaultCats);
     if (!error) {
-        showToast('Categorias padr�o adicionadas!', 'success');
+        showToast('Categorias padrão adicionadas!', 'success');
         if (typeof initializeCategories === 'function') await initializeCategories(user.id);
         if (typeof renderCategories === 'function') renderCategories();
     } else {
-        showToast('Erro ao inserir padr�es.', 'error');
+        showToast('Erro ao inserir padrões.', 'error');
     }
 };
 

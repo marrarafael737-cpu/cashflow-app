@@ -270,10 +270,8 @@ function setupAuthUI() {
             
             setLoading('btn-forgot-submit', true);
             try {
-                // Se estiver testando localmente, força o redirecionamento para o app em produção.
-                // Caso contrário, usa a URL atual (útil para deploys como Vercel/Netlify)
-                const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.protocol === 'file:';
-                const redirectUrl = isLocal ? 'https://cashflow.app/login.html' : window.location.origin + window.location.pathname;
+                // Usa a URL exata em que o usuário está para evitar redirecionamentos para domínios inexistentes
+                const redirectUrl = window.location.origin + window.location.pathname;
                 
                 const { error } = await client.auth.resetPasswordForEmail(email, {
                     redirectTo: redirectUrl,
