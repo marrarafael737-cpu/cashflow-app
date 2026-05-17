@@ -11,8 +11,7 @@
         content="finanças, controle financeiro, economy, investimentos, dinheiro, dashboard financeiro">
 
     <!-- Security Headers -->
-    <meta http-equiv="Content-Security-Policy"
-        content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://us.i.posthog.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; img-src 'self' data: https://*; connect-src 'self' https://wecvchpyutwjqxoeilgq.supabase.co https://us.i.posthog.com wss://wecvchpyutwjqxoeilgq.supabase.co; frame-ancestors 'none';">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://us.i.posthog.com https://www.gstatic.com https://www.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; img-src 'self' data: https: blob:; connect-src 'self' https://wecvchpyutwjqxoeilgq.supabase.co https://us.i.posthog.com wss://wecvchpyutwjqxoeilgq.supabase.co https://tessdata.projectnaptha.com; worker-src 'self' blob:; frame-src https://www.google.com;">
     <meta http-equiv="X-Content-Type-Options" content="nosniff">
     <meta http-equiv="X-Frame-Options" content="DENY">
     <meta name="referrer" content="strict-origin-when-cross-origin">
@@ -100,6 +99,8 @@
         crossorigin="anonymous"></script>
     <script src="js/search.js"></script>
     <script src="js/utils/nlp.js"></script>
+    <script src="js/utils/smart-nlp.js"></script>
+    <script src="js/utils/voice.js"></script>
     <!-- Google Charts for Sankey Flow -->
     <script src="https://www.gstatic.com/charts/loader.js"></script>
     <!-- Tesseract.js for Magic Scan OCR -->
@@ -514,11 +515,11 @@
                                 <div class="magic-input-wrapper" style="display: flex; gap: 0.75rem; position: relative; align-items: center;">
                                     <div style="position: relative; flex: 1; display: flex; align-items: center;">
                                         <input type="text" id="magic-input" placeholder="Ex: Gastei 50 no almoço hoje..."
-                                            style="width: 100%; padding: 1rem 3.5rem 1rem 1.2rem; border-radius: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white; font-size: 0.95rem; transition: all 0.3s ease; box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);">
+                                            style="width: 100%; padding: 1rem 95px 1rem 1.2rem; border-radius: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white; font-size: 0.95rem; transition: all 0.3s ease; box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);">
                                         
                                         <!-- Magic Scan (OCR) Button -->
                                         <button id="btn-magic-scan" type="button" class="btn-scan-input" title="Escanear Comprovante" 
-                                            style="position: absolute; right: 42px; background: transparent; border: none; color: rgba(255,255,255,0.4); cursor: pointer; padding: 8px; font-size: 1.1rem; transition: all 0.3s ease; z-index: 100;">
+                                            style="position: absolute; right: 50px; background: rgba(255, 122, 0, 0.15); border: 1px solid rgba(255, 122, 0, 0.3); border-radius: 8px; color: var(--color-primary); cursor: pointer; padding: 6px 10px; font-size: 1.1rem; transition: all 0.3s ease; z-index: 100;">
                                             <i class="fas fa-camera"></i>
                                         </button>
 
@@ -526,7 +527,7 @@
 
                                         <!-- Voice Button Inside Input -->
                                         <button id="btn-magic-voice" type="button" class="btn-voice-input" title="Falar comando" 
-                                            style="position: absolute; right: 10px; background: transparent; border: none; color: rgba(255,255,255,0.4); cursor: pointer; padding: 8px; font-size: 1.1rem; transition: all 0.3s ease; z-index: 100;">
+                                            style="position: absolute; right: 8px; background: rgba(255, 122, 0, 0.15); border: 1px solid rgba(255, 122, 0, 0.3); border-radius: 8px; color: var(--color-primary); cursor: pointer; padding: 6px 10px; font-size: 1.1rem; transition: all 0.3s ease; z-index: 100;">
                                             <i class="fas fa-microphone"></i>
                                         </button>
                                     </div>
@@ -874,8 +875,7 @@
                     <div class="section-header-row">
                         <h2 class="section-title">Minhas Categorias</h2>
                     </div>
-                    <div class="grid-layout"
-                        style="display: grid; grid-template-columns: 1fr 1.5fr; gap: 2rem; margin-top: 2rem;">
+                    <div class="categories-grid">
                         <div class="card-glass" style="padding: 2rem;">
                             <h3 style="font-size: 1rem; margin-bottom: 1.5rem;">Nova Categoria</h3>
                             <form id="category-form-view" class="modern-form">
@@ -895,7 +895,12 @@
                             </form>
                         </div>
                         <div class="card-glass" style="padding: 2rem;">
-                            <h3 style="font-size: 1rem; margin-bottom: 1.5rem;">Categorias Ativas</h3>
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                                <h3 style="font-size: 1rem; margin: 0;">Categorias Ativas</h3>
+                                <button onclick="injectDefaultCategories()" class="btn-ghost-small" style="font-size: 0.7rem; padding: 4px 8px; gap: 0.25rem;">
+                                    <i class="fas fa-magic"></i> Padrões
+                                </button>
+                            </div>
                             <div id="categorias-list-view" class="mini-list">
                                 <!-- Preenchido via JS -->
                             </div>
@@ -997,9 +1002,10 @@
                     </div>
                     <div class="profile-card card-glass"
                         style="margin-top: 1.5rem; padding: 2.5rem; text-align: center; max-width: 600px; margin-left: auto; margin-right: auto;">
-                        <div class="profile-avatar-large"
+                        <div id="view-profile-avatar" class="profile-avatar-large"
                             style="width: 120px; height: 120px; background: linear-gradient(135deg, var(--color-primary), #FF2D55); border-radius: 50%; margin: 0 auto 1.5rem; display: flex; align-items: center; justify-content: center; font-size: 3rem; font-weight: 800; color: white; box-shadow: 0 10px 40px rgba(255, 122, 0, 0.3); border: 4px solid var(--color-surface);">
-                            R</div>
+                            <span id="view-profile-avatar-initials" style="line-height:1;">R</span>
+                        </div>
                         <h3 id="profile-name" style="font-size: 1.5rem; margin-bottom: 0.25rem;">Rafael Marra</h3>
                         <p id="profile-email" style="color: var(--color-text-muted); margin-bottom: 2.5rem;">
                             rafael@email.com</p>

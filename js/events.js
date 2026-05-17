@@ -1,47 +1,48 @@
 /* js/events.js - Event Listeners & Interactive Handlers */
 
 function setupCategoryFormEvents(userId) {
+    const handleCategorySubmit = async (e, formElement, isView) => {
+        e.preventDefault();
+        if (typeof triggerHaptic === 'function') triggerHaptic(50);
+
+        const btn = formElement.querySelector('button[type="submit"]');
+        if (btn && (btn.disabled || btn.classList.contains('loading'))) return;
+        if (btn) { btn.classList.add('loading'); btn.disabled = true; }
+
+        const nome = document.getElementById(isView ? 'cat-nome-view' : 'cat-nome').value;
+        const tipo = document.getElementById(isView ? 'cat-tipo-view' : 'cat-tipo').value;
+
+        const { error } = await supabase.from('categorias').insert([{
+            nome, tipo, user_id: userId
+        }]);
+
+        if (!error) {
+            showToast('Categoria criada com sucesso!', 'success');
+            formElement.reset();
+            if (typeof initializeCategories === 'function') await initializeCategories(userId);
+            if (typeof renderCategories === 'function') renderCategories();
+            if (typeof addXP === 'function') addXP(5); // XP por organizar categorias
+        } else {
+            showToast('Erro ao criar categoria.', 'error');
+        }
+        if (btn) { btn.classList.remove('loading'); btn.disabled = false; }
+    };
+
     const form = document.getElementById('category-form');
     if (form) {
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            if (typeof triggerHaptic === 'function') triggerHaptic(50);
+        form.addEventListener('submit', (e) => handleCategorySubmit(e, form, false));
+    }
 
-            const btn = form.querySelector('button[type="submit"]');
-            if (btn && (btn.disabled || btn.classList.contains('loading'))) return;
-            if (btn) { btn.classList.add('loading'); btn.disabled = true; }
-
-            const nome = document.getElementById('cat-nome').value;
-            const tipo = document.getElementById('cat-tipo').value;
-
-            const { error } = await supabase.from('categorias').insert([{
-                nome, tipo, user_id: userId
-            }]);
-
-            if (!error) {
-                showToast('Categoria criada com sucesso!', 'success');
-                form.reset();
-                if (typeof initializeCategories === 'function') await initializeCategories(userId);
-                if (typeof renderCategories === 'function') renderCategories();
-                if (typeof addXP === 'function') addXP(5); // XP por organizar categorias
-            } else {
-                showToast('Erro ao criar categoria.', 'error');
-            }
-            if (btn) { btn.classList.remove('loading'); btn.disabled = false; }
-        });
+    const formView = document.getElementById('category-form-view');
+    if (formView) {
+        formView.addEventListener('submit', (e) => handleCategorySubmit(e, formView, true));
     }
 }
 
 async function renderCategories() {
-    const list = document.getElementById('categorias-list');
-    if (!list) return;
-
-    if (!_categories || _categories.length === 0) {
-        list.innerHTML = '<p style="text-align:center; color:var(--color-text-muted); padding: 1rem; font-size: 0.8rem;">Nenhuma categoria personalizada.</p>';
-        return;
-    }
-
-    list.innerHTML = _categories.map(c => {
+    const renderHtml = (!_categories || _categories.length === 0) ? 
+        '<p style="text-align:center; color:var(--color-text-muted); padding: 1rem; font-size: 0.8rem;">Nenhuma categoria personalizada.</p>' 
+        : _categories.map(c => {
         const config = getCategoryConfig(c.nome);
         return `
             <div class="mini-list-item" style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem; border-bottom: 1px solid var(--color-border);">
@@ -49,7 +50,10 @@ async function renderCategories() {
                     <div style="width: 32px; height: 32px; border-radius: 8px; background: ${config.color}20; color: ${config.color}; display: flex; align-items: center; justify-content: center; font-size: 0.9rem;">
                         <i class="fas ${config.icon}"></i>
                     </div>
-                    ${escapeHTML(c.nome)}
+                    <div>
+                        <div style="font-weight: 500;">${escapeHTML(c.nome)}</div>
+                        <div style="font-size: 0.7rem; color: var(--color-text-muted); text-transform: uppercase;">${c.tipo === 'entrada' ? 'Receita' : 'Despesa'}</div>
+                    </div>
                 </span>
                 <button class="btn-icon-danger" onclick="handleDeleteCategory('${c.id}')">
                     <i class="fas fa-trash-alt"></i>
@@ -57,6 +61,12 @@ async function renderCategories() {
             </div>
         `;
     }).join('');
+
+    const list = document.getElementById('categorias-list');
+    if (list) list.innerHTML = renderHtml;
+
+    const listView = document.getElementById('categorias-list-view');
+    if (listView) listView.innerHTML = renderHtml;
 }
 
 async function handleDeleteCategory(id) {
@@ -707,3 +717,25 @@ async function handlePayRecurrenceEarly(id) {
 }
 
 window.handlePayRecurrenceEarly = handlePayRecurrenceEarly;
+
+window.injectDefaultCategories = async function() {
+    const user = await getCurrentUser();
+    if (!user) return;
+    const defaultCats = [
+        { nome: 'Alimentação', tipo: 'saida', user_id: user.id },
+        { nome: 'Moradia', tipo: 'saida', user_id: user.id },
+        { nome: 'Lazer', tipo: 'saida', user_id: user.id },
+        { nome: 'Saúde', tipo: 'saida', user_id: user.id },
+        { nome: 'Transporte', tipo: 'saida', user_id: user.id },
+        { nome: 'Salário', tipo: 'entrada', user_id: user.id }
+    ];
+    const { data, error } = await supabase.from('categorias').insert(defaultCats);
+    if (!error) {
+        showToast('Categorias padrão adicionadas!', 'success');
+        if (typeof initializeCategories === 'function') await initializeCategories(user.id);
+        if (typeof renderCategories === 'function') renderCategories();
+    } else {
+        showToast('Erro ao inserir padrões.', 'error');
+    }
+};
+

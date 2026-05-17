@@ -133,6 +133,19 @@ function updateAvatarUI(fullName, avatarUrl) {
             previewEl.appendChild(previewInitials);
         }
     }
+
+    // View Profile (Tela de Perfil)
+    const viewAvatarEl = document.getElementById('view-profile-avatar');
+    const viewAvatarInitials = document.getElementById('view-profile-avatar-initials');
+    if (viewAvatarEl) {
+        if (finalUrl) {
+            viewAvatarEl.innerHTML = `<img src="${finalUrl}" alt="Avatar" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+        } else if (viewAvatarInitials) {
+            viewAvatarInitials.textContent = initials;
+            viewAvatarEl.innerHTML = ''; // Limpar se houver imagem anterior
+            viewAvatarEl.appendChild(viewAvatarInitials);
+        }
+    }
 }
 
 /**
@@ -1264,14 +1277,17 @@ window.handleMagicInput = async function(userId) {
 /**
  * Função auxiliar para processar um único comando (extraída da lógica original)
  */
+/**
+ * Função auxiliar para processar um único comando (extraída da lógica original)
+ */
 async function processSingleMagicCommand(text, userId, inputElement) {
     try {
-        const nlpAnalysis = SmartNLP.analyze(text);
-        console.log('🧠 C.A.S.H. Unit: Análise NLP:', nlpAnalysis);
+        const result = await SmartNLP.process(text);
+        console.log('🧠 C.A.S.H. Unit: Processamento SmartNLP:', result);
 
         // --- 1. WORKFLOW DE SIMULAÇÃO ---
-        if (nlpAnalysis.intent === SmartNLP.intents.SIMULATION) {
-            const amountRegex = /(?:R\$|r\$|\$|reais|reias|conto|pila)?\s?(\d{1,3}(?:\.\d{3})*(?:,\d{2})|\d+(?:\.\d{2})?)(?!\/)(?:\s?(?:reais|reias|conto|pila))?/i;
+        if (result.type === 'simulation') {
+            const amountRegex = /(?:R\$|r\$|\$|reais|conto|pila)?\s?(\d{1,3}(?:\.\d{3})*(?:,\d{2})|\d+(?:\.\d{2})?)(?!\/)(?:\s?(?:reais|conto|pila))?/i;
             const amountMatch = text.match(amountRegex);
             
             if (amountMatch) {
@@ -1293,34 +1309,24 @@ async function processSingleMagicCommand(text, userId, inputElement) {
             }
         }
 
-        // --- 2. WORKFLOW DE DÍVIDA / EMPRÉSTIMO ---
-        if (nlpAnalysis.intent === SmartNLP.intents.DEBT) {
-            console.log('💸 C.A.S.H. Unit: Detectada intenção de dívida/empréstimo.');
-            // Lógica futura para criar transação em 'Contas a Receber/Pagar'
-        }
-
         if (!userId) {
             console.error('❌ C.A.S.H. Unit: Usuário não autenticado.');
             showToast('Por favor, faça login.', 'error');
             return;
         }
 
-        const parsed = SmartParser.parse(text);
+        const parsed = result.data;
         if (!parsed || !parsed.valor) {
-            // Tentativa final via LLM Simulado se o parser falhar totalmente
-            const llmFallback = await SmartNLP.callLLM(text);
-            if (!llmFallback) {
-                showToast('Não entendi: "' + text + '"', 'warning');
-                return;
-            }
+            showToast('Não entendi: "' + text + '"', 'warning');
+            return;
         }
 
         const valor = parsed.valor;
         const tipo = parsed.tipo;
         
-        // --- LÓGICA DE SPLIT (Divisão Inteligente) ---
-        let isSplit = nlpAnalysis.intent === SmartNLP.intents.SPLIT;
-        let splitWith = text.match(/(?:metade|dividir|split)\s+(?:com|do|da|pro)\s+(\w+)/i)?.[1] || 'Alguém';
+        // --- LÓGICA DE DÍVIDA / EMPRÉSTIMO ---
+        let isSplit = !!parsed.split;
+        let splitWith = parsed.split?.with || 'Alguém';
 
         let categoria_id = parsed.categoria_id;
         if (!categoria_id && parsed.categoria_nome && typeof _categories !== 'undefined') {
@@ -1368,11 +1374,10 @@ async function processSingleMagicCommand(text, userId, inputElement) {
         }
 
         const transactionsToInsert = [];
-        const valorOriginal = parsed.valor;
 
         if (parsed.split) {
             // Caso de Split: Dividir o valor
-            const userShare = valorOriginal - parsed.split.value;
+            const userShare = valor;
             const friendShare = parsed.split.value;
 
             // 1. Sua parte (Despesa real)
@@ -1392,7 +1397,7 @@ async function processSingleMagicCommand(text, userId, inputElement) {
                 is_split_loan: true // Flag interna
             });
             
-            showMascotMessage(`Entendido! Registrei sua parte (${window.formatar(userShare)}) e marquei que o(a) ${parsed.split.with} te deve ${window.formatar(friendShare)}. 🤝`, 'happy');
+            showMascotMessage(`Entendido! Registrei sua parte (${formatCurrency(userShare)}) e marquei que o(a) ${parsed.split.with} te deve ${formatCurrency(friendShare)}. 🤝`, 'happy');
         } else {
             transactionsToInsert.push(transactionData);
         }
@@ -1419,7 +1424,10 @@ async function processSingleMagicCommand(text, userId, inputElement) {
             if (typeof addXP === 'function') addXP(15);
             
             if (typeof showMascotMessage === 'function' && !text.includes('?')) {
-                showMascotMessage(`Anotei R$ ${valor.toFixed(2)} em ${parsed.categoria_nome}. ✨`, 'happy', '', 'happy');
+                showMascotMessage(`Anotei ${formatCurrency(valor)} em ${parsed.categoria_nome}. ✨`, 'happy', '', 'happy');
+                if (window.VoiceEngine) {
+                    window.VoiceEngine.speak(`Anotei ${valor.toFixed(0)} reais em ${parsed.categoria_nome}. Tudo certo!`);
+                }
             }
         } else {
             throw error;
@@ -1429,6 +1437,31 @@ async function processSingleMagicCommand(text, userId, inputElement) {
         showToast('Erro ao processar comando.', 'error');
     }
 }
+
+/**
+ * Atualiza o preview visual do Magic Input em tempo real
+ */
+window.updateMagicPreview = function(parsed) {
+    const previewContainer = document.getElementById('magic-intelligence-preview');
+    if (!previewContainer) return;
+
+    if (parsed && parsed.valor > 0) {
+        previewContainer.style.display = 'flex';
+        const amountEl = document.getElementById('preview-amount');
+        const categoryEl = document.getElementById('preview-category');
+        const typeIconEl = document.getElementById('preview-type-icon');
+
+        if (amountEl) amountEl.textContent = formatCurrency(parsed.valor);
+        if (typeIconEl) typeIconEl.innerHTML = `<i class="fas ${parsed.tipo === 'saida' ? 'fa-arrow-down val-neg' : 'fa-arrow-up val-pos'}"></i>`;
+        
+        if (categoryEl) {
+            const catConfig = typeof getCategoryConfig === 'function' ? getCategoryConfig(parsed.categoria_nome) : { icon: 'fa-tags', color: '#ccc' };
+            categoryEl.innerHTML = `<i class="fas ${catConfig.icon}" style="color:${catConfig.color}; margin-right: 4px;"></i> ${parsed.categoria_nome}`;
+        }
+    } else {
+        previewContainer.style.display = 'none';
+    }
+};
 
 /**
  * Abre um mini-seletor de categorias para correção expressa
@@ -1570,69 +1603,65 @@ function initMagicFeatures() {
     }
 
     // --- 3. PREVIEW & PREVENTIVE ALERTS ---
+    let magicDebounceTimeout;
     let lastAlertTime = 0;
     magicInput.addEventListener('input', () => {
         const text = magicInput.value.trim();
+        
         if (text.length < 3 || text.includes('?')) {
             if (previewContainer) previewContainer.style.display = 'none';
             if (alertContainer) alertContainer.innerHTML = '';
             return;
         }
 
-        const parsed = SmartParser.parse(text);
-        if (parsed && parsed.valor > 0) {
-            if (previewContainer) {
-                previewContainer.style.display = 'flex';
-                const amountEl = document.getElementById('preview-amount');
-                const categoryEl = document.getElementById('preview-category');
-                const typeIconEl = document.getElementById('preview-type-icon');
-
-                if (amountEl) amountEl.textContent = formatCurrency(parsed.valor);
-                if (typeIconEl) typeIconEl.innerHTML = `<i class="fas ${parsed.tipo === 'saida' ? 'fa-arrow-down val-neg' : 'fa-arrow-up val-pos'}"></i>`;
-                
-                if (categoryEl) {
-                    const catConfig = typeof getCategoryConfig === 'function' ? getCategoryConfig(parsed.categoria_nome) : { icon: 'fa-tags', color: '#ccc' };
-                    categoryEl.innerHTML = `<i class="fas ${catConfig.icon}" style="color:${catConfig.color}; margin-right: 4px;"></i> ${parsed.categoria_nome}`;
-                }
-            }
-
-            // Alerta Preventivo (Orçamento)
-            if (parsed.tipo === 'saida' && typeof _budgets !== 'undefined') {
-                const budget = _budgets.find(b => {
-                    const cat = _categories.find(c => c.nome === parsed.categoria_nome);
-                    return b.categoria_id === (cat ? cat.id : null);
-                });
-
-                if (budget) {
-                    const spent = (_allTransactions || [])
-                        .filter(t => t.categoria_id === budget.categoria_id && t.tipo === 'saida')
-                        .reduce((acc, t) => acc + parseFloat(t.valor), 0);
+        clearTimeout(magicDebounceTimeout);
+        magicDebounceTimeout = setTimeout(async () => {
+            try {
+                const result = await SmartNLP.process(text);
+                if (result && result.type === 'transaction') {
+                    window.updateMagicPreview(result.data);
                     
-                    const total = spent + parsed.valor;
-                    const percent = (total / budget.valor_limite) * 100;
+                    // Alerta Preventivo (Orçamento)
+                    if (result.data.tipo === 'saida' && typeof _budgets !== 'undefined') {
+                        const budget = _budgets.find(b => {
+                            const cat = (window._categories || []).find(c => c.nome === result.data.categoria_nome);
+                            return b.categoria_id === (cat ? cat.id : null);
+                        });
 
-                    if (alertContainer && percent >= 80) {
-                        alertContainer.innerHTML = `
-                            <div class="premium-alert warning pulse-border" style="margin-bottom: 1rem; background: rgba(255, 122, 0, 0.1); border: 1px solid var(--color-primary); padding: 0.8rem; border-radius: 12px; display: flex; align-items: center; gap: 0.8rem;">
-                                <i class="fas fa-exclamation-triangle" style="color: var(--color-primary); font-size: 1.2rem;"></i>
-                                <div style="font-size: 0.8rem; color: #fff;">
-                                    <strong>Alerta de Orçamento!</strong> Este gasto comprometerá ${percent.toFixed(0)}% do seu limite de ${parsed.categoria_nome}.
-                                </div>
-                            </div>`;
-                        
-                        if (Date.now() - lastAlertTime > 10000 && typeof showMascotMessage === 'function') {
-                            showMascotMessage(`Opa! Isso vai comprometer seu orçamento de ${parsed.categoria_nome}. 🧐`, 'warning');
-                            lastAlertTime = Date.now();
+                        if (budget) {
+                            const spent = (window._allTransactions || [])
+                                .filter(t => t.categoria_id === budget.categoria_id && t.tipo === 'saida')
+                                .reduce((acc, t) => acc + parseFloat(t.valor), 0);
+                            
+                            const total = spent + result.data.valor;
+                            const percent = (total / budget.valor_limite) * 100;
+
+                            if (alertContainer && percent >= 80) {
+                                alertContainer.innerHTML = `
+                                    <div class="premium-alert warning pulse-border" style="margin-bottom: 1rem; background: rgba(255, 122, 0, 0.1); border: 1px solid var(--color-primary); padding: 0.8rem; border-radius: 12px; display: flex; align-items: center; gap: 0.8rem;">
+                                        <i class="fas fa-exclamation-triangle" style="color: var(--color-primary); font-size: 1.2rem;"></i>
+                                        <div style="font-size: 0.8rem; color: #fff;">
+                                            <strong>Alerta de Orçamento!</strong> Este gasto comprometerá ${percent.toFixed(0)}% do seu limite de ${result.data.categoria_nome}.
+                                        </div>
+                                    </div>`;
+                                
+                                if (Date.now() - lastAlertTime > 10000 && typeof showMascotMessage === 'function') {
+                                    showMascotMessage(`Opa! Isso vai comprometer seu orçamento de ${result.data.categoria_nome}. 🧐`, 'warning');
+                                    lastAlertTime = Date.now();
+                                }
+                            } else if (alertContainer) {
+                                alertContainer.innerHTML = '';
+                            }
                         }
-                    } else if (alertContainer) {
-                        alertContainer.innerHTML = '';
                     }
+                } else {
+                    if (previewContainer) previewContainer.style.display = 'none';
+                    if (alertContainer) alertContainer.innerHTML = '';
                 }
+            } catch (e) {
+                console.error('Erro no preview do Magic Input:', e);
             }
-        } else {
-            if (previewContainer) previewContainer.style.display = 'none';
-            if (alertContainer) alertContainer.innerHTML = '';
-        }
+        }, 500);
     });
 
     // --- 4. SUBMIT ---
@@ -1648,55 +1677,7 @@ function initMagicFeatures() {
 /**
  * Atualiza os chips de sugestão do Magic Input baseados em Tempo e Localização
  */
-/**
- * Objeto de Inteligência Linguística (Smart NLP)
- * Gerencia a compreensão de intenções complexas sem depender apenas de Regex
- */
-const SmartNLP = {
-    intents: {
-        SIMULATION: 'simulation',
-        TRANSACTION: 'transaction',
-        DEBT: 'debt',
-        SPLIT: 'split'
-    },
 
-    /**
-     * Analisa a frase e retorna a intenção provável e os dados extraídos
-     */
-    analyze: function(text) {
-        const normalized = text.toLowerCase().trim();
-        let result = { intent: this.intents.TRANSACTION, confidence: 0.5, data: {} };
-
-        // 1. Detecção de Intenção de Simulação (Compra)
-        if (normalized.includes('posso comprar') || normalized.includes('consigo comprar') || normalized.includes('vale a pena')) {
-            result.intent = this.intents.SIMULATION;
-            result.confidence = 0.9;
-        }
-
-        // 2. Detecção de Dívida / Empréstimo
-        if (normalized.includes('devo') || normalized.includes('emprestei') || normalized.includes('pagar para')) {
-            result.intent = this.intents.DEBT;
-            result.confidence = 0.8;
-        }
-
-        // 3. Detecção de Divisão (Split)
-        if (normalized.includes('metade') || normalized.includes('dividir') || normalized.includes('split')) {
-            result.intent = this.intents.SPLIT;
-            result.confidence = 0.85;
-        }
-
-        return result;
-    },
-
-    /**
-     * Gateway para futura integração com LLM (OpenAI/Gemini)
-     */
-    callLLM: async function(prompt) {
-        console.log('🤖 C.A.S.H. Unit: Encaminhando para processamento neural (Simulado)...');
-        // Aqui entraria a chamada de API real
-        return null; 
-    }
-};
 
 /**
  * Atualiza os chips de sugestão do Magic Input baseados em Tempo e Localização REAL

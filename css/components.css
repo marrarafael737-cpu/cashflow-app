@@ -1143,3 +1143,71 @@ input:checked + .slider:before { transform: translateX(20px); }
     color: #000;
     font-weight: 700;
 }
+
+/* Magic Input Multimodal Buttons */
+.magic-input-actions {
+    display: flex;
+    gap: 0.5rem;
+    position: absolute;
+    right: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 10;
+}
+
+.btn-scan-input, .btn-voice-input {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--color-text-muted);
+    width: 36px;
+    height: 36px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    backdrop-filter: blur(5px);
+    -webkit-tap-highlight-color: transparent;
+}
+
+.btn-scan-input:hover, .btn-voice-input:hover {
+    background: var(--color-primary);
+    color: #000;
+    border-color: var(--color-primary);
+    transform: scale(1.1);
+    box-shadow: 0 0 15px rgba(255, 122, 0, 0.3);
+}
+
+.btn-scan-input:active, .btn-voice-input:active {
+    transform: scale(0.95);
+}
+
+.btn-voice-input.recording {
+    background: var(--color-danger);
+    color: white;
+    animation: pulse-red 1.5s infinite;
+}
+
+@keyframes pulse-red {
+    0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+    70% { transform: scale(1.1); box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+    100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+}
+
+/* Ajuste para o input não sobrepor os botões */
+#magic-input {
+    padding-right: 95px !important;
+}
+
+/* Mobile Adjustments for Magic Input */
+@media (max-width: 480px) {
+    .btn-scan-input, .btn-voice-input {
+        width: 32px;
+        height: 32px;
+    }
+    #magic-input {
+        padding-right: 85px !important;
+    }
+}
+

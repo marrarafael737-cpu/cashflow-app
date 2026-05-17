@@ -70,8 +70,8 @@ const SmartParser = {
         const cleanText = workingText.toLowerCase();
         
         // 1. Extract Value (Enhanced Regex with date protection and common currency words)
-        // Detects: 50.00, 50,00, R$ 50, 50 reais, 50 reias, 50 conto
-        const amountRegex = /(?:R\$|r\$|\$|reais|reias|conto|pila)?\s?(\d{1,3}(?:\.\d{3})*(?:,\d{2})|\d+(?:\.\d{2})?)(?!\/)(?:\s?(?:reais|reias|conto|pila))?/i;
+        // Detects: 50.00, 50,00, R$ 50, 50 reais, 50 conto
+        const amountRegex = /(?:R\$|r\$|\$|reais|conto|pila)?\s?(\d{1,3}(?:\.\d{3})*(?:,\d{2})|\d+(?:\.\d{2})?)(?!\/)(?:\s?(?:reais|conto|pila))?/i;
         const amountMatch = workingText.match(amountRegex);
         let valor = 0;
         if (amountMatch) {
@@ -102,7 +102,7 @@ const SmartParser = {
 
         // 3. Extract Description (Advanced Heuristic)
         let descricao = "Nova Transação";
-        const stopWords = ['no valor de', 'no valor', 'valor', 'em', 'da', 'do', 'de', 'na', 'no', 'para', 'com', 'realizada', 'realizado', 'aprovada', 'recebido', 'paguei', 'gastei', 'recebi', 'um', 'uma', 'compra', 'venda', 'pagamento', 'estabelecimento', 'sucesso', 'comprovante', 'autorizado', 'mensagem', 'alerta', 'banco', 'agencia', 'conta', 'cartão', 'final', 'vencimento', 'transação', 'efetuada', 'via', 'pix', 'reais', 'reias', 'conto', 'pila'];
+        const stopWords = ['no valor de', 'no valor', 'valor', 'em', 'da', 'do', 'de', 'na', 'no', 'para', 'com', 'realizada', 'realizado', 'aprovada', 'recebido', 'paguei', 'gastei', 'recebi', 'um', 'uma', 'compra', 'venda', 'pagamento', 'estabelecimento', 'sucesso', 'comprovante', 'autorizado', 'mensagem', 'alerta', 'banco', 'agencia', 'conta', 'cartão', 'final', 'vencimento', 'transação', 'efetuada', 'via', 'pix', 'reais', 'conto', 'pila'];
         
         const patterns = [
             /(?:em|no|na|estabelecimento|para|de)\s+([^,.:;()0-9]+)/i,

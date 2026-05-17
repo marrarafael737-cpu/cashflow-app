@@ -852,8 +852,10 @@ async function initSankeyFlow() {
         const incomeMap = {};
         incomes.forEach(t => {
             const accName = contas.find(c => c.id === t.conta_id)?.nome || 'Conta Principal';
-            const source = t.descricao.split(' ')[0] || 'Receita'; 
-            const key = `${source} -> ${accName}`;
+            let source = t.descricao.split(' ')[0] || 'Receita'; 
+            source = source.trim() + ' (Entrada)';
+            const dest = accName + ' (Conta)';
+            const key = `${source} -> ${dest}`;
             incomeMap[key] = (incomeMap[key] || 0) + Number(t.valor);
         });
 
@@ -867,7 +869,9 @@ async function initSankeyFlow() {
         expenses.forEach(t => {
             const accName = contas.find(c => c.id === t.conta_id)?.nome || 'Conta Principal';
             const catName = categories.find(c => c.id === t.categoria_id)?.nome || 'Geral';
-            const key = `${accName} -> ${catName}`;
+            const source = accName + ' (Conta)';
+            const dest = catName + ' (Saída)';
+            const key = `${source} -> ${dest}`;
             expenseMap[key] = (expenseMap[key] || 0) + Number(t.valor);
         });
 

@@ -28,18 +28,36 @@ async function handleOCR(file) {
         const valorRegex = /(?:R\$|TOTAL|VALOR|PAGAR)\s*[:\s]*([\d.,]+)/i;
         const match = text.match(valorRegex);
 
-        if (match) {
-            let valor = match[1].replace(/\./g, '').replace(',', '.');
-            const magicInput = document.getElementById('magic-input');
-            if (magicInput) {
-                magicInput.value = `Gastei ${valor} em ${linhas[0]?.substring(0, 20) || 'Compra'}`;
-                magicInput.focus();
-                // Disparar input para o preview atualizar
-                magicInput.dispatchEvent(new Event('input'));
+        if (text) {
+            // Inteligência Zero-Click: Processa o texto extraído diretamente
+            const result = await SmartNLP.processOCR(text);
+            
+            if (result && result.type === 'transaction') {
+                const parsed = result.data;
+                const magicInput = document.getElementById('magic-input');
+                
+                if (magicInput) {
+                    // Preenche o input para visibilidade
+                    magicInput.value = `Gastei ${parsed.valor} em ${parsed.descricao}`;
+                    magicInput.focus();
+                    
+                    // Atualiza o preview de inteligência automaticamente
+                    if (typeof window.updateMagicPreview === 'function') {
+                        window.updateMagicPreview(parsed);
+                    }
+                }
+                
+                showToast('Mágica! Dados extraídos do comprovante. 📸', 'success');
+                
+                // Feedback de voz opcional se habilitado
+                if (window.VoiceEngine) {
+                    window.VoiceEngine.speak(`Entendi! Um gasto de ${parsed.valor} reais em ${parsed.descricao}. Quer que eu salve?`);
+                }
+            } else {
+                showToast('Não identifiquei valores claros, mas o texto está no input! 😅', 'warning');
             }
-            showToast('Dados extraídos para o Magic Input!', 'success');
         } else {
-            showToast('Não consegui ler o valor, mas tentei! 😅', 'warning');
+            showToast('Não consegui ler o comprovante.', 'warning');
         }
 
     } catch (error) {
@@ -116,7 +134,51 @@ function setupEnhancementListeners(userId) {
         });
     }
 
-    // 2. Ouvinte para Geolocalização (Sugestões de Contexto)
+    // 2. Ouvinte para o Microfone (Web Speech API)
+    const btnVoice = document.getElementById('btn-magic-voice');
+    if (btnVoice) {
+        btnVoice.addEventListener('click', () => {
+            if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+                showToast('Seu navegador não suporta reconhecimento de voz.', 'error');
+                return;
+            }
+
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            const recognition = new SpeechRecognition();
+            recognition.lang = 'pt-BR';
+            recognition.interimResults = false;
+            recognition.maxAlternatives = 1;
+
+            btnVoice.style.backgroundColor = 'rgba(255, 0, 0, 0.2)';
+            btnVoice.style.color = '#ff4444';
+            showToast('Ouvindo... Fale o seu gasto.', 'info');
+
+            recognition.start();
+
+            recognition.onresult = (event) => {
+                const transcript = event.results[0][0].transcript;
+                const magicInput = document.getElementById('magic-input');
+                if (magicInput) {
+                    magicInput.value = transcript;
+                    showToast('Áudio capturado com sucesso! ✨', 'success');
+                }
+            };
+
+            recognition.onerror = (event) => {
+                console.error('Erro no reconhecimento de voz', event.error);
+                if (event.error !== 'aborted') {
+                    showToast('Erro no microfone: ' + event.error, 'error');
+                }
+            };
+
+            recognition.onend = () => {
+                btnVoice.style.backgroundColor = 'rgba(255, 122, 0, 0.15)';
+                btnVoice.style.color = 'var(--color-primary)';
+            };
+        });
+    }
+
+    // 3. Ouvinte para Geolocalização (Sugestões de Contexto)
     if ("geolocation" in navigator) {
         navigator.geolocation.getCurrentPosition(async (position) => {
             const { latitude, longitude } = position.coords;
