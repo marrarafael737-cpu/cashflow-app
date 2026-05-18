@@ -20,14 +20,20 @@ const SmartParser = {
     keywords: {
         expense: [
             'compra aprovada', 'pagamento realizado', 'saída de', 'vencimento', 
-            'pagamento de', 'compra no valor', 'transferência enviada', 'ted enviada', 'doc enviado'
+            'pagamento de', 'compra no valor', 'transferência enviada', 'ted enviada', 'doc enviado',
+            'paguei', 'gastei', 'comprei', 'compra', 'gastos', 'despesa', 'debito', 'debito em conta',
+            'saida', 'enviado', 'enviou', 'pagou', 'gastou'
         ],
         income: [
             'recebido', 'pix recebido', 'transferência recebida', 'depósito', 
-            'crédito em conta', 'reembolso', 'estorno'
+            'crédito em conta', 'reembolso', 'estorno', 'ganhei', 'recebi', 
+            'faturei', 'entrou', 'recebimento', 'vendi', 'comissão', 'salário',
+            'pagamento', 'ganhos', 'lucro', 'dividendos', 'rendimento', 'proventos',
+            'cashback', 'ganhou', 'recebeu'
         ],
         transfer: [
-            'entre contas', 'transferência entre', 'resgate de investimento'
+            'entre contas', 'transferência entre', 'resgate de investimento', 'transferencia entre',
+            'resgate', 'aplicacao', 'aplicação', 'investimento', 'guardar'
         ]
     },
 
@@ -138,17 +144,21 @@ const SmartParser = {
 
         // 2. Identify Type (Entry vs Exit vs Transfer)
         let tipo = 'saida';
+        const normalizedText = this.normalize(workingText);
+
         const isTransfer = this.keywords.transfer.some(k => {
-            const regex = new RegExp('\\b' + k + '\\b', 'i');
-            return regex.test(cleanText) || (window.NLP && window.NLP.isSimilar(cleanText, k, 1));
+            const cleanK = this.normalize(k);
+            const regex = new RegExp('\\b' + cleanK + '\\b', 'i');
+            return regex.test(normalizedText) || (window.NLP && window.NLP.isSimilar(normalizedText, cleanK, 1));
         });
         
         const isIncome = this.keywords.income.some(k => {
-            const regex = new RegExp('\\b' + k + '\\b', 'i');
-            return regex.test(cleanText) || (window.NLP && window.NLP.isSimilar(cleanText, k, 1));
+            const cleanK = this.normalize(k);
+            const regex = new RegExp('\\b' + cleanK + '\\b', 'i');
+            return regex.test(normalizedText) || (window.NLP && window.NLP.isSimilar(normalizedText, cleanK, 1));
         }) || 
-        (/\brecebi\b/i.test(cleanText) && !/\bnão recebi\b/i.test(cleanText)) ||
-        (/\bpix\b/i.test(cleanText) && (/\brecebido\b/i.test(cleanText) || /\bcrédito\b/i.test(cleanText)));
+        (/\b(recebi|receber|recebido|recebimento|recebimentos|recebida|ganhei|ganhar|ganho|ganhos|faturei|faturar|faturamento|entrou|caiu|salario|pagamento|vendi|venda|comissao|deposito|reembolso|estorno|lucro|dividendo|rendimento|proventos|provento|cashback|ted recebida|doc recebido|pix recebido|recebidos|ganhos|ganhou|recebeu)\b/i.test(normalizedText) && !/\b(nao recebi)\b/i.test(normalizedText)) ||
+        (/\bpix\b/i.test(normalizedText) && /\b(recebi|receber|recebido|recebimento|ganhei|ganhar|ganho|faturei|faturar|entrou|caiu|deposito|credito|estorno|reembolso|ganhou|recebeu)\b/i.test(normalizedText));
 
         if (isTransfer) {
             tipo = 'transferencia';
@@ -163,7 +173,10 @@ const SmartParser = {
             'pagamento', 'estabelecimento', 'sucesso', 'comprovante', 'autorizado', 'mensagem', 'alerta', 
             'banco', 'agencia', 'conta', 'cartão', 'cartao', 'final', 'vencimento', 'transação', 'transacao', 
             'efetuada', 'via', 'pix', 'reais', 'conto', 'pila', 'comprei', 'comprar', 'compras', 'gastos', 
-            'despesa', 'recebimento', 'ganhei', 'ganhar', 'por', 'deu', 'foi', 'para', 'pro', 'pra'
+            'despesa', 'recebimento', 'ganhei', 'ganhar', 'por', 'deu', 'foi', 'para', 'pro', 'pra',
+            'faturei', 'faturar', 'faturamento', 'entrou', 'caiu', 'salário', 'salario', 'vendi', 'venda',
+            'comissão', 'comissao', 'depósito', 'deposito', 'depositou', 'reembolso', 'estorno', 'lucro',
+            'dividendos', 'rendimento', 'proventos', 'cashback', 'ganhou', 'recebeu', 'ganhos'
         ];
 
         let descText = workingText;

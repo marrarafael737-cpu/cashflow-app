@@ -221,11 +221,22 @@ async function initDashboard() {
         // 3. Carregar Dados (Em segundo plano, sem travar a UI)
         if (typeof showSkeletons === 'function') showSkeletons(true);
         
-        // Haptic feedback initialization for nav items
-        document.querySelectorAll('.nav-item, .nav-item-mobile, .mobile-nav-item').forEach(el => {
-            el.addEventListener('click', () => {
-                if (typeof App !== 'undefined' && App.Utils.triggerHaptic) App.Utils.triggerHaptic(15);
-            });
+        // Premium Haptic feedback dynamic delegation initialization
+        document.addEventListener('click', (e) => {
+            if (typeof App === 'undefined' || !App.Utils || !App.Utils.triggerHaptic) return;
+            
+            const target = e.target.closest('button, .btn-primary-action, .btn-secondary, .btn-danger, .btn-danger-outline, .btn-ghost-small, .btn-close, .nav-item, .nav-item-mobile, .mobile-nav-item, .suggestion-chip, .btn-confirm-yes, .btn-confirm-no');
+            if (target) {
+                if (target.classList.contains('btn-close') || target.id === 'btn-close-sidebar-mobile') {
+                    App.Utils.triggerHaptic(8); // Toque sutil para fechar/cancelar
+                } else if (target.classList.contains('btn-danger') || target.classList.contains('btn-danger-outline') || target.id === 'btn-final-factory-reset') {
+                    App.Utils.triggerHaptic([35, 45]); // Pulso duplo de aviso para ações destrutivas ou de perigo
+                } else if (target.type === 'submit' || target.classList.contains('btn-primary-action') || target.classList.contains('btn-confirm-yes')) {
+                    App.Utils.triggerHaptic([15, 30]); // Pulso duplo de sucesso para salvar/confirmar
+                } else {
+                    App.Utils.triggerHaptic(15); // Toque padrão para outros botões/links
+                }
+            }
         });
         
         try {

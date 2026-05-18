@@ -118,19 +118,110 @@ window.OracleEngine = {
         
         let message = "";
         let mood = "happy";
+        let status = "safe"; // safe, warning, danger
 
         if (newProjection < 0) {
             message = `Cuidado! Se você comprar isso agora, sua projeção de fim de mês ficará negativa em ${window.formatar(Math.abs(newProjection))}. O Oráculo recomenda adiar esta compra.`;
             mood = "sad";
+            status = "danger";
         } else if (newProjection < reserva * 0.1) {
             message = `Essa compra de ${window.formatar(valor)} vai consumir quase toda sua margem de segurança. Sobrarão apenas ${window.formatar(newProjection)} no fim do mês.`;
             mood = "neutral";
+            status = "warning";
         } else if (valor > liquid * 0.5) {
             message = `O valor de ${window.formatar(valor)} representa mais de 50% do seu saldo atual disponível. Pense se realmente é o momento ideal.`;
             mood = "worried";
+            status = "warning";
         } else {
             message = `Veredito: Compra Segura! ✅ Mesmo após gastar ${window.formatar(valor)}, sua saúde financeira permanece excelente com ${window.formatar(newProjection)} de sobra projetada.`;
             mood = "happy";
+            status = "safe";
+        }
+
+        // Update the Visual Simulation Card
+        const simCard = document.getElementById('magic-simulation-card');
+        if (simCard) {
+            simCard.style.display = 'block';
+            
+            const valDisplay = document.getElementById('sim-value-display');
+            if (valDisplay) valDisplay.textContent = window.formatar ? window.formatar(valor) : `R$ ${valor.toFixed(2)}`;
+
+            const curBalDisplay = document.getElementById('sim-current-balance');
+            if (curBalDisplay) curBalDisplay.textContent = window.formatar ? window.formatar(liquid) : `R$ ${liquid.toFixed(2)}`;
+
+            const projBalDisplay = document.getElementById('sim-projected-balance');
+            if (projBalDisplay) {
+                projBalDisplay.textContent = window.formatar ? window.formatar(newProjection) : `R$ ${newProjection.toFixed(2)}`;
+                if (newProjection < 0) {
+                    projBalDisplay.style.color = 'var(--color-danger)';
+                } else if (status === 'warning') {
+                    projBalDisplay.style.color = 'var(--color-warning)';
+                } else {
+                    projBalDisplay.style.color = 'var(--color-success)';
+                }
+            }
+
+            const verdictBadge = document.getElementById('sim-verdict-badge');
+            const statusIcon = document.getElementById('sim-status-icon');
+            const statusIconBg = document.getElementById('sim-status-icon-bg');
+            const verdictMsg = document.getElementById('sim-verdict-msg');
+
+            if (verdictMsg) {
+                verdictMsg.textContent = message;
+            }
+
+            if (status === 'danger') {
+                if (verdictBadge) {
+                    verdictBadge.textContent = 'Crítico ❌';
+                    verdictBadge.style.background = 'rgba(239, 68, 68, 0.15)';
+                    verdictBadge.style.color = 'var(--color-danger)';
+                }
+                if (statusIcon) {
+                    statusIcon.className = 'fas fa-exclamation-triangle';
+                    statusIcon.style.color = 'var(--color-danger)';
+                }
+                if (statusIconBg) {
+                    statusIconBg.style.background = 'rgba(239, 68, 68, 0.1)';
+                }
+                if (verdictMsg) {
+                    verdictMsg.style.borderLeft = '3px solid var(--color-danger)';
+                }
+            } else if (status === 'warning') {
+                if (verdictBadge) {
+                    verdictBadge.textContent = 'Atenção ⚠️';
+                    verdictBadge.style.background = 'rgba(245, 158, 11, 0.15)';
+                    verdictBadge.style.color = 'var(--color-warning)';
+                }
+                if (statusIcon) {
+                    statusIcon.className = 'fas fa-exclamation-circle';
+                    statusIcon.style.color = 'var(--color-warning)';
+                }
+                if (statusIconBg) {
+                    statusIconBg.style.background = 'rgba(245, 158, 11, 0.1)';
+                }
+                if (verdictMsg) {
+                    verdictMsg.style.borderLeft = '3px solid var(--color-warning)';
+                }
+            } else {
+                if (verdictBadge) {
+                    verdictBadge.textContent = 'Seguro ✅';
+                    verdictBadge.style.background = 'rgba(16, 185, 129, 0.15)';
+                    verdictBadge.style.color = 'var(--color-success)';
+                }
+                if (statusIcon) {
+                    statusIcon.className = 'fas fa-check-circle';
+                    statusIcon.style.color = 'var(--color-success)';
+                }
+                if (statusIconBg) {
+                    statusIconBg.style.background = 'rgba(16, 185, 129, 0.1)';
+                }
+                if (verdictMsg) {
+                    verdictMsg.style.borderLeft = '3px solid var(--color-success)';
+                }
+            }
+
+            // Scroll the card into view smoothly
+            simCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
 
         if (typeof showMascotMessage === 'function') {
@@ -138,7 +229,7 @@ window.OracleEngine = {
             showMascotMessage(message, 'eyes', '', mood);
         } else {
             console.warn('C.A.S.H. Unit: showMascotMessage não disponível.');
-            alert(message);
+            if (!simCard) alert(message);
         }
     }
 };

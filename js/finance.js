@@ -800,11 +800,43 @@ window.getProactiveAlerts = getProactiveAlerts;
 let sankeyChartInstance = null;
 let isGoogleChartsLoaded = false;
 
+function getGoogle() {
+    return new Promise((resolve) => {
+        if (typeof google !== 'undefined') {
+            resolve(google);
+            return;
+        }
+        const check = setInterval(() => {
+            if (typeof google !== 'undefined') {
+                clearInterval(check);
+                resolve(google);
+            }
+        }, 100);
+        setTimeout(() => {
+            clearInterval(check);
+            resolve(null);
+        }, 10000);
+    });
+}
+
 async function initSankeyFlow() {
     const container = document.getElementById('sankey-flow-container');
-    if (!container || typeof google === 'undefined') return;
+    if (!container) return;
 
-    // Se já houver um gráfico, limpamos para evitar vazamento de memória
+    if (!isGoogleChartsLoaded) {
+        container.innerHTML = '<div style="display:flex; justify-content:center; align-items:center; height:100%;"><i class="fas fa-circle-notch fa-spin" style="color:var(--color-primary); margin-right: 10px;"></i> Carregando motor de fluxos...</div>';
+    }
+
+    const g = await getGoogle();
+    if (!g) {
+        container.innerHTML = `
+            <div style="height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; color:var(--color-text-muted); font-size:0.8rem; gap:10px;">
+                <i class="fas fa-exclamation-triangle" style="font-size:2rem; opacity:0.3; color:var(--color-warning);"></i>
+                <span>Erro: Não foi possível carregar o motor de gráficos.</span>
+            </div>`;
+        return;
+    }
+
     if (sankeyChartInstance) {
         try {
             sankeyChartInstance.clearChart();
@@ -813,105 +845,130 @@ async function initSankeyFlow() {
         }
         sankeyChartInstance = null;
     }
-    
-    // Limpar o container fisicamente também
-    container.innerHTML = '<div style="display:flex; justify-content:center; align-items:center; height:100%;"><i class="fas fa-circle-notch fa-spin" style="color:var(--color-primary);"></i></div>';
 
     if (!isGoogleChartsLoaded) {
-        google.charts.load('current', { 'packages': ['sankey'] });
-        google.charts.setOnLoadCallback(() => {
+        try {
+            g.charts.load('current', { 'packages': ['sankey'] });
+            await new Promise((resolve) => {
+                g.charts.setOnLoadCallback(() => {
+                    resolve();
+                });
+                // Safety timeout of 5 seconds
+                setTimeout(resolve, 5000);
+            });
             isGoogleChartsLoaded = true;
             drawSankey();
-        });
+        } catch (e) {
+            console.error('Erro ao carregar Google Charts packages:', e);
+            container.innerHTML = `
+                <div style="height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; color:var(--color-text-muted); font-size:0.8rem; gap:10px;">
+                    <i class="fas fa-exclamation-triangle" style="font-size:2rem; opacity:0.3; color:var(--color-warning);"></i>
+                    <span>Erro ao carregar o módulo de fluxos.</span>
+                </div>`;
+        }
     } else {
         drawSankey();
     }
 
     function drawSankey() {
-        const data = new google.visualization.DataTable();
-        data.addColumn('string', 'Origem');
-        data.addColumn('string', 'Destino');
-        data.addColumn('number', 'Valor');
+        try {
+            const data = new google.visualization.DataTable();
+            data.addColumn('string', 'Origem');
+            data.addColumn('string', 'Destino');
+            data.addColumn('number', 'Valor');
 
-        const rows = [];
-        const transactions = window._allTransactions || [];
-        
-        // Filtrar apenas o mês atual para o Sankey ser relevante e performático
-        const now = new Date();
-        const currentMonthTransactions = transactions.filter(t => {
-            const d = new Date(t.data + 'T00:00:00');
-            return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-        });
+            const rows = [];
+            const transactions = window._allTransactions || [];
+            
+            const now = new Date();
+            const currentMonthTransactions = transactions.filter(t => {
+                if (!t || !t.data) return false;
+                const d = new Date(t.data + 'T00:00:00');
+                return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+            });
 
-        const incomes = currentMonthTransactions.filter(t => t.tipo === 'entrada');
-        const expenses = currentMonthTransactions.filter(t => t.tipo === 'saida');
-        const contas = window._contas || [];
-        const categories = window._categories || [];
+            const incomes = currentMonthTransactions.filter(t => t.tipo === 'entrada');
+            const expenses = currentMonthTransactions.filter(t => t.tipo === 'saida');
+            const contas = window._contas || [];
+            const categories = window._categories || [];
 
-        // 1. Mapear Receitas -> Contas
-        const incomeMap = {};
-        incomes.forEach(t => {
-            const accName = contas.find(c => c.id === t.conta_id)?.nome || 'Conta Principal';
-            let source = t.descricao.split(' ')[0] || 'Receita'; 
-            source = source.trim() + ' (Entrada)';
-            const dest = accName + ' (Conta)';
-            const key = `${source} -> ${dest}`;
-            incomeMap[key] = (incomeMap[key] || 0) + Number(t.valor);
-        });
+            const incomeMap = {};
+            incomes.forEach(t => {
+                if (!t || !t.valor || Number(t.valor) <= 0) return;
+                const accName = contas.find(c => c.id === t.conta_id)?.nome || 'Conta Principal';
+                const descText = t.descricao || 'Receita';
+                let source = descText.split(' ')[0] || 'Receita'; 
+                source = source.trim() + ' (Entrada)';
+                const dest = accName + ' (Conta)';
+                
+                if (source === dest) return; // Prevent self-loop
+                const key = `${source} -> ${dest}`;
+                incomeMap[key] = (incomeMap[key] || 0) + Number(t.valor);
+            });
 
-        for (const [key, val] of Object.entries(incomeMap)) {
-            const [from, to] = key.split(' -> ');
-            if (val > 0) rows.push([from, to, val]);
-        }
+            for (const [key, val] of Object.entries(incomeMap)) {
+                const [from, to] = key.split(' -> ');
+                if (val > 0 && from !== to) rows.push([from, to, val]);
+            }
 
-        // 2. Mapear Contas -> Categorias
-        const expenseMap = {};
-        expenses.forEach(t => {
-            const accName = contas.find(c => c.id === t.conta_id)?.nome || 'Conta Principal';
-            const catName = categories.find(c => c.id === t.categoria_id)?.nome || 'Geral';
-            const source = accName + ' (Conta)';
-            const dest = catName + ' (Saída)';
-            const key = `${source} -> ${dest}`;
-            expenseMap[key] = (expenseMap[key] || 0) + Number(t.valor);
-        });
+            const expenseMap = {};
+            expenses.forEach(t => {
+                if (!t || !t.valor || Number(t.valor) <= 0) return;
+                const accName = contas.find(c => c.id === t.conta_id)?.nome || 'Conta Principal';
+                const catName = categories.find(c => c.id === t.categoria_id)?.nome || 'Geral';
+                const source = accName + ' (Conta)';
+                const dest = catName + ' (Saída)';
+                
+                if (source === dest) return; // Prevent self-loop
+                const key = `${source} -> ${dest}`;
+                expenseMap[key] = (expenseMap[key] || 0) + Number(t.valor);
+            });
 
-        for (const [key, val] of Object.entries(expenseMap)) {
-            const [from, to] = key.split(' -> ');
-            if (val > 0) rows.push([from, to, val]);
-        }
+            for (const [key, val] of Object.entries(expenseMap)) {
+                const [from, to] = key.split(' -> ');
+                if (val > 0 && from !== to) rows.push([from, to, val]);
+            }
 
-        if (rows.length === 0) {
+            if (rows.length === 0) {
+                container.innerHTML = `
+                    <div style="height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; color:var(--color-text-muted); font-size:0.8rem; gap:10px;">
+                        <i class="fas fa-project-diagram" style="font-size:2rem; opacity:0.3;"></i>
+                        <span>Sem dados de fluxo para este mês.</span>
+                    </div>`;
+                return;
+            }
+
+            data.addRows(rows);
+
+            const options = {
+                height: 350,
+                sankey: {
+                    node: {
+                        colors: ['#10B981', '#3B82F6', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#06B6D4'],
+                        label: { color: '#ffffff', fontSize: 11, bold: true },
+                        interactivity: true,
+                        width: 8,
+                        nodePadding: 30
+                    },
+                    link: {
+                        colorMode: 'gradient',
+                        colors: ['#10B981', '#3B82F6', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#06B6D4']
+                    }
+                },
+                backgroundColor: 'transparent'
+            };
+
+            container.innerHTML = '';
+            sankeyChartInstance = new google.visualization.Sankey(container);
+            sankeyChartInstance.draw(data, options);
+        } catch (err) {
+            console.error('Erro ao desenhar Sankey Flow:', err);
             container.innerHTML = `
                 <div style="height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; color:var(--color-text-muted); font-size:0.8rem; gap:10px;">
-                    <i class="fas fa-project-diagram" style="font-size:2rem; opacity:0.3;"></i>
-                    <span>Sem dados de fluxo para este mês.</span>
+                    <i class="fas fa-exclamation-circle" style="font-size:2rem; opacity:0.3; color:var(--color-warning);"></i>
+                    <span>Erro ao renderizar fluxo de capital.</span>
                 </div>`;
-            return;
         }
-
-        data.addRows(rows);
-
-        const options = {
-            height: 350,
-            sankey: {
-                node: {
-                    colors: ['#10B981', '#3B82F6', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#06B6D4'],
-                    label: { color: '#ffffff', fontSize: 11, bold: true },
-                    interactivity: true,
-                    width: 8,
-                    nodePadding: 30
-                },
-                link: {
-                    colorMode: 'gradient',
-                    colors: ['#10B981', '#3B82F6', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#06B6D4']
-                }
-            },
-            backgroundColor: 'transparent'
-        };
-
-        container.innerHTML = '';
-        sankeyChartInstance = new google.visualization.Sankey(container);
-        sankeyChartInstance.draw(data, options);
     }
 }
 window.initSankeyFlow = initSankeyFlow;

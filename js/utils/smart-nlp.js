@@ -13,11 +13,11 @@ const SmartNLP = {
         console.log('C.A.S.H. Unit: Analisando com SmartNLP...', text);
 
         // 1. Detect Intent: Is it a simulation (question) or a transaction?
+        const cleanText = text.toLowerCase();
         const isSimulation = text.includes('?') || 
-                             text.toLowerCase().includes('posso') || 
-                             text.toLowerCase().includes('vale a pena');
+                             /\b(posso|consigo|da\s+pra|dá\s+pra|da\s+para|dá\s+para|vale\s+a\s+pena|compro|comprar|gastar|gasto|previsao|previsão|simular|simulação|simulacao|devo|compraria|sera\s+que|será\s+que|compromete|oraculo|oráculo)\b/i.test(cleanText);
 
-        if (isSimulation && typeof OracleEngine !== 'undefined') {
+        if (isSimulation && typeof window.OracleEngine !== 'undefined') {
             return { type: 'simulation', data: text };
         }
 

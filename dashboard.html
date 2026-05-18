@@ -11,7 +11,8 @@
         content="finanças, controle financeiro, economy, investimentos, dinheiro, dashboard financeiro">
 
     <!-- Security Headers -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://us.i.posthog.com https://www.gstatic.com https://www.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; img-src 'self' data: https: blob:; connect-src 'self' https://wecvchpyutwjqxoeilgq.supabase.co https://us.i.posthog.com wss://wecvchpyutwjqxoeilgq.supabase.co https://tessdata.projectnaptha.com; worker-src 'self' blob:; frame-src https://www.google.com;">
+    <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://us.i.posthog.com https://www.gstatic.com https://www.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com https://www.gstatic.com https://www.google.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; img-src 'self' data: https: blob:; connect-src 'self' https://wecvchpyutwjqxoeilgq.supabase.co https://us.i.posthog.com wss://wecvchpyutwjqxoeilgq.supabase.co https://tessdata.projectnaptha.com https://cdn.jsdelivr.net https://*.jsdelivr.net https://raw.githubusercontent.com blob: data:; worker-src 'self' blob:; frame-src https://www.google.com;">
     <meta http-equiv="X-Content-Type-Options" content="nosniff">
     <meta http-equiv="X-Frame-Options" content="DENY">
     <meta name="referrer" content="strict-origin-when-cross-origin">
@@ -51,19 +52,17 @@
         }
     </script>
 
-    <link rel="stylesheet" href="css/base.css">
-    <link rel="stylesheet" href="css/animations.css">
-    <link rel="stylesheet" href="css/components.css">
-    <link rel="stylesheet" href="css/layout.css">
-    <link rel="stylesheet" href="css/views.css">
-    <link rel="stylesheet" href="css/mascot.css">
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
-        integrity="sha384-iw3OoTErCYJJB9mCa8LNS2hbsQ7M3C0EpIsO/H5+EGAkPGc6rk+V8i04oW/K5xq0" crossorigin="anonymous">
-    <!-- Google Fonts -->
-    <link
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;500;600;700;800&display=swap"
-        rel="stylesheet">
+    <!-- Fontes Premium & Estilos Base -->
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;500;600;700;800&display=swap');
+        @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css');
+        @import url('css/base.css');
+        @import url('css/animations.css');
+        @import url('css/components.css');
+        @import url('css/layout.css');
+        @import url('css/views.css');
+        @import url('css/mascot.css');
+    </style>
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"
         integrity="sha384-e6cc9LaIG7xZ3XD5B+jtr1NhTWPQGQdRCh6xiZ+ZFUtWCpg4ycv3Sh+SkZoopvUY"
@@ -110,25 +109,28 @@
         .sankey-section {
             animation: slideInUp 0.6s ease-out;
         }
+
         #sankey-flow-container svg {
-            filter: drop-shadow(0 0 5px rgba(255,255,255,0.05));
+            filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.05));
         }
-        
+
         /* Premium Alert Styles */
         .premium-alert {
             animation: bounceIn 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
             transition: transform 0.3s ease;
         }
+
         .premium-alert:hover {
             transform: translateY(-2px);
         }
-        
+
         /* Loading States for OCR */
         .scanning {
             position: relative;
             overflow: hidden;
         }
+
         .scanning::after {
             content: "";
             position: absolute;
@@ -136,23 +138,38 @@
             left: -50%;
             width: 200%;
             height: 200%;
-            background: linear-gradient(to bottom, transparent, rgba(255,122,0,0.2), transparent);
+            background: linear-gradient(to bottom, transparent, rgba(255, 122, 0, 0.2), transparent);
             animation: scanLine 2s linear infinite;
         }
+
         @keyframes scanLine {
-            0% { transform: translateY(-30%); }
-            100% { transform: translateY(30%); }
+            0% {
+                transform: translateY(-30%);
+            }
+
+            100% {
+                transform: translateY(30%);
+            }
         }
-        
+
         /* Pulse Border for Alerts */
         .pulse-border {
             box-shadow: 0 0 0 0 rgba(255, 122, 0, 0.4);
             animation: pulse-orange 2s infinite;
         }
+
         @keyframes pulse-orange {
-            0% { box-shadow: 0 0 0 0 rgba(255, 122, 0, 0.4); }
-            70% { box-shadow: 0 0 0 10px rgba(255, 122, 0, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(255, 122, 0, 0); }
+            0% {
+                box-shadow: 0 0 0 0 rgba(255, 122, 0, 0.4);
+            }
+
+            70% {
+                box-shadow: 0 0 0 10px rgba(255, 122, 0, 0);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(255, 122, 0, 0);
+            }
         }
     </style>
 </head>
@@ -418,20 +435,26 @@
 
                     <!-- Visualização de Fluxo (Sankey Diagram - Item 5) -->
                     <section class="sankey-section" style="margin-bottom: 2rem;">
-                        <div class="card-glass" style="padding: 1.5rem; min-height: 400px; display: flex; flex-direction: column;">
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                        <div class="card-glass"
+                            style="padding: 1.5rem; min-height: 400px; display: flex; flex-direction: column;">
+                            <div
+                                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
                                 <div>
                                     <h3 class="section-title" style="margin: 0;">Fluxo Inteligente de Capital</h3>
-                                    <p style="font-size: 0.75rem; color: var(--color-text-muted); margin: 0.2rem 0 0;">Visualização de onde seu dinheiro vem e para onde ele vai</p>
+                                    <p style="font-size: 0.75rem; color: var(--color-text-muted); margin: 0.2rem 0 0;">
+                                        Visualização de onde seu dinheiro vem e para onde ele vai</p>
                                 </div>
-                                <div class="badge-premium" style="background: rgba(255, 122, 0, 0.1); color: var(--color-primary); padding: 4px 12px; border-radius: 20px; font-size: 0.7rem; font-weight: 700;">
+                                <div class="badge-premium"
+                                    style="background: rgba(255, 122, 0, 0.1); color: var(--color-primary); padding: 4px 12px; border-radius: 20px; font-size: 0.7rem; font-weight: 700;">
                                     Sankey Flow v1.0
                                 </div>
                             </div>
                             <div id="sankey-flow-container" style="flex: 1; min-height: 300px; width: 100%;">
                                 <!-- Carregado via JS -->
-                                <div class="premium-loader-mini" style="height: 100%; display: flex; align-items: center; justify-content: center; color: var(--color-text-muted);">
-                                    <i class="fas fa-spinner fa-spin" style="margin-right: 10px;"></i> Orquestrando fluxos...
+                                <div class="premium-loader-mini"
+                                    style="height: 100%; display: flex; align-items: center; justify-content: center; color: var(--color-text-muted);">
+                                    <i class="fas fa-spinner fa-spin" style="margin-right: 10px;"></i> Orquestrando
+                                    fluxos...
                                 </div>
                             </div>
                         </div>
@@ -512,21 +535,26 @@
                                     </button>
                                 </div>
                                 <div id="budget-alerts-container" style="margin-bottom: 1rem;"></div>
-                                <div class="magic-input-wrapper" style="display: flex; gap: 0.75rem; position: relative; align-items: center;">
+                                <div class="magic-input-wrapper"
+                                    style="display: flex; gap: 0.75rem; position: relative; align-items: center;">
                                     <div style="position: relative; flex: 1; display: flex; align-items: center;">
-                                        <input type="text" id="magic-input" placeholder="Ex: Gastei 50 no almoço hoje..."
+                                        <input type="text" id="magic-input"
+                                            placeholder="Ex: Gastei 50 no almoço hoje..."
                                             style="width: 100%; padding: 1rem 95px 1rem 1.2rem; border-radius: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white; font-size: 0.95rem; transition: all 0.3s ease; box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);">
-                                        
+
                                         <!-- Magic Scan (OCR) Button -->
-                                        <button id="btn-magic-scan" type="button" class="btn-scan-input" title="Escanear Comprovante" 
+                                        <button id="btn-magic-scan" type="button" class="btn-scan-input"
+                                            title="Escanear Comprovante"
                                             style="position: absolute; right: 50px; background: rgba(255, 122, 0, 0.15); border: 1px solid rgba(255, 122, 0, 0.3); border-radius: 8px; color: var(--color-primary); cursor: pointer; padding: 6px 10px; font-size: 1.1rem; transition: all 0.3s ease; z-index: 100;">
                                             <i class="fas fa-camera"></i>
                                         </button>
 
-                                        <input type="file" id="magic-scan-input" accept="image/*" capture="environment" style="display: none;">
+                                        <input type="file" id="magic-scan-input" accept="image/*" capture="environment"
+                                            style="display: none;">
 
                                         <!-- Voice Button Inside Input -->
-                                        <button id="btn-magic-voice" type="button" class="btn-voice-input" title="Falar comando" 
+                                        <button id="btn-magic-voice" type="button" class="btn-voice-input"
+                                            title="Falar comando"
                                             style="position: absolute; right: 8px; background: rgba(255, 122, 0, 0.15); border: 1px solid rgba(255, 122, 0, 0.3); border-radius: 8px; color: var(--color-primary); cursor: pointer; padding: 6px 10px; font-size: 1.1rem; transition: all 0.3s ease; z-index: 100;">
                                             <i class="fas fa-microphone"></i>
                                         </button>
@@ -539,13 +567,15 @@
                                 </div>
 
                                 <!-- Intelligence Preview Container -->
-                                <div id="magic-intelligence-preview" class="intelligence-preview" style="display: none; margin-top: 0.75rem; padding: 0.6rem 1rem; background: rgba(var(--color-primary-rgb), 0.05); border-radius: 10px; border: 1px dashed rgba(var(--color-primary-rgb), 0.3); align-items: center; gap: 1rem; animation: slideInUp 0.3s ease;">
+                                <div id="magic-intelligence-preview" class="intelligence-preview"
+                                    style="display: none; margin-top: 0.75rem; padding: 0.6rem 1rem; background: rgba(var(--color-primary-rgb), 0.05); border-radius: 10px; border: 1px dashed rgba(var(--color-primary-rgb), 0.3); align-items: center; gap: 1rem; animation: slideInUp 0.3s ease;">
                                     <div class="preview-item">
                                         <span class="preview-label">Detectado:</span>
                                         <span id="preview-type-icon" class="preview-icon"></span>
                                         <span id="preview-amount" class="preview-value"></span>
                                     </div>
-                                    <div class="preview-divider" style="width: 1px; height: 15px; background: rgba(255,255,255,0.1);"></div>
+                                    <div class="preview-divider"
+                                        style="width: 1px; height: 15px; background: rgba(255,255,255,0.1);"></div>
                                     <div class="preview-item">
                                         <i class="fas fa-tag" style="font-size: 0.7rem; opacity: 0.5;"></i>
                                         <span id="preview-category" class="preview-text"></span>
@@ -556,14 +586,80 @@
                                     </div>
                                 </div>
 
+                                <!-- Simulation Result Card -->
+                                <div id="magic-simulation-card" class="card-glass"
+                                    style="display: none; margin-top: 1rem; padding: 1.25rem; border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.08); background: rgba(24, 24, 27, 0.95); animation: slideInUp 0.3s ease; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+                                    <div
+                                        style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
+                                        <div style="display: flex; align-items: center; gap: 0.75rem;">
+                                            <div id="sim-status-icon-bg"
+                                                style="width: 38px; height: 38px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem;">
+                                                <i id="sim-status-icon" class="fas fa-chart-line"></i>
+                                            </div>
+                                            <div>
+                                                <h4
+                                                    style="margin: 0; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--color-text-muted);">
+                                                    Simulação de Compra</h4>
+                                                <span id="sim-verdict-badge"
+                                                    style="font-size: 0.7rem; font-weight: 800; padding: 2px 8px; border-radius: 100px; text-transform: uppercase;">Aguardando...</span>
+                                            </div>
+                                        </div>
+                                        <button type="button" class="btn-close-premium"
+                                            style="background: none; border: none; color: var(--color-text-muted); cursor: pointer; padding: 4px;"
+                                            onclick="document.getElementById('magic-simulation-card').style.display = 'none';">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+
+                                    <div
+                                        style="background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255,255,255,0.03); border-radius: 12px; padding: 0.75rem; margin-bottom: 1rem;">
+                                        <span
+                                            style="font-size: 0.7rem; color: var(--color-text-muted); display: block;">Valor
+                                            da Compra</span>
+                                        <div id="sim-value-display"
+                                            style="font-size: 1.5rem; font-weight: 800; color: white;">R$ 0,00</div>
+                                    </div>
+
+                                    <!-- Impact Metrics Grid -->
+                                    <div
+                                        style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1rem;">
+                                        <div
+                                            style="background: rgba(255,255,255,0.02); border-radius: 10px; padding: 0.6rem; border: 1px solid rgba(255,255,255,0.03);">
+                                            <span
+                                                style="font-size: 0.65rem; color: var(--color-text-muted); display: block;">Saldo
+                                                Atual Líquido</span>
+                                            <div id="sim-current-balance" class="privacy-blur"
+                                                style="font-size: 0.95rem; font-weight: 700; color: #fff;">R$ 0,00</div>
+                                        </div>
+                                        <div
+                                            style="background: rgba(255,255,255,0.02); border-radius: 10px; padding: 0.6rem; border: 1px solid rgba(255,255,255,0.03);">
+                                            <span
+                                                style="font-size: 0.65rem; color: var(--color-text-muted); display: block;">Saldo
+                                                Final Projetado</span>
+                                            <div id="sim-projected-balance" class="privacy-blur"
+                                                style="font-size: 0.95rem; font-weight: 700; color: #fff;">R$ 0,00</div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Detailed verdict message -->
+                                    <div id="sim-verdict-msg"
+                                        style="font-size: 0.8rem; line-height: 1.4; color: var(--color-text-main); background: rgba(255,255,255,0.03); border-radius: 10px; padding: 0.75rem; border-left: 3px solid var(--color-primary);">
+                                        Inicializando simulação...
+                                    </div>
+                                </div>
+
+
                                 <div class="magic-suggestions"
                                     style="margin-top: 1rem; display: flex; flex-wrap: wrap; gap: 0.5rem;">
                                     <span
                                         style="font-size: 0.65rem; color: rgba(255,255,255,0.4); width: 100%; margin-bottom: 0.2rem; text-transform: uppercase; letter-spacing: 1px; font-weight: 700;">Tente
                                         dizer:</span>
-                                    <div class="suggestion-chip" data-text="Gastei 45 no iFood">"Gastei 45 no iFood"</div>
-                                    <div class="suggestion-chip" data-text="Recebi 1500 de salário">"Recebi 1500 de salário"</div>
-                                    <div class="suggestion-chip" data-text="Posso comprar um monitor por 1200?">"Posso comprar um monitor por 1200?"</div>
+                                    <div class="suggestion-chip" data-text="Gastei 45 no iFood">"Gastei 45 no iFood"
+                                    </div>
+                                    <div class="suggestion-chip" data-text="Recebi 1500 de salário">"Recebi 1500 de
+                                        salário"</div>
+                                    <div class="suggestion-chip" data-text="Posso comprar um monitor por 1200?">"Posso
+                                        comprar um monitor por 1200?"</div>
                                 </div>
                             </div>
 
@@ -642,11 +738,13 @@
                                         <div class="form-field">
                                             <label>Aporte Mensal Pretendido</label>
                                             <input type="number" id="sim-aporte" value="500" step="50"
+                                                inputmode="decimal" pattern="[0-9]*[.,]?[0-9]*"
                                                 style="padding: 0.5rem;">
                                         </div>
                                         <div class="form-field" style="margin-top: 1rem;">
                                             <label>Rentabilidade Anual Esperada (%)</label>
                                             <input type="number" id="sim-rentabilidade" value="10" step="0.5"
+                                                inputmode="decimal" pattern="[0-9]*[.,]?[0-9]*"
                                                 style="padding: 0.5rem;">
                                         </div>
                                     </div>
@@ -684,6 +782,7 @@
                                         <div class="form-field">
                                             <label for="dash-valor">Valor</label>
                                             <input type="number" id="dash-valor" step="0.01" required
+                                                inputmode="decimal" pattern="[0-9]*[.,]?[0-9]*"
                                                 placeholder="0,00">
                                         </div>
                                         <div class="form-field">
@@ -895,9 +994,11 @@
                             </form>
                         </div>
                         <div class="card-glass" style="padding: 2rem;">
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                            <div
+                                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
                                 <h3 style="font-size: 1rem; margin: 0;">Categorias Ativas</h3>
-                                <button onclick="injectDefaultCategories()" class="btn-ghost-small" style="font-size: 0.7rem; padding: 4px 8px; gap: 0.25rem;">
+                                <button onclick="injectDefaultCategories()" class="btn-ghost-small"
+                                    style="font-size: 0.7rem; padding: 4px 8px; gap: 0.25rem;">
                                     <i class="fas fa-magic"></i> Padrões
                                 </button>
                             </div>
@@ -966,7 +1067,8 @@
                                             todos os dados e limpa seu progresso. Gera um backup "Caixa Preta" antes de
                                             apagar.</small>
                                     </div>
-                                    <button id="btn-open-factory-reset" class="btn-danger" onclick="if(window.openModal) window.openModal('modal-factory-reset'); else document.getElementById('modal-factory-reset').style.display='flex'; goToResetStep(1);"
+                                    <button id="btn-open-factory-reset" class="btn-danger"
+                                        onclick="if(window.openModal) window.openModal('modal-factory-reset'); else document.getElementById('modal-factory-reset').style.display='flex'; goToResetStep(1);"
                                         style="padding: 0.6rem 1rem; border-radius: 10px; font-weight: 700; font-size: 0.8rem; white-space: nowrap; cursor: pointer; border: none; background: var(--color-danger); color: #fff;">
                                         <i class="fas fa-trash-alt"></i> Resetar
                                     </button>
@@ -1123,15 +1225,19 @@
                             <h2 id="total-investments-value" class="privacy-blur"
                                 style="margin: 0.5rem 0; font-size: 2.2rem; font-weight: 850; background: linear-gradient(to right, #fff, #00D2FF); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
                                 R$ 0,00</h2>
-                            
+
                             <div style="margin-bottom: 1rem; display: flex; gap: 1.5rem;">
                                 <div>
-                                    <span style="font-size: 0.65rem; color: var(--color-text-muted); display: block; text-transform: uppercase;">Investido</span>
-                                    <span id="invested-cost-value" class="privacy-blur" style="font-size: 1rem; font-weight: 700; color: white;">R$ 0,00</span>
+                                    <span
+                                        style="font-size: 0.65rem; color: var(--color-text-muted); display: block; text-transform: uppercase;">Investido</span>
+                                    <span id="invested-cost-value" class="privacy-blur"
+                                        style="font-size: 1rem; font-weight: 700; color: white;">R$ 0,00</span>
                                 </div>
                                 <div>
-                                    <span style="font-size: 0.65rem; color: var(--color-text-muted); display: block; text-transform: uppercase;">Mercado</span>
-                                    <span id="market-price-value" class="privacy-blur" style="font-size: 1rem; font-weight: 700; color: #00D2FF;">R$ 0,00</span>
+                                    <span
+                                        style="font-size: 0.65rem; color: var(--color-text-muted); display: block; text-transform: uppercase;">Mercado</span>
+                                    <span id="market-price-value" class="privacy-blur"
+                                        style="font-size: 1rem; font-weight: 700; color: #00D2FF;">R$ 0,00</span>
                                 </div>
                             </div>
 
@@ -1263,7 +1369,9 @@
                     <div class="form-row">
                         <div class="form-field">
                             <label>Valor (R$)</label>
-                            <input type="number" id="valor" required step="0.01" placeholder="0,00">
+                            <input type="number" id="valor" required step="0.01"
+                                inputmode="decimal" pattern="[0-9]*[.,]?[0-9]*"
+                                placeholder="0,00">
                         </div>
                         <div class="form-field">
                             <label>Data</label>
@@ -1433,7 +1541,9 @@
                     <div class="form-row">
                         <div class="form-field">
                             <label>Valor Objetivo</label>
-                            <input type="number" id="goal-target" required step="0.01" placeholder="0,00">
+                            <input type="number" id="goal-target" required step="0.01"
+                                inputmode="decimal" pattern="[0-9]*[.,]?[0-9]*"
+                                placeholder="0,00">
                         </div>
                         <div class="form-field">
                             <label>Prazo (Opcional)</label>
@@ -1442,7 +1552,9 @@
                     </div>
                     <div class="form-field">
                         <label>Quanto você já tem? (Opcional)</label>
-                        <input type="number" id="goal-current" step="0.01" value="0.00">
+                        <input type="number" id="goal-current" step="0.01"
+                            inputmode="decimal" pattern="[0-9]*[.,]?[0-9]*"
+                            value="0.00">
                     </div>
                     <button type="submit" class="btn-primary-action">Salvar Meta</button>
                 </form>
@@ -1466,7 +1578,8 @@
                     </div>
                     <div class="form-field">
                         <label>Valor Limite Mensal</label>
-                        <input type="number" id="budget-value" required step="0.01">
+                        <input type="number" id="budget-value" required step="0.01"
+                            inputmode="decimal" pattern="[0-9]*[.,]?[0-9]*">
                     </div>
                     <button type="submit" class="btn-primary-action">Definir Limite</button>
                 </form>
@@ -1991,11 +2104,15 @@
                     <div class="form-row">
                         <div class="form-field">
                             <label id="label-asset-custo">Custo Médio / Aporte</label>
-                            <input type="number" id="asset-custo" step="0.01" placeholder="0,00">
+                            <input type="number" id="asset-custo" step="0.01"
+                                inputmode="decimal" pattern="[0-9]*[.,]?[0-9]*"
+                                placeholder="0,00">
                         </div>
                         <div class="form-field">
                             <label id="label-asset-valor-atual">Valor Atual Total</label>
-                            <input type="number" id="asset-valor-atual" step="0.01" required placeholder="0,00">
+                            <input type="number" id="asset-valor-atual" step="0.01" required
+                                inputmode="decimal" pattern="[0-9]*[.,]?[0-9]*"
+                                placeholder="0,00">
                         </div>
                     </div>
                     <button type="submit" class="btn-primary-action" style="width: 100%; margin-top: 1rem;">Salvar

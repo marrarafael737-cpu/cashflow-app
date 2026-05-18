@@ -270,6 +270,7 @@ async function loadTransactions(userId) {
         filterAndRenderData();
         if (typeof updateSummary === 'function') updateSummary();
         if (typeof updateVisionHighlight === 'function') updateVisionHighlight();
+        if (typeof initSankeyFlow === 'function') initSankeyFlow();
     } catch (err) { 
         console.error('Erro ao carregar transações:', err); 
     }

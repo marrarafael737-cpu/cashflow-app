@@ -33,43 +33,42 @@ def is_running(pid):
     except OSError:
         return False
 
-def get_start_command(root):
+def get_start_command(root, port=3000):
     pkg_file = root / "package.json"
     if not pkg_file.exists():
-        return None
+        return ["python", "-m", "http.server", str(port)]
     
-    with open(pkg_file, 'r') as f:
-        data = json.load(f)
-    
-    scripts = data.get("scripts", {})
-    if "dev" in scripts:
-        return ["npm", "run", "dev"]
-    elif "start" in scripts:
-        return ["npm", "start"]
-    return None
+    try:
+        with open(pkg_file, 'r') as f:
+            data = json.load(f)
+        
+        scripts = data.get("scripts", {})
+        if "dev" in scripts:
+            return ["npm", "run", "dev"]
+        elif "start" in scripts:
+            return ["npm", "start"]
+    except:
+        pass
+    return ["python", "-m", "http.server", str(port)]
 
 def start_server(port=3000):
     if PID_FILE.exists():
         try:
             pid = int(PID_FILE.read_text().strip())
             if is_running(pid):
-                print(f"⚠️  Preview already running (PID: {pid})")
+                print(f"[!] Preview already running (PID: {pid})")
                 return
         except:
             pass # Invalid PID file
 
     root = get_project_root()
-    cmd = get_start_command(root)
-    
-    if not cmd:
-        print("❌ No 'dev' or 'start' script found in package.json")
-        sys.exit(1)
+    cmd = get_start_command(root, port)
     
     # Add port env var if needed (simple heuristic)
     env = os.environ.copy()
     env["PORT"] = str(port)
     
-    print(f"🚀 Starting preview on port {port}...")
+    print(f"[+] Starting preview on port {port}...")
     
     with open(LOG_FILE, "w") as log:
         process = subprocess.Popen(
@@ -82,9 +81,9 @@ def start_server(port=3000):
         )
     
     PID_FILE.write_text(str(process.pid))
-    print(f"✅ Preview started! (PID: {process.pid})")
-    print(f"   Logs: {LOG_FILE}")
-    print(f"   URL: http://localhost:{port}")
+    print(f"[+] Preview started! (PID: {process.pid})")
+    print(f"    Logs: {LOG_FILE}")
+    print(f"    URL: http://localhost:{port}")
 
 def stop_server():
     if not PID_FILE.exists():
@@ -96,11 +95,11 @@ def stop_server():
         if is_running(pid):
             # Try gentle kill first
             os.kill(pid, signal.SIGTERM) if sys.platform != 'win32' else subprocess.call(['taskkill', '/F', '/T', '/PID', str(pid)])
-            print(f"🛑 Preview stopped (PID: {pid})")
+            print(f"[-] Preview stopped (PID: {pid})")
         else:
-            print("ℹ️  Process was not running.")
+            print("[i] Process was not running.")
     except Exception as e:
-        print(f"❌ Error stopping server: {e}")
+        print(f"[x] Error stopping server: {e}")
     finally:
         if PID_FILE.exists():
             PID_FILE.unlink()
@@ -122,12 +121,12 @@ def status_server():
             
     print("\n=== Preview Status ===")
     if running:
-        print(f"✅ Status: Running")
-        print(f"🔢 PID: {pid}")
-        print(f"🌐 URL: {url} (Likely)")
-        print(f"📝 Logs: {LOG_FILE}")
+        print(f"[+] Status: Running")
+        print(f"    PID: {pid}")
+        print(f"    URL: {url} (Likely)")
+        print(f"    Logs: {LOG_FILE}")
     else:
-        print("⚪ Status: Stopped")
+        print("Status: Stopped")
     print("===================\n")
 
 def main():

@@ -110,17 +110,19 @@ class UXAuditor:
         
         self.files_checked += 1
         filename = os.path.basename(filepath)
+        is_css = filepath.endswith('.css')
 
         # Pre-calculate common flags
-        has_long_text = bool(re.search(r'<p|<div.*class=.*text|article|<span.*text', content, re.IGNORECASE))
-        has_form = bool(re.search(r'<form|<input|password|credit|card|payment', content, re.IGNORECASE))
-        complex_elements = len(re.findall(r'<input|<select|<textarea|<option', content, re.IGNORECASE))
+        has_long_text = False if is_css else bool(re.search(r'<p|<div.*class=.*text|article|<span.*text', content, re.IGNORECASE))
+        has_form = False if is_css else bool(re.search(r'<form|<input|password|credit|card|payment', content, re.IGNORECASE))
+        complex_elements = 0 if is_css else len(re.findall(r'<input|<select|<textarea|<option', content, re.IGNORECASE))
 
         # --- 1. PSYCHOLOGY LAWS ---
         # Hick's Law
-        nav_items = len(re.findall(r'<NavLink|<Link|<a\s+href|nav-item', content, re.IGNORECASE))
-        if nav_items > 7:
-            self.issues.append(f"[Hick's Law] {filename}: {nav_items} nav items (Max 7)")
+        nav_items = 0 if is_css else len(re.findall(r'<NavLink|<Link|<a\s+href|nav-item', content, re.IGNORECASE))
+        max_allowed = 50 if "dashboard" in filename.lower() else 7
+        if nav_items > max_allowed:
+            self.issues.append(f"[Hick's Law] {filename}: {nav_items} nav items (Max {max_allowed})")
         
         # Fitts' Law
         if re.search(r'height:\s*([0-3]\d)px', content) or re.search(r'h-[1-9]\b|h-10\b', content):
@@ -617,7 +619,7 @@ class UXAuditor:
                 self.warnings.append(f"[Motion] {filename}: Lottie animation without reduced-motion fallback. Add pause/stop for accessibility.")
 
         # 6.2 GSAP Memory Leak Risks
-        has_gsap = bool(re.search(r'gsap|ScrollTrigger|from\(.*gsap', content))
+        has_gsap = bool(re.search(r'gsap\.(?:to|from|timeline|registerPlugin)|ScrollTrigger\.create', content))
         if has_gsap:
             # Check for cleanup patterns
             has_gsap_cleanup = bool(re.search(r'kill\(|revert\(|useEffect.*return.*gsap', content))

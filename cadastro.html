@@ -6,6 +6,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>C.A.S.H. Unit - Solicitar Credenciais</title>
 
+    <!-- Meta Tags SEO -->
+    <meta name="description" content="Solicite suas credenciais e registre-se no C.A.S.H. Unit. Gestão de finanças inteligentes com inteligência artificial.">
+    <meta property="og:title" content="C.A.S.H. Unit - Registrar Novo Operador">
+    <meta property="og:description" content="Solicite suas credenciais e registre-se no C.A.S.H. Unit. Gestão de finanças inteligentes com inteligência artificial.">
+
     <!-- Security Headers -->
     <meta http-equiv="Content-Security-Policy"
         content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; img-src 'self' data: https://*; connect-src 'self' https://wecvchpyutwjqxoeilgq.supabase.co; frame-ancestors 'none';">
@@ -13,24 +18,17 @@
     <meta http-equiv="X-Frame-Options" content="DENY">
     <meta name="referrer" content="strict-origin-when-cross-origin">
 
-    <!-- Fontes Premium -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;500;600;700;800&display=swap"
-        rel="stylesheet">
-
-    <!-- Ícones -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
-        integrity="sha384-iw3OoTErCYJJB9mCa8LNS2hbsQ7M3C0EpIsO/H5+EGAkPGc6rk+V8i04oW/K5xq0" crossorigin="anonymous">
-
-    <!-- Estilos Base & Componentes -->
-    <link rel="stylesheet" href="css/base.css">
-    <link rel="stylesheet" href="css/animations.css">
-    <link rel="stylesheet" href="css/components.css">
-    <link rel="stylesheet" href="css/layout.css">
-    <link rel="stylesheet" href="css/views.css">
-    <link rel="stylesheet" href="css/mascot.css">
+    <!-- Fontes Premium & Estilos Base -->
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;500;600;700;800&display=swap');
+        @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css');
+        @import url('css/base.css');
+        @import url('css/animations.css');
+        @import url('css/components.css');
+        @import url('css/layout.css');
+        @import url('css/views.css');
+        @import url('css/mascot.css');
+    </style>
 
     <style>
         :root {
@@ -312,7 +310,7 @@
         crossorigin="anonymous"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            gsap.from(".auth-card", { scale: 0.95, opacity: 0, duration: 1, ease: "expo.out" });
+            const anim = gsap.from(".auth-card", { scale: 0.95, opacity: 0, duration: 1, ease: "expo.out" });
             window.addEventListener('mousemove', (e) => {
                 const eyes = document.getElementById('cashy-eyes');
                 if (!eyes) return;
@@ -322,6 +320,7 @@
                 const angle = Math.atan2(e.clientY - centerY, e.clientX - centerX);
                 gsap.to(eyes, { x: Math.cos(angle) * 3, y: Math.sin(angle) * 3, duration: 0.4 });
             });
+            // Cleanup: anim.kill() or ScrollTrigger.revert()
         });
     </script>
     <script src="js/config.js?v=12" defer></script>
