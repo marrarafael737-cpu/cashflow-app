@@ -1339,10 +1339,23 @@ async function processSingleMagicCommand(text, userId, inputElement) {
 
         let categoria_id = parsed.categoria_id;
         if (!categoria_id && parsed.categoria_nome && typeof _categories !== 'undefined') {
-            const catMatch = _categories.find(c => 
-                c.nome.toLowerCase().includes(parsed.categoria_nome.toLowerCase())
-            );
-            if (catMatch) categoria_id = catMatch.id;
+            const normalize = (str) => {
+                if (!str) return '';
+                return str.toLowerCase()
+                    .normalize('NFD')
+                    .replace(/[\u0300-\u036f]/g, '')
+                    .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, '')
+                    .trim();
+            };
+            const normParsed = normalize(parsed.categoria_nome);
+            const catMatch = _categories.find(c => {
+                const normCat = normalize(c.nome);
+                return normCat.includes(normParsed) || normParsed.includes(normCat);
+            });
+            if (catMatch) {
+                categoria_id = catMatch.id;
+                parsed.categoria_nome = catMatch.nome; // Keep the official casing/name
+            }
         }
 
         let conta_id = parsed.conta_id;

@@ -18,7 +18,7 @@ async function initGamification(userId) {
 
     try {
         console.log('C.A.S.H. Unit: Inicializando Gamificação Persistente...');
-        
+
         // 1. Tentar carregar do Supabase (user_profiles)
         const { data: profile, error: pError } = await supabase
             .from('user_profiles')
@@ -43,7 +43,7 @@ async function initGamification(userId) {
             // Dados carregados com sucesso do Supabase
             _userXP = profile.xp || 0;
             _userLevel = profile.level || 1;
-            
+
             // Marcar badges desbloqueadas
             if (badgeRows) {
                 badgeRows.forEach(row => {
@@ -108,7 +108,7 @@ async function migrateToSupabase(userId) {
         if (badgesToInsert.length > 0) {
             await supabase.from('user_badges').insert(badgesToInsert);
         }
-        
+
         console.log('C.A.S.H. Unit: Migração concluída com sucesso.');
     } catch (err) {
         console.error('Falha na migração para Supabase:', err);
@@ -118,26 +118,26 @@ async function migrateToSupabase(userId) {
 async function addXP(amount) {
     if (amount <= 0) return;
     _userXP += amount;
-    
+
     const leveledUp = calculateLevel();
     updateMascotEvolutionUI();
-    
+
     // Persistência Híbrida
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
         localStorage.setItem(`xp_${user.id}`, _userXP);
-        
+
         // Update Supabase in background
         supabase.from('user_profiles')
             .update({ xp: _userXP, level: _userLevel, updated_at: new Date().toISOString() })
             .eq('id', user.id)
-            .then(({error}) => {
+            .then(({ error }) => {
                 if (error) console.warn('Erro ao persistir XP na nuvem:', error.message);
             });
-            
+
         checkBadges(user.id);
     }
-    
+
     if (leveledUp && typeof showToast === 'function') {
         showToast(`Nível UP! C.A.S.H. Unit evoluiu para o Nível ${_userLevel}!`, 'success');
         if (typeof confetti === 'function') confetti();
@@ -155,7 +155,7 @@ function evaluateFinancialPerformance(summary) {
     const hasExpenses = allTxs.some(t => t.tipo === 'saida');
     const income = summary.receitas || 0;
     const savingsRate = income > 0 ? (summary.saldoMes / income) : 0;
-    
+
     if (summary.saldoMes > 1000 && transactionCount >= 5 && hasExpenses && savingsRate > 0.1) {
         if (!_badges.economyMaster) {
             unlockBadge('economyMaster');
@@ -172,15 +172,15 @@ function calculateLevel() {
 async function unlockBadge(badgeId) {
     if (_badges[badgeId]) return;
     _badges[badgeId] = true;
-    
+
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
         localStorage.setItem(`badges_${user.id}`, JSON.stringify(_badges));
-        
+
         // Persistir na nuvem
         supabase.from('user_badges')
             .insert([{ user_id: user.id, badge_id: badgeId }])
-            .then(({error}) => {
+            .then(({ error }) => {
                 if (error) console.warn('Erro ao salvar conquista na nuvem:', error.message);
             });
 
@@ -258,7 +258,7 @@ function updateMascotEvolutionUI() {
 
     xpBar.style.width = `${Math.min(percent, 100)}%`;
     if (xpText) xpText.textContent = `${_userXP} XP (Lvl ${_userLevel})`;
-    
+
     lvlBadges.forEach(badge => {
         if (badge) badge.textContent = `LVL ${_userLevel}`;
     });
@@ -287,7 +287,7 @@ function showSnapshotModal() {
     const modal = document.createElement('div');
     modal.className = 'modal-overlay active';
     modal.style.zIndex = '10000';
-    
+
     const balance = window._projectedBalance || 0;
     const name = document.getElementById('user-name-header')?.textContent || 'Usuário';
 
@@ -336,13 +336,13 @@ function setupPredictor(userId) {
         // Incrementar contador de predições
         let count = parseInt(localStorage.getItem(`predict_count_${userId}`) || '0') + 1;
         localStorage.setItem(`predict_count_${userId}`, count);
-        
+
         // Update Supabase
         supabase.rpc('increment_predict_count', { user_id: userId })
             .catch(() => {
                 // Fallback if RPC doesn't exist
                 supabase.from('user_profiles').select('predict_count').eq('id', userId).single()
-                    .then(({data}) => {
+                    .then(({ data }) => {
                         const newCount = (data?.predict_count || 0) + 1;
                         supabase.from('user_profiles').update({ predict_count: newCount }).eq('id', userId);
                     });
@@ -352,7 +352,7 @@ function setupPredictor(userId) {
 
         const balance = window._projectedBalance || calculateGlobalBalance();
         const remaining = balance - value;
-        
+
         let message = "";
         let type = "info";
         let mood = "neutral";
@@ -386,6 +386,6 @@ function setupPredictor(userId) {
 function calculateGlobalBalance() {
     if (typeof _contas === 'undefined') return 0;
     const txs = window._allTransactions || [];
-    return _contas.reduce((acc, c) => acc + (parseFloat(c.saldo_inicial) || 0), 0) + 
-           txs.reduce((acc, t) => acc + (t.tipo === 'entrada' ? parseFloat(t.valor) : -parseFloat(t.valor)), 0);
+    return _contas.reduce((acc, c) => acc + (parseFloat(c.saldo_inicial) || 0), 0) +
+        txs.reduce((acc, t) => acc + (t.tipo === 'entrada' ? parseFloat(t.valor) : -parseFloat(t.valor)), 0);
 }

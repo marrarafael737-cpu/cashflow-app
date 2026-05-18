@@ -4,27 +4,58 @@ const AccountReset = {
     async exportData(userId) {
         showToast('Iniciando extração da Caixa Preta...', 'info');
         
+        let actualUserId = userId;
+        if (!actualUserId) {
+            actualUserId = window.App?.State?.user?.id;
+        }
+        if (!actualUserId) {
+            try {
+                const client = typeof getSupabaseClient === 'function' ? getSupabaseClient() : window.supabase;
+                const { data: { user } } = await client.auth.getUser();
+                if (user) actualUserId = user.id;
+            } catch (e) {
+                console.error("Erro ao obter user via fallback getUser:", e);
+            }
+        }
+        if (!actualUserId) {
+            try {
+                const client = typeof getSupabaseClient === 'function' ? getSupabaseClient() : window.supabase;
+                const { data: { session } } = await client.auth.getSession();
+                if (session && session.user) actualUserId = session.user.id;
+            } catch (e) {
+                console.error("Erro ao obter user via fallback getSession:", e);
+            }
+        }
+
+        if (!actualUserId) {
+            console.error("C.A.S.H. Unit: Falha ao obter o ID do usuário. Abortando exportação!");
+            showToast("Erro crítico: ID do usuário não identificado.", "error");
+            return false;
+        }
+
         const tables = [
-            'transacoes', 'contas', 'metas', 'orcamentos', 
-            'recorrencias', 'categorias', 'subcategorias', 
-            'ativos', 'historico_acesso'
+            'transacoes', 'transacoes_recorrentes', 'recorrencias', 
+            'orcamentos', 'subcategorias', 'faturas', 'contas', 
+            'categorias', 'metas', 'ativos', 'historico_acesso', 
+            'user_badges'
         ];
         
         const backupData = {
             metadata: {
                 exported_at: new Date().toISOString(),
                 app_version: window.CONFIG?.APP_VERSION || '1.2.0',
-                user_id: userId
+                user_id: actualUserId
             },
             database: {},
             localStorage: {}
         };
+ 
+        const client = typeof getSupabaseClient === 'function' ? getSupabaseClient() : window.supabase;
 
         // 1. Fetch Supabase Data
         for (const table of tables) {
             try {
-                const client = typeof getSupabaseClient === 'function' ? getSupabaseClient() : window.supabase;
-                const { data, error } = await client.from(table).select('*').eq('user_id', userId);
+                const { data, error } = await client.from(table).select('*').eq('user_id', actualUserId);
                 if (!error) {
                     backupData.database[table] = data;
                 } else {
@@ -36,14 +67,36 @@ const AccountReset = {
             }
         }
 
+        // Exportar user_profiles
+        try {
+            const { data, error } = await client.from('user_profiles').select('*').eq('id', actualUserId);
+            if (!error && data) {
+                backupData.database['user_profiles'] = data;
+            } else {
+                console.warn(`Erro ao exportar user_profiles:`, error);
+                backupData.database['user_profiles'] = [];
+            }
+        } catch (e) {
+            console.error(`Falha crítica ao exportar user_profiles:`, e);
+        }
+ 
         // 2. Fetch LocalStorage Data
         const lsKeys = Object.keys(localStorage);
         lsKeys.forEach(key => {
-            if (key.includes('xp_') || key.includes('badges_') || key.includes('import_') || key.includes('predict_')) {
+            if (
+                key.includes(actualUserId) ||
+                key.includes('xp_') ||
+                key.includes('badges_') ||
+                key.includes('import_') ||
+                key.includes('predict_') ||
+                key.includes('cashflow_') ||
+                key === 'piggy_bank_active' ||
+                key === 'privacy_mode'
+            ) {
                 backupData.localStorage[key] = localStorage.getItem(key);
             }
         });
-
+ 
         try {
             // 3. Trigger Download
             const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
@@ -62,44 +115,94 @@ const AccountReset = {
         }
         return true;
     },
-
+ 
     async performFullWipe(userId) {
         showToast('Iniciando limpeza total do núcleo...', 'warning');
         
+        let actualUserId = userId;
+        if (!actualUserId) {
+            actualUserId = window.App?.State?.user?.id;
+        }
+        if (!actualUserId) {
+            try {
+                const client = typeof getSupabaseClient === 'function' ? getSupabaseClient() : window.supabase;
+                const { data: { user } } = await client.auth.getUser();
+                if (user) actualUserId = user.id;
+            } catch (e) {
+                console.error("Erro ao obter user via fallback getUser:", e);
+            }
+        }
+        if (!actualUserId) {
+            try {
+                const client = typeof getSupabaseClient === 'function' ? getSupabaseClient() : window.supabase;
+                const { data: { session } } = await client.auth.getSession();
+                if (session && session.user) actualUserId = session.user.id;
+            } catch (e) {
+                console.error("Erro ao obter user via fallback getSession:", e);
+            }
+        }
+
+        if (!actualUserId) {
+            console.error("C.A.S.H. Unit: Falha ao obter o ID do usuário. Abortando wipe!");
+            showToast("Erro crítico: ID do usuário não identificado.", "error");
+            return;
+        }
+ 
+        // Ordem segura de deleção baseada em chaves estrangeiras
         const tables = [
-            'transacoes', 'contas', 'metas', 'orcamentos', 
-            'recorrencias', 'categorias', 'subcategorias', 
-            'ativos', 'historico_acesso'
+            'transacoes', 'transacoes_recorrentes', 'recorrencias', 
+            'orcamentos', 'subcategorias', 'faturas', 'contas', 
+            'categorias', 'metas', 'ativos', 'historico_acesso', 
+            'user_badges'
         ];
+ 
+        const client = typeof getSupabaseClient === 'function' ? getSupabaseClient() : window.supabase;
 
         // 1. Wipe Supabase
         for (const table of tables) {
             try {
-                const client = typeof getSupabaseClient === 'function' ? getSupabaseClient() : window.supabase;
-                const { error } = await client.from(table).delete().eq('user_id', userId);
+                const { error } = await client.from(table).delete().eq('user_id', actualUserId);
                 if (error) console.error(`Erro ao limpar tabela ${table}:`, error);
             } catch (e) {
                 console.error(`Falha ao limpar ${table}:`, e);
             }
         }
 
-        // 2. Clear IndexedDB
-        if (typeof OfflineDB !== 'undefined' && OfflineDB.db) {
-            try {
-                const tx = OfflineDB.db.transaction('pending_transactions', 'readwrite');
-                tx.objectStore('pending_transactions').clear();
-                await tx.done;
-            } catch (e) { console.warn('Erro ao limpar IndexedDB:', e); }
+        // Limpar tabela user_profiles (chave é 'id', não 'user_id')
+        try {
+            const { error } = await client.from('user_profiles').delete().eq('id', actualUserId);
+            if (error) console.error(`Erro ao limpar perfil de usuário (user_profiles):`, error);
+        } catch (e) {
+            console.error(`Falha ao limpar user_profiles:`, e);
         }
-
-        // 3. Clear LocalStorage
+ 
+        // 2. Clear IndexedDB completamente deletando a base de dados
+        try {
+            const DB_NAME = 'CashFlowOfflineDB';
+            const req = indexedDB.deleteDatabase(DB_NAME);
+            req.onsuccess = () => console.log("C.A.S.H. Unit: IndexedDB limpo com sucesso.");
+            req.onerror = () => console.warn("C.A.S.H. Unit: Erro ao expurgar IndexedDB.");
+        } catch (e) { 
+            console.warn('Erro ao limpar IndexedDB:', e); 
+        }
+ 
+        // 3. Clear LocalStorage (expurgar chaves do usuário e chaves globais da sessão)
         const lsKeys = Object.keys(localStorage);
         lsKeys.forEach(key => {
-            if (key.includes('xp_') || key.includes('badges_') || key.includes('import_') || key.includes('predict_')) {
+            if (
+                key.includes(actualUserId) ||
+                key.includes('xp_') ||
+                key.includes('badges_') ||
+                key.includes('import_') ||
+                key.includes('predict_') ||
+                key.includes('cashflow_') ||
+                key === 'piggy_bank_active' ||
+                key === 'privacy_mode'
+            ) {
                 localStorage.removeItem(key);
             }
         });
-
+ 
         showToast('Reset concluído. Deslogando...', 'success');
         
         setTimeout(async () => {

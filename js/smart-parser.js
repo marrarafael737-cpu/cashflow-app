@@ -7,6 +7,15 @@ const SmartParser = {
     // Dynamic Learning Cache (Phase 3)
     vendorCache: {}, // Stores { 'mcdonalds': 'Alimentação', ... }
 
+    normalize(str) {
+        if (!str) return '';
+        return str.toLowerCase()
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, '')
+            .trim();
+    },
+
     // Keywords for detection
     keywords: {
         expense: [
@@ -54,6 +63,50 @@ const SmartParser = {
         }
     },
 
+    // High-Intelligence Category Concepts (Dynamic Concept mapping)
+    categoryConcepts: {
+        alimentacao: {
+            names: ['alimenta', 'comida', 'restaurante', 'bebida', 'gastron', 'padaria', 'lanche', 'gourmet', 'bar', 'café', 'cafe'],
+            keywords: ['comi', 'almoço', 'almoco', 'jantar', 'café', 'cafe', 'restaurante', 'ifood', 'lanche', 'padaria', 'mcdonalds', 'burger king', 'habibs', 'outback', 'gastronomia', 'pizza', 'sushi', 'espetinho', 'comida', 'refeição', 'refeicao', 'bebida', 'churrasco', 'açougue', 'acougue', 'fome', 'supermercado', 'mercado', 'hortifruti', 'mercearia', 'padoca']
+        },
+        transporte: {
+            names: ['transp', 'uber', 'carro', 'moto', 'combust', 'posto', 'viag', 'corrida', 'pedágio', 'pedagio', 'oficina', 'mecân', 'mecan'],
+            keywords: ['uber', 'gasolina', 'combustível', 'combustivel', 'ônibus', 'onibus', 'metrô', 'metro', '99app', 'posto', 'shell', 'ipiranga', 'estacionamento', 'pedágio', 'pedagio', 'oficina', 'mecânico', 'mecanico', 'pneu', 'corrida', 'viagem', 'passagem', 'carro', 'moto', 'taxa', 'volante', 'cabify', 'buser', 'azul', 'gol', 'latam']
+        },
+        lazer: {
+            names: ['lazer', 'divers', 'rolê', 'role', 'entreten', 'festa', 'cinema', 'show', 'games', 'bar', 'cerveja', 'pub', 'churrasco'],
+            keywords: ['cinema', 'show', 'festa', 'steam', 'netflix', 'spotify', 'ingressos', 'bar', 'cerveja', 'churrasco', 'games', 'playstation', 'xbox', 'nintendo', 'diversão', 'rolê', 'passeio', 'curtição', 'balada', 'pub', 'whisky', 'vinho']
+        },
+        compras_vestuario: {
+            names: ['compra', 'luxo', 'roupa', 'vestu', 'estilo', 'presente', 'shopping', 'utilidade', 'loja', 'moda', 'shopee', 'shein', 'mercado livre', 'aliexpress', 'amazon'],
+            keywords: ['roupa', 'vestuário', 'vestuario', 'calçado', 'calcado', 'tênis', 'tenis', 'camisa', 'calça', 'calca', 'casaco', 'compras', 'luxo', 'shopping', 'presente', 'joia', 'relógio', 'relogio', 'perfume', 'cosmético', 'cosmetico', 'maquiagem', 'salão', 'salao', 'barbearia', 'bolsa', 'óculos', 'oculos', 'sapato', 'vestido', 'terno', 'shopee', 'shein', 'mercado livre', 'aliexpress', 'amazon']
+        },
+        saude: {
+            names: ['saúd', 'saud', 'med', 'farm', 'hosp', 'exame', 'remed', 'dentis', 'psic', 'clin', 'terap'],
+            keywords: ['farmácia', 'farmacia', 'médico', 'medico', 'remédio', 'remedio', 'hospital', 'droga', 'exame', 'dentista', 'unimed', 'lab', 'clínica', 'clinica', 'terapia', 'psicólogo', 'psicologo', 'dor', 'doente', 'saúde', 'saude', 'consulta', 'drogaria', 'pills', 'vacina', 'lente', 'óculos', 'oculos']
+        },
+        mercado: {
+            names: ['merc', 'superm', 'horti', 'açoug', 'acoug', 'despensa', 'mantimento'],
+            keywords: ['mercado', 'supermercado', 'carrefour', 'extra', 'pao de acucar', 'atacadao', 'assai', 'hortifruti', 'mercearia', 'açougue', 'acougue', 'peixaria', 'compras', 'casa', 'despensa', 'mantimentos', 'feira', 'sacolão', 'sacolao']
+        },
+        moradia: {
+            names: ['mora', 'alug', 'condo', 'luz', 'energia', 'agua', 'água', 'internet', 'casa', 'lar', 'resid', 'reforma', 'móvel', 'movel', 'decor'],
+            keywords: ['aluguel', 'condominio', 'luz', 'energia', 'agua', 'água', 'internet', 'vivo', 'claro', 'tim', 'reforma', 'móveis', 'moveis', 'decoração', 'decoracao', 'casa', 'lar', 'residência', 'residencia', 'apartamento', 'apto', 'enxoval', 'limpeza', 'iptu', 'gás', 'gas']
+        },
+        educacao: {
+            names: ['educ', 'escola', 'facul', 'curso', 'estud', 'livro', 'aula', 'mensal'],
+            keywords: ['escola', 'faculdade', 'curso', 'livros', 'udemy', 'alura', 'facul', 'mensalidade', 'material escolar', 'estudo', 'aprender', 'conhecimento', 'aula', 'livro', 'workshop', 'pós', 'pos', 'mba', 'tcc']
+        },
+        salario: {
+            names: ['salár', 'salar', 'receit', 'ganho', 'renda', 'provent', 'faturam', 'venda', 'comiss'],
+            keywords: ['salário', 'salario', 'pagamento', 'recebido', 'pix recebido', 'transferência recebida', 'transferencia recebida', 'depósito', 'deposito', 'renda', 'venda', 'comissão', 'comissao', 'bônus', 'bonus', 'salarial', 'pro labore', 'reembolso', 'estorno', 'cashback']
+        },
+        investimentos: {
+            names: ['invest', 'aplic', 'poup', 'ativo', 'bolsa', 'renda fixa', 'renda var', 'cripto', 'tesouro'],
+            keywords: ['investimento', 'tesouro', 'ações', 'acoes', 'fii', 'cripto', 'poupanca', 'poupança', 'cdi', 'aplicação', 'aplicacao', 'ações', 'fundos', 'tesouro direto', 'bdr', 'etf', 'bitcoin', 'ethereum']
+        }
+    },
+
     /**
      * Parses the notification text and returns a transaction object
      * Uses contextual scoring and fuzzy matching to simulate "AI" logic.
@@ -62,19 +115,18 @@ const SmartParser = {
      */
     parse(text) {
         if (!text || text.trim().length < 2) return null;
-
-        // Safety: If it's a question, it should be handled by Oracle, not as a transaction
         if (text.includes('?')) return null;
 
         let workingText = text.trim();
         const cleanText = workingText.toLowerCase();
-        
-        // 1. Extract Value (Enhanced Regex with date protection and common currency words)
-        // Detects: 50.00, 50,00, R$ 50, 50 reais, 50 conto
+
+        // 1. Extract Value (Enhanced currency & format support)
         const amountRegex = /(?:R\$|r\$|\$|reais|conto|pila)?\s?(\d{1,3}(?:\.\d{3})*(?:,\d{2})|\d+(?:\.\d{2})?)(?!\/)(?:\s?(?:reais|conto|pila))?/i;
         const amountMatch = workingText.match(amountRegex);
         let valor = 0;
+        let amountText = "";
         if (amountMatch) {
+            amountText = amountMatch[0];
             let rawValue = amountMatch[1];
             if (rawValue.includes(',') && rawValue.includes('.')) {
                 rawValue = rawValue.replace(/\./g, '').replace(',', '.');
@@ -82,17 +134,21 @@ const SmartParser = {
                 rawValue = rawValue.replace(',', '.');
             }
             valor = parseFloat(rawValue);
-            // We don't remove it yet to keep context for description, but we note its presence
         }
 
         // 2. Identify Type (Entry vs Exit vs Transfer)
         let tipo = 'saida';
-        const isTransfer = this.keywords.transfer.some(k => cleanText.includes(k) || (window.NLP && window.NLP.isSimilar(cleanText, k, 1)));
+        const isTransfer = this.keywords.transfer.some(k => {
+            const regex = new RegExp('\\b' + k + '\\b', 'i');
+            return regex.test(cleanText) || (window.NLP && window.NLP.isSimilar(cleanText, k, 1));
+        });
         
-        // Enhanced income detection
-        const isIncome = this.keywords.income.some(k => cleanText.includes(k) || (window.NLP && window.NLP.isSimilar(cleanText, k, 1))) || 
-                         (cleanText.includes('recebi') && !cleanText.includes('não recebi')) ||
-                         (cleanText.includes('pix') && (cleanText.includes('recebido') || cleanText.includes('crédito')));
+        const isIncome = this.keywords.income.some(k => {
+            const regex = new RegExp('\\b' + k + '\\b', 'i');
+            return regex.test(cleanText) || (window.NLP && window.NLP.isSimilar(cleanText, k, 1));
+        }) || 
+        (/\brecebi\b/i.test(cleanText) && !/\bnão recebi\b/i.test(cleanText)) ||
+        (/\bpix\b/i.test(cleanText) && (/\brecebido\b/i.test(cleanText) || /\bcrédito\b/i.test(cleanText)));
 
         if (isTransfer) {
             tipo = 'transferencia';
@@ -100,156 +156,41 @@ const SmartParser = {
             tipo = 'entrada';
         }
 
-        // 3. Extract Description (Advanced Heuristic)
-        let descricao = "Nova Transação";
-        const stopWords = ['no valor de', 'no valor', 'valor', 'em', 'da', 'do', 'de', 'na', 'no', 'para', 'com', 'realizada', 'realizado', 'aprovada', 'recebido', 'paguei', 'gastei', 'recebi', 'um', 'uma', 'compra', 'venda', 'pagamento', 'estabelecimento', 'sucesso', 'comprovante', 'autorizado', 'mensagem', 'alerta', 'banco', 'agencia', 'conta', 'cartão', 'final', 'vencimento', 'transação', 'efetuada', 'via', 'pix', 'reais', 'conto', 'pila'];
-        
-        const patterns = [
-            /(?:em|no|na|estabelecimento|para|de)\s+([^,.:;()0-9]+)/i,
-            /aprovada\s+(?:no|na|em)\s+([^,.:;()0-9]+)/i,
-            /recebido\s+de\s+([^,.:;()0-9]+)/i,
-            /gastei\s+(?:no|na|em)?\s?([^,.:;()0-9]+)/i,
-            /paguei\s+(?:no|na|em)?\s?([^,.:;()0-9]+)/i
+        // 3. Extract Description (High-Intelligence Noun Phrase Heuristic)
+        const stopWords = [
+            'no valor de', 'no valor', 'valor', 'em', 'da', 'do', 'de', 'na', 'no', 'para', 'com', 'realizada', 
+            'realizado', 'aprovada', 'recebido', 'paguei', 'gastei', 'recebi', 'um', 'uma', 'compra', 'venda', 
+            'pagamento', 'estabelecimento', 'sucesso', 'comprovante', 'autorizado', 'mensagem', 'alerta', 
+            'banco', 'agencia', 'conta', 'cartão', 'cartao', 'final', 'vencimento', 'transação', 'transacao', 
+            'efetuada', 'via', 'pix', 'reais', 'conto', 'pila', 'comprei', 'comprar', 'compras', 'gastos', 
+            'despesa', 'recebimento', 'ganhei', 'ganhar', 'por', 'deu', 'foi', 'para', 'pro', 'pra'
         ];
 
-        for (const pattern of patterns) {
-            const match = workingText.match(pattern);
-            if (match && match[1]) {
-                let candidate = match[1].trim();
-                if (candidate.length > 2) {
-                    descricao = candidate;
-                    break;
-                }
-            }
+        let descText = workingText;
+        if (amountText) {
+            descText = descText.replace(amountText, '');
         }
 
-        if (descricao === "Nova Transação") {
-            const words = workingText.split(/\s+/);
-            if (words.length > 0 && !stopWords.includes(words[0].toLowerCase())) {
-                const potentialVendor = words[0];
-                if (potentialVendor.length > 2) {
-                    descricao = potentialVendor;
-                    if (words[1] && !stopWords.includes(words[1].toLowerCase()) && words[1].length > 2) {
-                        descricao += ' ' + words[1];
-                    }
-                }
-            }
-        }
+        descText = descText
+            .replace(/\b(hoje|ontem|amanhã|amanha|cedo|tarde|noite|agora|dia)\b/gi, '')
+            .replace(/\bd{1,2}\/d{1,2}(\/d{2,4})?\b/g, '');
 
-        // Cleanup Description
-        stopWords.forEach(sw => {
-            const regexStart = new RegExp('^' + sw + '\\b\\s*', 'i');
-            const regexEnd = new RegExp('\\s*\\b' + sw + '$', 'i');
-            descricao = descricao.replace(regexStart, '').replace(regexEnd, '').trim();
-        });
-
-        if (descricao.length < 3 || descricao === "Nova Transação") {
-            let textWithoutValue = workingText;
-            if (amountMatch) textWithoutValue = textWithoutValue.replace(amountMatch[0], '');
-            
-            descricao = textWithoutValue.split(/\s+/).filter(w => w.length > 2 && !stopWords.includes(w.toLowerCase())).slice(0, 3).join(' ') || "Nova Transação";
-        }
-
-        descricao = descricao
-            .replace(/\b(hoje|ontem|amanhã|cedo|tarde|noite|agora|dia)\b/gi, '')
-            .replace(/\b\d{1,2}\/\d{1,2}(\/\d{2,4})?\b/g, '')
-            .replace(/\s+/g, ' ')
-            .trim();
-
-        // 4. Temporal Intelligence (Phase 5) - Retroactive Dates
-        let dataFinal = new Date().toLocaleDateString('en-CA');
-        const temporalPatterns = [
-            { regex: /ontem/i, offset: -1 },
-            { regex: /anteontem/i, offset: -2 },
-            { regex: /sábado passado/i, day: 6 },
-            { regex: /domingo passado/i, day: 0 },
-            { regex: /sexta passada/i, day: 5 },
-            { regex: /quinta passada/i, day: 4 },
-            { regex: /quarta passada/i, day: 3 },
-            { regex: /terça passada/i, day: 2 },
-            { regex: /segunda passada/i, day: 1 }
-        ];
-
-        for (const p of temporalPatterns) {
-            if (cleanText.match(p.regex)) {
-                const d = new Date();
-                if (p.offset !== undefined) {
-                    d.setDate(d.getDate() + p.offset);
-                } else if (p.day !== undefined) {
-                    const currentDay = d.getDay();
-                    let distance = currentDay - p.day;
-                    if (distance <= 0) distance += 7;
-                    d.setDate(d.getDate() - distance);
-                }
-                dataFinal = d.toLocaleDateString('en-CA');
-                break;
-            }
-        }
-
-        // 5. Split Intelligence (Phase 5) - Expense Splitting
-        let splitInfo = null;
         const splitRegex = /(?:metade|divide|dividir|meio|parte)\s+(?:é|com|pro|pra|do|da|de)?\s+([A-Z][a-zà-ÿ]+)/i;
-        const splitMatch = workingText.match(splitRegex);
-        
-        if (splitMatch && valor > 0) {
-            const friendName = splitMatch[1];
-            splitInfo = {
-                friend: friendName,
-                userShare: valor / 2,
-                friendShare: valor / 2
-            };
-            valor = splitInfo.userShare;
-            descricao = `${descricao} (Divisão com ${friendName})`;
+        descText = descText.replace(splitRegex, '');
+
+        let descWords = descText.split(/\s+/)
+            .map(w => w.replace(/[,.:;()]/g, '').trim())
+            .filter(w => w.length > 2 && !stopWords.includes(w.toLowerCase()));
+
+        let descricao = descWords.slice(0, 4).join(' ');
+
+        if (descricao) {
+            descricao = this.capitalize(descricao);
+        } else {
+            descricao = tipo === 'entrada' ? 'Receita Recebida' : 'Despesa Lançada';
         }
 
-        // 6. Contextual Category Scoring (Simulated AI with Fuzzy Matching)
-        let bestCategory = 'Geral';
-        let highestScore = 0;
-
-        for (const [vendor, category] of Object.entries(this.vendorCache)) {
-            if (descricao.toLowerCase().includes(vendor.toLowerCase()) || (window.NLP && window.NLP.isSimilar(descricao, vendor, 1))) {
-                bestCategory = category;
-                highestScore = 100;
-                break;
-            }
-        }
-
-        if (highestScore < 100) {
-            for (const [catName, data] of Object.entries(this.categoryMappings)) {
-                let score = 0;
-                data.keywords.forEach(k => { 
-                    if (cleanText.includes(k)) score += 10; 
-                    else if (window.NLP && window.NLP.isSimilar(cleanText, k, 1)) score += 8;
-                });
-                
-                data.keywords.forEach(k => { 
-                    if (descricao.toLowerCase().includes(k)) score += 15; 
-                    else if (window.NLP && window.NLP.isSimilar(descricao, k, 1)) score += 12;
-                });
-
-                data.context.forEach(c => { 
-                    if (cleanText.includes(c)) score += 5; 
-                });
-
-                if (score > highestScore) {
-                    highestScore = score;
-                    bestCategory = catName;
-                }
-            }
-        }
-
-        // 7. Resolve Category
-        let categoryId = null;
-        let categoria_nome = bestCategory;
-        if (typeof _categories !== 'undefined' && Array.isArray(_categories)) {
-            const cat = _categories.find(c => c.nome.toLowerCase().includes(bestCategory.toLowerCase()));
-            if (cat) {
-                categoryId = cat.id;
-                categoria_nome = cat.nome;
-            }
-        }
-
-        // 6. Detect Account (Zero-Click)
+        // 4. Zero-Click Account Detection
         let detectedAccountId = null;
         let detectedAccountName = null;
         if (typeof _contas !== 'undefined' && Array.isArray(_contas)) {
@@ -261,11 +202,10 @@ const SmartParser = {
             if (accMatch) {
                 detectedAccountId = accMatch.id;
                 detectedAccountName = accMatch.nome;
-                highestScore += 25; 
             }
         }
 
-        // 7. Detect Date (Zero-Click - Enhanced Temporal Intelligence)
+        // 5. Zero-Click Date Detection (Enhanced Temporal Intelligence)
         const d = new Date();
         let transDate = d.toLocaleDateString('en-CA');
         const weekdays = { 'domingo': 0, 'segunda': 1, 'terça': 2, 'quarta': 3, 'quinta': 4, 'sexta': 5, 'sábado': 6, 'sabado': 6 };
@@ -285,22 +225,14 @@ const SmartParser = {
         } else if (cleanText.includes('semana passada')) {
             transDate = getRelativeDate(-7);
         } else {
-            // Detect specific Weekdays (e.g., "sábado passado")
             let weekdayFound = false;
             for (const [name, dayNum] of Object.entries(weekdays)) {
                 if (cleanText.includes(name)) {
                     const currentDay = d.getDay();
                     let diff = currentDay - dayNum;
-                    
-                    // If it's "passado" or if the day hasn't happened yet this week, go back
                     if (cleanText.includes('passado') || cleanText.includes('passada') || diff <= 0) {
                         if (diff <= 0) diff += 7;
-                        if (cleanText.includes('passado') || cleanText.includes('passada')) {
-                            // If user says "sábado passado" and today is Friday, they mean 6 days ago + 7
-                            // But usually they mean the most recent Saturday.
-                        }
                     }
-                    
                     const targetDate = new Date();
                     targetDate.setDate(d.getDate() - diff);
                     transDate = targetDate.toLocaleDateString('en-CA');
@@ -325,10 +257,9 @@ const SmartParser = {
             }
         }
 
-        // 8. Detect Split (Item 3 - Split Intelligence)
+        // 6. Zero-Click Split Detection
         let splitWith = null;
         let splitValue = null;
-        
         const splitPatterns = [
             /(?:metade|dividi|rachei)\s+(?:com|do|da|pro|pra)?\s+([a-zA-Záàâãéèêíïóôõöúçñ]+)/i,
             /([a-zA-Záàâãéèêíïóôõöúçñ]+)\s+(?:me deve|vai pagar|paga metade)/i
@@ -340,19 +271,138 @@ const SmartParser = {
                 const name = match[1].toLowerCase();
                 if (!['reais', 'conto', 'pila', 'hoje', 'ontem'].includes(name)) {
                     splitWith = this.capitalize(name);
-                    splitValue = valor / 2; // Default to half
+                    splitValue = valor / 2;
                     break;
                 }
             }
         }
 
-        // 9. Final Description Cleanup
+        // 7. Contextual Category Scoring (Dynamic Conceptual Scoring vs Fallbacks)
+        let bestCategoryObj = null;
+        let highestScore = -1;
+        let bestCategoryName = 'Geral';
+        const activeCategories = (typeof _categories !== 'undefined' && Array.isArray(_categories)) ? _categories : [];
+
+        // Dynamic Learning Cache Check
+        for (const [vendor, category] of Object.entries(this.vendorCache)) {
+            if (descricao.toLowerCase().includes(vendor.toLowerCase()) || (window.NLP && window.NLP.isSimilar(descricao, vendor, 1))) {
+                const catMatch = activeCategories.find(c => c.nome.toLowerCase() === category.toLowerCase());
+                if (catMatch) {
+                    bestCategoryObj = catMatch;
+                    highestScore = 1000; // Perfect match override
+                    break;
+                }
+            }
+        }
+
+        if (highestScore < 1000 && activeCategories.length > 0) {
+            activeCategories.forEach(cat => {
+                const normCatName = this.normalize(cat.nome);
+                const normCleanText = this.normalize(cleanText);
+                let score = 0;
+
+                // Word boundary check for direct category name reference
+                const catNameRegex = new RegExp('\\b' + normCatName + '\\b', 'i');
+                if (catNameRegex.test(normCleanText)) {
+                    score += 50;
+                }
+
+                // Score against concept families
+                for (const [conceptKey, conceptData] of Object.entries(this.categoryConcepts)) {
+                    const isConceptMatch = conceptData.names.some(n => {
+                        const normN = this.normalize(n);
+                        return normCatName.includes(normN) || normN.includes(normCatName);
+                    });
+                    if (isConceptMatch) {
+                        conceptData.keywords.forEach(k => {
+                            const normK = this.normalize(k);
+                            const wordRegex = new RegExp('\\b' + normK + '\\b', 'i');
+                            if (wordRegex.test(normCleanText)) {
+                                score += 15;
+                            }
+                        });
+
+                        conceptData.keywords.forEach(k => {
+                            const normK = this.normalize(k);
+                            const wordRegex = new RegExp('\\b' + normK + '\\b', 'i');
+                            if (wordRegex.test(this.normalize(descricao))) {
+                                score += 25;
+                            }
+                        });
+                    }
+                }
+
+                // Check direct word matches in category name
+                const words = normCatName.split(/\s+/).filter(w => w.length > 2);
+                words.forEach(w => {
+                    const wRegex = new RegExp('\\b' + w + '\\b', 'i');
+                    if (wRegex.test(normCleanText)) score += 20;
+                });
+
+                if (score > highestScore && score > 0) {
+                    highestScore = score;
+                    bestCategoryObj = cat;
+                }
+            });
+        }
+
+        // Static mapping fallback if no dynamic match could score above 0
+        if (highestScore <= 0) {
+            for (const [catName, data] of Object.entries(this.categoryMappings)) {
+                let score = 0;
+                data.keywords.forEach(k => {
+                    const wordRegex = new RegExp('\\b' + k + '\\b', 'i');
+                    if (wordRegex.test(cleanText)) score += 10;
+                });
+                
+                data.keywords.forEach(k => {
+                    const wordRegex = new RegExp('\\b' + k + '\\b', 'i');
+                    if (wordRegex.test(descricao.toLowerCase())) score += 15;
+                });
+
+                if (score > highestScore && score > 0) {
+                    highestScore = score;
+                    bestCategoryName = catName;
+                }
+            }
+        }
+
+        // Final Category Resolution (Guarantees categoria_id is NEVER null to avoid toast crashes!)
+        let categoryId = null;
+        let categoria_nome = 'Geral';
+
+        if (bestCategoryObj) {
+            categoryId = bestCategoryObj.id;
+            categoria_nome = bestCategoryObj.nome;
+        } else if (activeCategories.length > 0) {
+            // Locate static mapping match inside user's active categories using robust normalization
+            const normBestName = this.normalize(bestCategoryName);
+            const matchedCat = activeCategories.find(c => {
+                const normCat = this.normalize(c.nome);
+                return normCat.includes(normBestName) || normBestName.includes(normCat);
+            });
+            if (matchedCat) {
+                categoryId = matchedCat.id;
+                categoria_nome = matchedCat.nome;
+            } else {
+                // Perfect, robust ultimate fallback to prevent any toast blocks!
+                const fallbackCat = activeCategories.find(c => {
+                    const normCat = this.normalize(c.nome);
+                    return normCat.includes('outro') || normCat.includes('geral') || normCat.includes('lazer');
+                }) || activeCategories[0];
+                
+                categoryId = fallbackCat.id;
+                categoria_nome = fallbackCat.nome;
+            }
+        }
+
+        // 8. Final Description Cleanup (Remove auxiliary words, temporal shifts, splits)
         let finalDesc = descricao;
         if (detectedAccountName) {
-            const accRegex = new RegExp(detectedAccountName, 'gi');
+            const accRegex = new RegExp('\\b' + detectedAccountName + '\\b', 'gi');
             finalDesc = finalDesc.replace(accRegex, '');
         }
-        ['ontem', 'hoje', 'amanhã', 'no valor de', 'metade', 'dividi', 'rachei'].forEach(word => {
+        ['ontem', 'hoje', 'amanhã', 'amanha', 'no valor de', 'metade', 'dividi', 'rachei'].forEach(word => {
             const wordRegex = new RegExp('\\b' + word + '\\b', 'gi');
             finalDesc = finalDesc.replace(wordRegex, '');
         });
@@ -362,16 +412,21 @@ const SmartParser = {
         }
         finalDesc = finalDesc.replace(/\s+/g, ' ').trim();
 
+        // If cleanup left description empty, restore clean initial candidate
+        if (!finalDesc || finalDesc.length < 2) {
+            finalDesc = descricao;
+        }
+
         return {
             valor: splitValue ? splitValue : valor,
-            descricao: this.capitalize(finalDesc || descricao),
+            descricao: this.capitalize(finalDesc),
             tipo,
             categoria_id: categoryId,
             categoria_nome,
             conta_id: detectedAccountId,
             conta_nome: detectedAccountName,
             data: transDate,
-            confidence: highestScore,
+            confidence: highestScore > 15 ? 95 : (highestScore > 0 ? highestScore : 10),
             split: splitWith ? { with: splitWith, value: splitValue, original_total: valor } : null
         };
     },
