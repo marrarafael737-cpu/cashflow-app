@@ -363,6 +363,15 @@ function setupAuthUI() {
     checkRecovery();
 }
 
+// Register Service Worker for PWA support on auth pages
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+            .then(reg => console.log('C.A.S.H. Unit: Service Worker registered from auth', reg.scope))
+            .catch(err => console.warn('C.A.S.H. Unit: Service Worker registration failed from auth', err));
+    });
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     initMascotAuthInteractions();
     setupAuthUI();

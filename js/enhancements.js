@@ -240,7 +240,8 @@ function setupEnhancementListeners(userId) {
     const btnScan = document.getElementById('btn-magic-scan');
     const fileInput = document.getElementById('magic-scan-input');
 
-    if (btnScan && fileInput) {
+    if (btnScan && fileInput && !btnScan.dataset.listenerSetup) {
+        btnScan.dataset.listenerSetup = 'true';
         btnScan.addEventListener('click', () => fileInput.click());
         fileInput.addEventListener('change', (e) => {
             const file = e.target.files[0];
@@ -250,8 +251,10 @@ function setupEnhancementListeners(userId) {
 
     // 2. Ouvinte para o Microfone (Web Speech API - iOS and Android Optimized)
     const btnVoice = document.getElementById('btn-magic-voice');
-    if (btnVoice) {
+    if (btnVoice && !btnVoice.dataset.listenerSetup) {
+        btnVoice.dataset.listenerSetup = 'true';
         let isListening = false;
+        
         btnVoice.addEventListener('click', () => {
             if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
                 showToast('Seu navegador não suporta reconhecimento de voz.', 'error');
@@ -264,11 +267,22 @@ function setupEnhancementListeners(userId) {
             }
 
             // Se já estiver ouvindo, para gentilmente
-            if (isListening && window._cashflowSpeechRecognition) {
-                try {
-                    window._cashflowSpeechRecognition.stop();
-                } catch(e){}
+            if (isListening) {
+                if (window._cashflowSpeechRecognition) {
+                    try {
+                        window._cashflowSpeechRecognition.stop();
+                    } catch(e){
+                        console.warn("Falha ao parar reconhecimento:", e);
+                    }
+                }
                 return;
+            }
+
+            // Se houver uma instância anterior ativa ou travada, aborte-a primeiro
+            if (window._cashflowSpeechRecognition) {
+                try {
+                    window._cashflowSpeechRecognition.abort();
+                } catch(e){}
             }
 
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -310,6 +324,7 @@ function setupEnhancementListeners(userId) {
 
             recognition.onerror = (event) => {
                 console.error('C.A.S.H. Unit SpeechError:', event.error);
+                isListening = false;
                 if (event.error === 'not-allowed') {
                     showToast('Permissão de microfone negada ou bloqueada. Ative nas configurações do aparelho!', 'error');
                 } else if (event.error !== 'aborted') {
@@ -328,6 +343,10 @@ function setupEnhancementListeners(userId) {
                 recognition.start();
             } catch(e) {
                 console.error("C.A.S.H. Unit Voice Start Error:", e);
+                isListening = false;
+                btnVoice.style.backgroundColor = 'rgba(255, 122, 0, 0.15)';
+                btnVoice.style.color = 'var(--color-primary)';
+                btnVoice.classList.remove('listening');
                 showToast("Erro ao ligar o microfone.", "error");
             }
         });
