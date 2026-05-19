@@ -1,6 +1,6 @@
 /* sw.js - Service Worker for CashFlow */
 
-const CACHE_NAME = 'cashflow-v13';
+const CACHE_NAME = 'cashflow-v14';
 const ASSETS_TO_CACHE = [
   './',
   './dashboard.html',
@@ -41,6 +41,7 @@ const ASSETS_TO_CACHE = [
   './js/sync-engine.js',
   './js/offline-sync.js',
   './js/smart-parser.js',
+  './js/enhancements.js',
   './assets/mascot.svg'
 ];
 
