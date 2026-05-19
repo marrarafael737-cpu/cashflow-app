@@ -232,16 +232,17 @@ const AccountReset = {
             await sleep(200);
 
             try {
-                const { data, count, error } = await client
+                const { data, error } = await client
                     .from(table)
-                    .delete({ count: 'exact' })
-                    .eq('user_id', actualUserId);
+                    .delete()
+                    .eq('user_id', actualUserId)
+                    .select();
                 
                 if (error) {
                     addLog(`FALHA NA TABELA '${table.toUpperCase()}': ${error.message || error}`, 'error');
                 } else {
-                    const rowsStr = count !== null ? `(${count} regs)` : '';
-                    addLog(`TABELA '${table.toUpperCase()}' EXPURGADA COM SUCESSO! ${rowsStr}`, 'success');
+                    const count = data ? data.length : 0;
+                    addLog(`TABELA '${table.toUpperCase()}' EXPURGADA COM SUCESSO! (${count} regs)`, 'success');
                 }
             } catch (e) {
                 addLog(`ERRO INESPERADO NA TABELA '${table.toUpperCase()}': ${e.message || e}`, 'error');
@@ -256,15 +257,17 @@ const AccountReset = {
         await sleep(200);
 
         try {
-            const { data, count, error } = await client
+            const { data, error } = await client
                 .from('user_profiles')
-                .delete({ count: 'exact' })
-                .eq('id', actualUserId);
+                .delete()
+                .eq('id', actualUserId)
+                .select();
             
             if (error) {
                 addLog(`FALHA AO APAGAR USER_PROFILES: ${error.message || error}`, 'error');
             } else {
-                addLog(`PERFIL DO NÚCLEO APAGADO COM SUCESSO!`, 'success');
+                const count = data ? data.length : 0;
+                addLog(`PERFIL DO NÚCLEO APAGADO COM SUCESSO! (${count} regs)`, 'success');
             }
         } catch (e) {
             addLog(`ERRO INESPERADO EM USER_PROFILES: ${e.message || e}`, 'error');
