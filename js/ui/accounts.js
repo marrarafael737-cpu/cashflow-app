@@ -53,7 +53,14 @@ window.renderContas = function() {
                             <h4 style="color: white; margin: 0; font-size: 1rem;">${window.escapeHTML(c.nome)}</h4>
                             <span style="font-size: 0.7rem; color: rgba(255,255,255,0.5);">${typeLabel}</span>
                         </div>
-                        <i class="fas ${c.icone || 'fa-credit-card'}" style="color: ${color}; font-size: 1.2rem;"></i>
+                        <div class="digital-core-node" style="--node-color: ${color}">
+                            <div class="node-border-scanner"></div>
+                            <div class="node-corner-led animate-pulse-slow"></div>
+                            <div class="node-icon-wrapper">
+                                <i class="fas ${c.icone || 'fa-credit-card'} node-icon-glow"></i>
+                            </div>
+                            <span class="node-tech-tag">CHIP</span>
+                        </div>
                     </div>
                     <div style="margin: 1rem 0;">
                         <span style="font-size: 0.7rem; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 1px;">Fatura Atual</span>
@@ -91,8 +98,13 @@ window.renderContas = function() {
             return `
                 <div class="account-card" style="--card-color: ${color}">
                     <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                        <div style="width: 40px; height: 40px; border-radius: 12px; background: ${color}20; color: ${color}; display: flex; align-items: center; justify-content: center;">
-                            <i class="fas ${c.icone || 'fa-wallet'}"></i>
+                        <div class="digital-core-node" style="--node-color: ${color}">
+                            <div class="node-border-scanner"></div>
+                            <div class="node-corner-led animate-pulse-slow"></div>
+                            <div class="node-icon-wrapper">
+                                <i class="fas ${c.icone || 'fa-wallet'} node-icon-glow"></i>
+                            </div>
+                            <span class="node-tech-tag">CORE</span>
                         </div>
                         <div style="text-align: right;">
                             <h4 style="margin: 0; font-size: 0.9rem;">${window.escapeHTML(c.nome)}</h4>

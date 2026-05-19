@@ -238,9 +238,9 @@ svg.theme-sun { display: none !important; }
 
 /* Icon Buttons - Premium (Phase 3) */
 .btn-icon-premium {
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    color: var(--color-text-muted);
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: rgba(255, 255, 255, 0.75); /* Higher default contrast */
     width: 32px;
     height: 32px;
     border-radius: 10px;
@@ -248,19 +248,30 @@ svg.theme-sun { display: none !important; }
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* Spring physics */
     padding: 0;
+    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.05);
 }
 
 .btn-icon-premium:hover {
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.12);
     border-color: var(--color-primary);
-    color: var(--color-primary);
-    transform: translateY(-2px);
+    color: #ffffff; /* Bright white icon */
+    transform: translateY(-3px) scale(1.08);
+    box-shadow: 0 0 12px rgba(255, 122, 0, 0.3); /* Premium accent glow */
+}
+
+/* Smooth rotation for the gear icon on hover */
+.btn-icon-premium:hover i {
+    transform: rotate(45deg);
+}
+
+.btn-icon-premium i {
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 .btn-icon-premium:active {
-    transform: scale(0.95);
+    transform: scale(0.9);
 }
 
 .btn-icon-danger {
@@ -1238,5 +1249,164 @@ input:checked + .slider:before { transform: translateX(20px); }
     #magic-input {
         padding-right: 85px !important;
     }
+}
+
+/* ==========================================================================
+   DIGITAL CORE NODES - Premium Cybernetic Icon Modules
+   ========================================================================== */
+
+.digital-core-node {
+    position: relative;
+    width: 46px;
+    height: 46px;
+    border-radius: 14px;
+    background: rgba(15, 15, 15, 0.85);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    box-shadow: 
+        inset 0 0 8px rgba(0, 0, 0, 0.8),
+        0 4px 10px rgba(0, 0, 0, 0.4);
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.15);
+    flex-shrink: 0;
+}
+
+/* Glowing sub-border using CSS mask for clean neon effect */
+.digital-core-node::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 14px;
+    padding: 1px;
+    background: linear-gradient(135deg, var(--node-color, var(--color-primary)) 0%, transparent 60%);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    opacity: 0.75;
+    pointer-events: none;
+    transition: opacity 0.3s ease, background 0.3s ease;
+}
+
+/* Subtle holographic technical circuit board pattern */
+.digital-core-node::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: 
+        radial-gradient(var(--node-color, var(--color-primary)) 1px, transparent 1px),
+        linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+    background-size: 8px 8px, 4px 4px, 4px 4px;
+    background-position: center;
+    opacity: 0.2;
+    pointer-events: none;
+}
+
+/* Slow Pulsing Micro-LED Link indicator */
+.node-corner-led {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background-color: var(--node-color, var(--color-primary));
+    box-shadow: 0 0 6px var(--node-color, var(--color-primary));
+    z-index: 2;
+}
+
+/* Center icon holographic high-contrast glow wrapper */
+.node-icon-wrapper {
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.node-icon-glow {
+    color: #ffffff !important;
+    font-size: 1.15rem;
+    filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.6)) drop-shadow(0 0 6px var(--node-color, var(--color-primary)));
+    transition: all 0.3s ease;
+}
+
+/* Courier Mono Technical Label */
+.node-tech-tag {
+    position: absolute;
+    bottom: 3px;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 0.45rem;
+    font-weight: 900;
+    letter-spacing: 0.5px;
+    color: var(--node-color, var(--color-primary));
+    opacity: 0.6;
+    text-transform: uppercase;
+    transform: scale(0.85);
+    pointer-events: none;
+    z-index: 2;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+/* Neon laser scanning effect */
+.node-border-scanner {
+    position: absolute;
+    top: -100%;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        to bottom,
+        transparent 0%,
+        rgba(255, 255, 255, 0.1) 40%,
+        var(--node-color, var(--color-primary)) 50%,
+        rgba(255, 255, 255, 0.1) 60%,
+        transparent 100%
+    );
+    opacity: 0;
+    pointer-events: none;
+    z-index: 1;
+}
+
+/* Micro LED pulsing animation */
+@keyframes node-pulse {
+    0%, 100% { opacity: 0.4; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.1); box-shadow: 0 0 8px var(--node-color, var(--color-primary)); }
+}
+
+.animate-pulse-slow {
+    animation: node-pulse 3s infinite ease-in-out;
+}
+
+/* Active Hover Transitions when Account Card is hovered */
+.account-card:hover .digital-core-node {
+    transform: scale(1.05) translateY(-1px);
+    border-color: rgba(255, 255, 255, 0.15);
+    box-shadow: 
+        inset 0 0 10px rgba(0, 0, 0, 0.9),
+        0 0 12px var(--node-color, var(--color-primary)),
+        0 6px 15px rgba(0, 0, 0, 0.5);
+}
+
+.account-card:hover .digital-core-node::before {
+    opacity: 1;
+    background: linear-gradient(135deg, var(--node-color, var(--color-primary)) 0%, var(--node-color, var(--color-primary)) 100%);
+}
+
+.account-card:hover .node-tech-tag {
+    opacity: 0.95;
+    transform: scale(0.9);
+}
+
+.account-card:hover .node-border-scanner {
+    animation: node-scan 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes node-scan {
+    0% { top: -100%; opacity: 0; }
+    30% { opacity: 0.8; }
+    70% { opacity: 0.8; }
+    100% { top: 100%; opacity: 0; }
 }
 
