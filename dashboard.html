@@ -613,8 +613,11 @@
                                         <!-- Magic Scan (OCR) Button -->
                                         <button id="btn-magic-scan" type="button" class="btn-scan-input"
                                             title="Escanear Comprovante"
-                                            style="position: absolute; right: 50px; background: rgba(255, 122, 0, 0.15); border: 1px solid rgba(255, 122, 0, 0.3); border-radius: 8px; color: var(--color-primary); cursor: pointer; padding: 6px 10px; font-size: 1.1rem; transition: all 0.3s ease; z-index: 100;">
-                                            <i class="fas fa-camera"></i>
+                                            style="position: absolute; right: 50px; background: rgba(255, 122, 0, 0.15); border: 1px solid rgba(255, 122, 0, 0.3); border-radius: 8px; color: var(--color-primary); cursor: pointer; display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; transition: all 0.3s ease; z-index: 100; padding: 0;">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width: 18px; height: 18px;">
+                                                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                                                <circle cx="12" cy="13" r="4"></circle>
+                                            </svg>
                                         </button>
 
                                         <input type="file" id="magic-scan-input" accept="image/*" capture="environment"
@@ -623,8 +626,13 @@
                                         <!-- Voice Button Inside Input -->
                                         <button id="btn-magic-voice" type="button" class="btn-voice-input"
                                             title="Falar comando"
-                                            style="position: absolute; right: 8px; background: rgba(255, 122, 0, 0.15); border: 1px solid rgba(255, 122, 0, 0.3); border-radius: 8px; color: var(--color-primary); cursor: pointer; padding: 6px 10px; font-size: 1.1rem; transition: all 0.3s ease; z-index: 100;">
-                                            <i class="fas fa-microphone"></i>
+                                            style="position: absolute; right: 8px; background: rgba(255, 122, 0, 0.15); border: 1px solid rgba(255, 122, 0, 0.3); border-radius: 8px; color: var(--color-primary); cursor: pointer; display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; transition: all 0.3s ease; z-index: 100; padding: 0;">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width: 18px; height: 18px;">
+                                                <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                                                <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                                                <line x1="12" y1="19" x2="12" y2="23"></line>
+                                                <line x1="8" y1="23" x2="16" y2="23"></line>
+                                            </svg>
                                         </button>
                                     </div>
 
@@ -1398,7 +1406,10 @@
                         <button type="button" id="btn-change-avatar"
                             onclick="document.getElementById('avatar-file-input').click()"
                             style="background: var(--color-surface-secondary); color: var(--color-text-main); border: 1px solid var(--color-border); border-radius: 8px; padding: 0.4rem 1rem; font-size: 0.8rem; cursor: pointer; display: flex; align-items: center; gap: 0.4rem;">
-                            <i class="fas fa-camera"></i> Trocar Foto
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width: 14px; height: 14px;">
+                                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                                <circle cx="12" cy="13" r="4"></circle>
+                            </svg> Trocar Foto
                         </button>
                         <p id="avatar-upload-status"
                             style="font-size: 0.72rem; color: var(--color-text-muted); margin: 0;"></p>
@@ -1484,8 +1495,10 @@
                     </div>
                     <div style="display: flex; gap: 1rem; margin-top: 1rem;">
                         <button type="submit" class="btn-primary-action" style="flex: 2;">Confirmar Lançamento</button>
-                        <button type="button" id="btn-ocr-trigger" class="btn-secondary" style="flex: 1;"><i
-                                class="fas fa-camera"></i> Escanear</button>
+                        <button type="button" id="btn-ocr-trigger" class="btn-secondary" style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 0.5rem;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width: 16px; height: 16px;">
+                                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                                <circle cx="12" cy="13" r="4"></circle>
+                            </svg> Escanear</button>
                         <input type="file" id="input-ocr-file" accept="image/*" style="display: none;">
                     </div>
                 </form>
