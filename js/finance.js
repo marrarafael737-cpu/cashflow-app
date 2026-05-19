@@ -18,9 +18,23 @@ function escapeHTML(str) {
 }
 
 function parseDate(dateStr) {
-    // Garante que a data seja interpretada no fuso local sem deslocamento
     if (!dateStr) return new Date();
-    return new Date(dateStr + 'T00:00:00');
+    if (dateStr instanceof Date) return dateStr;
+    
+    // Se já tiver fuso horário ou hora configurada, converte diretamente
+    if (dateStr.toString().includes('T') || dateStr.toString().includes(' ')) {
+        const d = new Date(dateStr);
+        if (!isNaN(d.getTime())) return d;
+    }
+    
+    // Se for formato YYYY-MM-DD
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+        const d = new Date(dateStr + 'T00:00:00');
+        if (!isNaN(d.getTime())) return d;
+    }
+    
+    const d = new Date(dateStr);
+    return isNaN(d.getTime()) ? new Date() : d;
 }
 
 /**
@@ -815,13 +829,259 @@ function getGoogle() {
         setTimeout(() => {
             clearInterval(check);
             resolve(null);
-        }, 10000);
+        }, 3000); // Strict 3-second timeout!
     });
+}
+
+function drawSvgSankey(container, transactions, contas, categories) {
+    const now = new Date();
+    
+    // Defensive date parsing
+    const currentMonthTransactions = transactions.filter(t => {
+        if (!t || !t.data) return false;
+        const d = parseDate(t.data);
+        return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+    });
+
+    const incomes = currentMonthTransactions.filter(t => t.tipo === 'entrada');
+    const expenses = currentMonthTransactions.filter(t => t.tipo === 'saida');
+
+    const incomeGroups = {};
+    incomes.forEach(t => {
+        if (!t.valor || Number(t.valor) <= 0) return;
+        const name = t.descricao ? t.descricao.split(' ')[0] : 'Receita';
+        const label = name.trim();
+        incomeGroups[label] = (incomeGroups[label] || 0) + Number(t.valor);
+    });
+
+    const expenseGroups = {};
+    expenses.forEach(t => {
+        if (!t.valor || Number(t.valor) <= 0) return;
+        const catName = categories.find(c => c.id === t.categoria_id)?.nome || 'Geral';
+        const label = catName.trim();
+        expenseGroups[label] = (expenseGroups[label] || 0) + Number(t.valor);
+    });
+
+    const sortedIncomes = Object.entries(incomeGroups).sort((a, b) => b[1] - a[1]);
+    let finalIncomes = [];
+    if (sortedIncomes.length > 4) {
+        finalIncomes = sortedIncomes.slice(0, 3);
+        const otherVal = sortedIncomes.slice(3).reduce((acc, curr) => acc + curr[1], 0);
+        finalIncomes.push(['Outros', otherVal]);
+    } else {
+        finalIncomes = sortedIncomes;
+    }
+
+    const sortedExpenses = Object.entries(expenseGroups).sort((a, b) => b[1] - a[1]);
+    let finalExpenses = [];
+    if (sortedExpenses.length > 5) {
+        finalExpenses = sortedExpenses.slice(0, 4);
+        const otherVal = sortedExpenses.slice(4).reduce((acc, curr) => acc + curr[1], 0);
+        finalExpenses.push(['Outros', otherVal]);
+    } else {
+        finalExpenses = sortedExpenses;
+    }
+
+    const totalIncome = finalIncomes.reduce((acc, curr) => acc + curr[1], 0);
+    const totalExpense = finalExpenses.reduce((acc, curr) => acc + curr[1], 0);
+
+    if (totalIncome === 0 && totalExpense === 0) {
+        container.innerHTML = `
+            <div style="height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; color:var(--color-text-muted); font-size:0.8rem; gap:10px;">
+                <i class="fas fa-project-diagram" style="font-size:2rem; opacity:0.3;"></i>
+                <span>Sem dados de fluxo para este mês.</span>
+            </div>`;
+        return;
+    }
+
+    function getStackedLayout(items, startY, totalHeight, gap) {
+        const N = items.length;
+        if (N === 0) return [];
+        
+        const totalVal = items.reduce((sum, item) => sum + item[1], 0);
+        const totalGaps = (N - 1) * gap;
+        const availHeight = Math.max(50, totalHeight - totalGaps);
+        
+        let currentY = startY;
+        return items.map(([name, val]) => {
+            const h = totalVal > 0 ? Math.max(16, (val / totalVal) * availHeight) : (availHeight / N);
+            const y = currentY;
+            currentY += h + gap;
+            return { name, value: val, y, h };
+        });
+    }
+
+    const leftNodes = getStackedLayout(finalIncomes, 40, 270, 16);
+    const rightNodes = getStackedLayout(finalExpenses, 40, 270, 14);
+
+    const centerHeight = 200;
+    const centerY = 40 + (270 - centerHeight) / 2;
+
+    let leftLinks = [];
+    let currentCenterInY = centerY;
+    leftNodes.forEach(node => {
+        const pct = totalIncome > 0 ? (node.value / totalIncome) : (1 / leftNodes.length);
+        const linkH = pct * centerHeight;
+        leftLinks.push({
+            fromY: node.y + node.h / 2,
+            toY: currentCenterInY + linkH / 2,
+            w: Math.max(3, linkH - 4),
+            value: node.value,
+            name: node.name
+        });
+        currentCenterInY += linkH;
+    });
+
+    let rightLinks = [];
+    let currentCenterOutY = centerY;
+    rightNodes.forEach(node => {
+        const pct = totalExpense > 0 ? (node.value / totalExpense) : (1 / rightNodes.length);
+        const linkH = pct * centerHeight;
+        rightLinks.push({
+            fromY: currentCenterOutY + linkH / 2,
+            toY: node.y + node.h / 2,
+            w: Math.max(3, linkH - 4),
+            value: node.value,
+            name: node.name
+        });
+        currentCenterOutY += linkH;
+    });
+
+    const netVal = totalIncome - totalExpense;
+    const netColor = netVal >= 0 ? '#10B981' : '#EF4444';
+    const netSign = netVal >= 0 ? '+' : '';
+
+    let svgHtml = `
+    <svg viewBox="0 0 640 340" width="100%" height="100%" style="background:transparent; font-family:system-ui, -apple-system, sans-serif;">
+        <defs>
+            <linearGradient id="left-flow" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stop-color="#10B981" stop-opacity="0.35"/>
+                <stop offset="100%" stop-color="#3B82F6" stop-opacity="0.2"/>
+            </linearGradient>
+            <linearGradient id="right-flow" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stop-color="#3B82F6" stop-opacity="0.2"/>
+                <stop offset="100%" stop-color="#EF4444" stop-opacity="0.35"/>
+            </linearGradient>
+            <linearGradient id="center-fill" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stop-color="#1e293b"/>
+                <stop offset="100%" stop-color="#0f172a"/>
+            </linearGradient>
+        </defs>
+        
+        <style>
+            .sankey-link {
+                transition: stroke-opacity 0.2s ease, stroke-width 0.2s ease;
+            }
+            .sankey-link:hover {
+                stroke-opacity: 0.75 !important;
+            }
+            .sankey-node-rect {
+                transition: fill-opacity 0.2s, stroke-width 0.2s;
+            }
+            .sankey-node-rect:hover {
+                fill-opacity: 0.25 !important;
+                stroke-width: 1.5px !important;
+            }
+            @keyframes flowDash {
+                to {
+                    stroke-dashoffset: -40;
+                }
+            }
+            .sankey-flow-line {
+                stroke-dasharray: 6, 24;
+                animation: flowDash 2.5s linear infinite;
+            }
+        </style>
+
+        <!-- FLOWS (LINKS) -->
+    `;
+
+    // Left flows
+    leftLinks.forEach(link => {
+        svgHtml += `
+        <!-- Flow background -->
+        <path d="M 150 ${link.fromY} C 210 ${link.fromY}, 210 ${link.toY}, 270 ${link.toY}" 
+              stroke="url(#left-flow)" stroke-width="${link.w}" fill="none" opacity="0.65" class="sankey-link" />
+        <!-- Flow particle animation -->
+        <path d="M 150 ${link.fromY} C 210 ${link.fromY}, 210 ${link.toY}, 270 ${link.toY}" 
+              stroke="#10B981" stroke-width="1.5" fill="none" opacity="0.7" class="sankey-flow-line" />
+        `;
+    });
+
+    // Right flows
+    rightLinks.forEach(link => {
+        svgHtml += `
+        <!-- Flow background -->
+        <path d="M 370 ${link.fromY} C 430 ${link.fromY}, 430 ${link.toY}, 490 ${link.toY}" 
+              stroke="url(#right-flow)" stroke-width="${link.w}" fill="none" opacity="0.65" class="sankey-link" />
+        <!-- Flow particle animation -->
+        <path d="M 370 ${link.fromY} C 430 ${link.fromY}, 430 ${link.toY}, 490 ${link.toY}" 
+              stroke="#EF4444" stroke-width="1.5" fill="none" opacity="0.7" class="sankey-flow-line" />
+        `;
+    });
+
+    svgHtml += `<!-- NODES -->`;
+
+    // Left nodes
+    leftNodes.forEach(node => {
+        svgHtml += `
+        <rect x="50" y="${node.y}" width="100" height="${node.h}" rx="4" 
+              fill="rgba(16, 185, 129, 0.08)" stroke="#10B981" stroke-width="1" class="sankey-node-rect" />
+        <text x="40" y="${node.y + node.h / 2 + 4}" fill="rgba(255,255,255,0.7)" font-size="9.5" text-anchor="end" font-weight="500">${node.name}</text>
+        <text x="140" y="${node.y + node.h / 2 + 4}" fill="#10B981" font-size="9" text-anchor="end" font-weight="700">R$ ${node.value.toLocaleString('pt-BR', {maximumFractionDigits:0})}</text>
+        `;
+    });
+
+    // Center Hub node
+    svgHtml += `
+    <rect x="270" y="${centerY}" width="100" height="${centerHeight}" rx="6" 
+          fill="url(#center-fill)" stroke="#3B82F6" stroke-width="1.2" class="sankey-node-rect" style="filter: drop-shadow(0 0 6px rgba(59, 130, 246, 0.15));" />
+    <text x="320" y="${centerY + centerHeight / 2 - 12}" fill="rgba(255,255,255,0.4)" font-size="8" letter-spacing="1" text-anchor="middle" font-weight="bold">CONEXÃO</text>
+    <text x="320" y="${centerY + centerHeight / 2 + 2}" fill="#ffffff" font-size="10.5" font-weight="800" text-anchor="middle">C.A.S.H. HUB</text>
+    <text x="320" y="${centerY + centerHeight / 2 + 15}" fill="${netColor}" font-size="9.5" font-weight="800" text-anchor="middle">${netSign}R$ ${netVal.toLocaleString('pt-BR', {maximumFractionDigits:0})}</text>
+    `;
+
+    // Right nodes
+    rightNodes.forEach(node => {
+        svgHtml += `
+        <rect x="490" y="${node.y}" width="100" height="${node.h}" rx="4" 
+              fill="rgba(239, 68, 68, 0.08)" stroke="#EF4444" stroke-width="1" class="sankey-node-rect" />
+        <text x="600" y="${node.y + node.h / 2 + 4}" fill="rgba(255,255,255,0.7)" font-size="9.5" text-anchor="start" font-weight="500">${node.name}</text>
+        <text x="500" y="${node.y + node.h / 2 + 4}" fill="#EF4444" font-size="9" text-anchor="start" font-weight="700">R$ ${node.value.toLocaleString('pt-BR', {maximumFractionDigits:0})}</text>
+        `;
+    });
+
+    svgHtml += `</svg>`;
+    container.innerHTML = svgHtml;
 }
 
 async function initSankeyFlow() {
     const container = document.getElementById('sankey-flow-container');
     if (!container) return;
+
+    const transactions = window._allTransactions || [];
+    const contas = window._contas || [];
+    const categories = window._categories || [];
+
+    const drawFallback = () => {
+        console.log("C.A.S.H. Unit: Executando fallback de fluxo SVG.");
+        try {
+            drawSvgSankey(container, transactions, contas, categories);
+        } catch (e) {
+            console.error("Erro ao desenhar fallback SVG:", e);
+            container.innerHTML = `
+                <div style="height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; color:var(--color-text-muted); font-size:0.8rem; gap:10px;">
+                    <i class="fas fa-exclamation-triangle" style="font-size:2rem; opacity:0.3; color:var(--color-warning);"></i>
+                    <span>Erro ao processar fluxos de capital.</span>
+                </div>`;
+        }
+    };
+
+    // If offline, bypass Google loader immediately
+    if (!navigator.onLine) {
+        drawFallback();
+        return;
+    }
 
     if (!isGoogleChartsLoaded) {
         container.innerHTML = '<div style="display:flex; justify-content:center; align-items:center; height:100%;"><i class="fas fa-circle-notch fa-spin" style="color:var(--color-primary); margin-right: 10px;"></i> Carregando motor de fluxos...</div>';
@@ -829,11 +1089,7 @@ async function initSankeyFlow() {
 
     const g = await getGoogle();
     if (!g) {
-        container.innerHTML = `
-            <div style="height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; color:var(--color-text-muted); font-size:0.8rem; gap:10px;">
-                <i class="fas fa-exclamation-triangle" style="font-size:2rem; opacity:0.3; color:var(--color-warning);"></i>
-                <span>Erro: Não foi possível carregar o motor de gráficos.</span>
-            </div>`;
+        drawFallback();
         return;
     }
 
@@ -849,25 +1105,28 @@ async function initSankeyFlow() {
     if (!isGoogleChartsLoaded) {
         try {
             g.charts.load('current', { 'packages': ['sankey'] });
-            await new Promise((resolve) => {
-                g.charts.setOnLoadCallback(() => {
-                    resolve();
-                });
-                // Safety timeout of 5 seconds
-                setTimeout(resolve, 5000);
+            const loaded = await new Promise((resolve) => {
+                g.charts.setOnLoadCallback(() => resolve(true));
+                setTimeout(() => resolve(false), 3000); // 3-second limit to load dynamic packages
             });
-            isGoogleChartsLoaded = true;
-            drawSankey();
+
+            if (loaded) {
+                isGoogleChartsLoaded = true;
+                drawSankey();
+            } else {
+                drawFallback();
+            }
         } catch (e) {
             console.error('Erro ao carregar Google Charts packages:', e);
-            container.innerHTML = `
-                <div style="height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; color:var(--color-text-muted); font-size:0.8rem; gap:10px;">
-                    <i class="fas fa-exclamation-triangle" style="font-size:2rem; opacity:0.3; color:var(--color-warning);"></i>
-                    <span>Erro ao carregar o módulo de fluxos.</span>
-                </div>`;
+            drawFallback();
         }
     } else {
-        drawSankey();
+        try {
+            drawSankey();
+        } catch (err) {
+            console.error('Erro ao rodar drawSankey nativo:', err);
+            drawFallback();
+        }
     }
 
     function drawSankey() {
@@ -883,7 +1142,7 @@ async function initSankeyFlow() {
             const now = new Date();
             const currentMonthTransactions = transactions.filter(t => {
                 if (!t || !t.data) return false;
-                const d = new Date(t.data + 'T00:00:00');
+                const d = parseDate(t.data);
                 return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
             });
 
@@ -963,11 +1222,7 @@ async function initSankeyFlow() {
             sankeyChartInstance.draw(data, options);
         } catch (err) {
             console.error('Erro ao desenhar Sankey Flow:', err);
-            container.innerHTML = `
-                <div style="height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; color:var(--color-text-muted); font-size:0.8rem; gap:10px;">
-                    <i class="fas fa-exclamation-circle" style="font-size:2rem; opacity:0.3; color:var(--color-warning);"></i>
-                    <span>Erro ao renderizar fluxo de capital.</span>
-                </div>`;
+            drawFallback();
         }
     }
 }

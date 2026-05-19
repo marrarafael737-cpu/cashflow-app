@@ -34,10 +34,9 @@ const AccountReset = {
         }
 
         const tables = [
-            'transacoes', 'transacoes_recorrentes', 'recorrencias', 
-            'orcamentos', 'subcategorias', 'faturas', 'contas', 
-            'categorias', 'metas', 'ativos', 'historico_acesso', 
-            'user_badges'
+            'ativos', 'transacoes', 'recorrencias', 'orcamentos', 
+            'subcategorias', 'contas', 'categorias', 'metas', 
+            'historico_acesso', 'user_badges'
         ];
         
         const backupData = {
@@ -117,7 +116,61 @@ const AccountReset = {
     },
  
     async performFullWipe(userId) {
-        showToast('Iniciando limpeza total do núcleo...', 'warning');
+        // Transition UI to Step 4 (Terminal logs)
+        if (typeof goToResetStep === 'function') {
+            goToResetStep(4);
+        } else {
+            const step4 = document.getElementById('reset-step-4');
+            if (step4) step4.style.display = 'block';
+        }
+
+        const terminal = document.getElementById('reset-terminal-logs');
+        const progressBar = document.getElementById('reset-progress-bar');
+        
+        if (terminal) terminal.innerHTML = '';
+        if (progressBar) progressBar.style.width = '0%';
+
+        const sleep = ms => new Promise(res => setTimeout(res, ms));
+
+        function addLog(text, status = 'info') {
+            if (!terminal) return;
+            const div = document.createElement('div');
+            div.style.lineHeight = '1.4';
+            div.style.wordBreak = 'break-all';
+            div.style.marginBottom = '0.25rem';
+            
+            let color = 'rgba(255,255,255,0.8)';
+            let prefix = '[⚙] ';
+            if (status === 'success') {
+                color = '#10b981';
+                prefix = '[✔] ';
+            } else if (status === 'error') {
+                color = '#ef4444';
+                prefix = '[✘] ';
+            } else if (status === 'warning') {
+                color = '#f59e0b';
+                prefix = '[⚠] ';
+            } else if (status === 'system') {
+                color = '#60a5fa';
+                prefix = '[⚡] ';
+            }
+            
+            div.style.color = color;
+            div.textContent = `${prefix}${text}`;
+            terminal.appendChild(div);
+            terminal.scrollTop = terminal.scrollHeight;
+        }
+
+        function updateProgress(percentage) {
+            if (progressBar) {
+                progressBar.style.width = `${percentage}%`;
+            }
+        }
+
+        addLog('INICIANDO EXPURGO INTEGRAL DO SISTEMA...', 'system');
+        await sleep(350);
+        addLog('ESTABELECENDO CANAL SEGURO DE DADOS...', 'info');
+        await sleep(250);
         
         let actualUserId = userId;
         if (!actualUserId) {
@@ -143,75 +196,156 @@ const AccountReset = {
         }
 
         if (!actualUserId) {
-            console.error("C.A.S.H. Unit: Falha ao obter o ID do usuário. Abortando wipe!");
+            addLog('FALHA CRÍTICA: IDENTIFICADOR DO USUÁRIO NÃO ENCONTRADO.', 'error');
+            addLog('ABORTANDO EXPURGO PARA PRESERVAR INTEGRIDADE.', 'error');
             showToast("Erro crítico: ID do usuário não identificado.", "error");
             return;
         }
- 
-        // Ordem segura de deleção baseada em chaves estrangeiras
+
+        addLog(`AUTENTICADO COM SUCESSO. UUID: ${actualUserId}`, 'success');
+        await sleep(200);
+
+        // Safe order deletion (children first)
         const tables = [
-            'transacoes', 'transacoes_recorrentes', 'recorrencias', 
-            'orcamentos', 'subcategorias', 'faturas', 'contas', 
-            'categorias', 'metas', 'ativos', 'historico_acesso', 
+            'ativos', 
+            'transacoes', 
+            'recorrencias', 
+            'orcamentos', 
+            'subcategorias', 
+            'contas', 
+            'categorias', 
+            'metas', 
+            'historico_acesso', 
             'user_badges'
         ];
- 
+
+        const totalSteps = tables.length + 4; // Tables + user_profiles + IndexedDB + localStorage + signOut
+        let currentStep = 0;
+
         const client = typeof getSupabaseClient === 'function' ? getSupabaseClient() : window.supabase;
 
-        // 1. Wipe Supabase
+        // 1. Wipe Supabase Tables sequentially
         for (const table of tables) {
+            currentStep++;
+            updateProgress((currentStep / totalSteps) * 100);
+            addLog(`DESVINCULANDO REGISTROS DA TABELA '${table.toUpperCase()}'...`, 'info');
+            await sleep(200);
+
             try {
-                const { error } = await client.from(table).delete().eq('user_id', actualUserId);
-                if (error) console.error(`Erro ao limpar tabela ${table}:`, error);
+                const { data, count, error } = await client
+                    .from(table)
+                    .delete({ count: 'exact' })
+                    .eq('user_id', actualUserId);
+                
+                if (error) {
+                    addLog(`FALHA NA TABELA '${table.toUpperCase()}': ${error.message || error}`, 'error');
+                } else {
+                    const rowsStr = count !== null ? `(${count} regs)` : '';
+                    addLog(`TABELA '${table.toUpperCase()}' EXPURGADA COM SUCESSO! ${rowsStr}`, 'success');
+                }
             } catch (e) {
-                console.error(`Falha ao limpar ${table}:`, e);
+                addLog(`ERRO INESPERADO NA TABELA '${table.toUpperCase()}': ${e.message || e}`, 'error');
             }
+            await sleep(150);
         }
 
-        // Limpar tabela user_profiles (chave é 'id', não 'user_id')
+        // 2. Wipe user_profiles
+        currentStep++;
+        updateProgress((currentStep / totalSteps) * 100);
+        addLog("DELETANDO REGISTRO DE PERFIL ('USER_PROFILES')...", 'info');
+        await sleep(200);
+
         try {
-            const { error } = await client.from('user_profiles').delete().eq('id', actualUserId);
-            if (error) console.error(`Erro ao limpar perfil de usuário (user_profiles):`, error);
+            const { data, count, error } = await client
+                .from('user_profiles')
+                .delete({ count: 'exact' })
+                .eq('id', actualUserId);
+            
+            if (error) {
+                addLog(`FALHA AO APAGAR USER_PROFILES: ${error.message || error}`, 'error');
+            } else {
+                addLog(`PERFIL DO NÚCLEO APAGADO COM SUCESSO!`, 'success');
+            }
         } catch (e) {
-            console.error(`Falha ao limpar user_profiles:`, e);
+            addLog(`ERRO INESPERADO EM USER_PROFILES: ${e.message || e}`, 'error');
         }
- 
-        // 2. Clear IndexedDB completamente deletando a base de dados
+        await sleep(200);
+
+        // 3. Clear IndexedDB
+        currentStep++;
+        updateProgress((currentStep / totalSteps) * 100);
+        addLog('APAGANDO BANCO DE DADOS LOCAL (INDEXEDDB)...', 'info');
+        await sleep(250);
+
         try {
             const DB_NAME = 'CashFlowOfflineDB';
             const req = indexedDB.deleteDatabase(DB_NAME);
-            req.onsuccess = () => console.log("C.A.S.H. Unit: IndexedDB limpo com sucesso.");
-            req.onerror = () => console.warn("C.A.S.H. Unit: Erro ao expurgar IndexedDB.");
+            
+            await new Promise((resolve) => {
+                req.onsuccess = () => {
+                    addLog('INDEXEDDB LOCAL DESTRUÍDO COM SUCESSO.', 'success');
+                    resolve();
+                };
+                req.onerror = () => {
+                    addLog('AVISO: FALHA AO EXPURGAR INDEXEDDB.', 'warning');
+                    resolve();
+                };
+                setTimeout(resolve, 1000); // safety timeout
+            });
         } catch (e) { 
-            console.warn('Erro ao limpar IndexedDB:', e); 
+            addLog(`AVISO ERRO INDEXEDDB: ${e.message}`, 'warning'); 
         }
- 
-        // 3. Clear LocalStorage (expurgar chaves do usuário e chaves globais da sessão)
-        const lsKeys = Object.keys(localStorage);
-        lsKeys.forEach(key => {
-            if (
-                key.includes(actualUserId) ||
-                key.includes('xp_') ||
-                key.includes('badges_') ||
-                key.includes('import_') ||
-                key.includes('predict_') ||
-                key.includes('cashflow_') ||
-                key === 'piggy_bank_active' ||
-                key === 'privacy_mode'
-            ) {
-                localStorage.removeItem(key);
-            }
-        });
- 
-        showToast('Reset concluído. Deslogando...', 'success');
-        
-        setTimeout(async () => {
-            if (typeof handleLogout === 'function') {
-                await handleLogout();
-            } else {
-                window.location.href = 'login.html';
-            }
-        }, 2000);
+        await sleep(150);
+
+        // 4. Clear LocalStorage
+        currentStep++;
+        updateProgress((currentStep / totalSteps) * 100);
+        addLog('DESTRUINDO VARIÁVEIS DE AMBIENTE (LOCALSTORAGE)...', 'info');
+        await sleep(250);
+
+        try {
+            const lsKeys = Object.keys(localStorage);
+            let cleanedCount = 0;
+            lsKeys.forEach(key => {
+                if (
+                    key.includes(actualUserId) ||
+                    key.includes('xp_') ||
+                    key.includes('badges_') ||
+                    key.includes('import_') ||
+                    key.includes('predict_') ||
+                    key.includes('cashflow_') ||
+                    key === 'piggy_bank_active' ||
+                    key === 'privacy_mode'
+                ) {
+                    localStorage.removeItem(key);
+                    cleanedCount++;
+                }
+            });
+            addLog(`LOCALSTORAGE HIGIENIZADO COM SUCESSO (${cleanedCount} chaves).`, 'success');
+        } catch (e) {
+            addLog(`AVISO ERRO LOCALSTORAGE: ${e.message}`, 'warning');
+        }
+        await sleep(150);
+
+        // 5. Cloud signout
+        currentStep++;
+        updateProgress(100);
+        addLog('DESCONECTANDO DO SERVIDOR REMOTO SUPABASE...', 'info');
+        await sleep(350);
+
+        try {
+            await client.auth.signOut();
+            addLog('SESSÃO ENCERRADA E PASSAPORTE REVOGADO.', 'success');
+        } catch (e) {
+            addLog('AVISO: FALHA AO REALIZAR SIGNOUT NA NUVEM.', 'warning');
+        }
+        await sleep(250);
+
+        addLog('EXPURGO INTEGRAL CONCLUÍDO COM SUCESSO!', 'system');
+        addLog('REDIRECIONANDO PARA TELA DE LOGIN...', 'system');
+        await sleep(2500);
+
+        window.location.href = 'login.html';
     }
 };
 
