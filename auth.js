@@ -370,6 +370,15 @@ if ('serviceWorker' in navigator) {
             .then(reg => console.log('C.A.S.H. Unit: Service Worker registered from auth', reg.scope))
             .catch(err => console.warn('C.A.S.H. Unit: Service Worker registration failed from auth', err));
     });
+
+    // Force reload when new service worker takes over
+    let refreshing = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (!refreshing) {
+            refreshing = true;
+            window.location.reload();
+        }
+    });
 }
 
 document.addEventListener('DOMContentLoaded', () => {

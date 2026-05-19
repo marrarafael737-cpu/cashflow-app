@@ -434,7 +434,7 @@ label {
 input, select, textarea {
     background: rgba(0, 0, 0, 0.3) !important; /* Force dark background */
     border: 1px solid rgba(255, 255, 255, 0.1) !important;
-    padding: 1.1rem 1.25rem !important;
+    padding: 1.1rem 1.25rem;
     border-radius: 14px !important;
     color: #FFFFFF !important;
     font-size: 0.95rem !important;
@@ -737,6 +737,10 @@ input:checked + .slider:before { transform: translateX(20px); }
     font-size: 1rem;
     pointer-events: none;
     transition: all 0.3s ease;
+}
+
+.input-with-icon input {
+    padding-left: 3.25rem !important;
 }
 
 #login-form .form-group input, 
