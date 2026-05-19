@@ -212,7 +212,7 @@
     }
 
     .topbar-mobile {
-        display: flex;
+        display: flex !important;
         width: 100%;
         background: #09090B;
         border-bottom: 1px solid var(--color-border);
@@ -225,7 +225,7 @@
         gap: 0.5rem;
     }
 
-    .bottom-nav-mobile { display: flex; }
+    .bottom-nav-mobile { display: flex !important; }
     
     .dashboard-main-content { 
         padding-top: 0;

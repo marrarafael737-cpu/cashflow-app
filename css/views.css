@@ -894,15 +894,11 @@
 }
 
 .btn-voice-input.listening {
-    color: var(--color-primary) !important;
-    animation: pulse-red 1.5s infinite;
-    text-shadow: 0 0 10px var(--color-primary);
-}
-
-@keyframes pulse-red {
-    0% { transform: scale(1); opacity: 1; }
-    50% { transform: scale(1.2); opacity: 0.7; }
-    100% { transform: scale(1); opacity: 1; }
+    background: rgba(239, 68, 68, 0.25) !important;
+    border-color: rgba(239, 68, 68, 0.5) !important;
+    color: #ff4444 !important;
+    animation: micPulse 1.5s infinite !important;
+    box-shadow: 0 0 15px rgba(239, 68, 68, 0.4);
 }
 
 .intelligence-preview {
