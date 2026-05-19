@@ -219,7 +219,7 @@ const AccountReset = {
             'user_badges'
         ];
 
-        const totalSteps = tables.length + 4; // Tables + user_profiles + IndexedDB + localStorage + signOut
+        const totalSteps = tables.length + 5; // Tables + user_profiles + IndexedDB + localStorage + browserCache + signOut
         let currentStep = 0;
 
         const client = typeof getSupabaseClient === 'function' ? getSupabaseClient() : window.supabase;
@@ -239,10 +239,15 @@ const AccountReset = {
                     .select();
                 
                 if (error) {
-                    addLog(`FALHA NA TABELA '${table.toUpperCase()}': ${error.message || error}`, 'error');
+                    addLog(`FALHA NA TABELA '${table.toUpperCase()}': ${error.message || JSON.stringify(error)}`, 'error');
                 } else {
                     const count = data ? data.length : 0;
-                    addLog(`TABELA '${table.toUpperCase()}' EXPURGADA COM SUCESSO! (${count} regs)`, 'success');
+                    if (count > 0) {
+                        addLog(`TABELA '${table.toUpperCase()}' EXPURGADA COM SUCESSO! (${count} regs)`, 'success');
+                    } else {
+                        addLog(`TABELA '${table.toUpperCase()}': 0 registros deletados.`, 'warning');
+                        addLog(`  -> Verifique se há dados ou se a política RLS DELETE está ativa.`, 'warning');
+                    }
                 }
             } catch (e) {
                 addLog(`ERRO INESPERADO NA TABELA '${table.toUpperCase()}': ${e.message || e}`, 'error');
@@ -264,10 +269,14 @@ const AccountReset = {
                 .select();
             
             if (error) {
-                addLog(`FALHA AO APAGAR USER_PROFILES: ${error.message || error}`, 'error');
+                addLog(`FALHA AO APAGAR USER_PROFILES: ${error.message || JSON.stringify(error)}`, 'error');
             } else {
                 const count = data ? data.length : 0;
-                addLog(`PERFIL DO NÚCLEO APAGADO COM SUCESSO! (${count} regs)`, 'success');
+                if (count > 0) {
+                    addLog(`PERFIL DO NÚCLEO APAGADO COM SUCESSO! (${count} regs)`, 'success');
+                } else {
+                    addLog(`USER_PROFILES: 0 registros deletados.`, 'warning');
+                }
             }
         } catch (e) {
             addLog(`ERRO INESPERADO EM USER_PROFILES: ${e.message || e}`, 'error');
@@ -300,26 +309,17 @@ const AccountReset = {
         }
         await sleep(150);
 
-        // 4. Clear LocalStorage
+        // 4. Clear LocalStorage completely (except theme)
         currentStep++;
         updateProgress((currentStep / totalSteps) * 100);
-        addLog('DESTRUINDO VARIÁVEIS DE AMBIENTE (LOCALSTORAGE)...', 'info');
+        addLog('DESTRUINDO VARIÁVEIS E CREDENCIAIS (LOCALSTORAGE)...', 'info');
         await sleep(250);
 
         try {
             const lsKeys = Object.keys(localStorage);
             let cleanedCount = 0;
             lsKeys.forEach(key => {
-                if (
-                    key.includes(actualUserId) ||
-                    key.includes('xp_') ||
-                    key.includes('badges_') ||
-                    key.includes('import_') ||
-                    key.includes('predict_') ||
-                    key.includes('cashflow_') ||
-                    key === 'piggy_bank_active' ||
-                    key === 'privacy_mode'
-                ) {
+                if (key !== 'theme') {
                     localStorage.removeItem(key);
                     cleanedCount++;
                 }
@@ -327,6 +327,29 @@ const AccountReset = {
             addLog(`LOCALSTORAGE HIGIENIZADO COM SUCESSO (${cleanedCount} chaves).`, 'success');
         } catch (e) {
             addLog(`AVISO ERRO LOCALSTORAGE: ${e.message}`, 'warning');
+        }
+        await sleep(150);
+
+        // 4.5. Clear PWA Cache Storage to force fresh client download
+        currentStep++;
+        updateProgress((currentStep / totalSteps) * 100);
+        addLog('LIMPENDO CACHES DO NAVEGADOR (PURGE PWA)...', 'info');
+        await sleep(250);
+
+        try {
+            if ('caches' in window) {
+                const keys = await caches.keys();
+                let deletedCount = 0;
+                for (const key of keys) {
+                    await caches.delete(key);
+                    deletedCount++;
+                }
+                addLog(`CACHE DE ARQUIVOS LIMPO COM SUCESSO (${deletedCount} caches).`, 'success');
+            } else {
+                addLog('CACHE STORAGE NÃO SUPORTADO NESTE NAVEGADOR.', 'info');
+            }
+        } catch (e) {
+            addLog(`AVISO ERRO CACHE PURGE: ${e.message}`, 'warning');
         }
         await sleep(150);
 
