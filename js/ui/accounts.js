@@ -30,8 +30,15 @@ window.renderContas = function() {
         `;
         if (grid) grid.innerHTML = emptyHTML;
         if (dashList) dashList.innerHTML = emptyHTML;
+        
+        const radarPanel = document.getElementById("radar-allocation-panel");
+        if (radarPanel) radarPanel.style.display = "none";
         return;
     }
+
+    // Calculate total assets (positive balances only, excluding credit cards)
+    const assetAccounts = _contas.filter(c => c.tipo !== 'credito' && (c.saldo_atual || 0) > 0);
+    const totalAssets = assetAccounts.reduce((sum, c) => sum + (c.saldo_atual || 0), 0);
 
     const cardsHTML = _contas.map(c => {
         const saldoFinal = c.saldo_atual || 0;
@@ -46,7 +53,7 @@ window.renderContas = function() {
             const usagePercent = limit > 0 ? Math.min((totalSpent / limit) * 100, 100) : 0;
             
             return `
-                <div class="account-card type-credito" style="--card-color: ${color}">
+                <div class="account-card type-credito" data-type="${c.tipo}" style="--card-color: ${color}">
                     <div class="card-chip"></div>
                     <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                         <div>
@@ -95,8 +102,11 @@ window.renderContas = function() {
                     </div>
                 </div>`;
         } else {
+            // Calculate proportional share in total assets
+            const assetPercent = (totalAssets > 0 && saldoFinal > 0) ? ((saldoFinal / totalAssets) * 100).toFixed(1) : "0.0";
+            
             return `
-                <div class="account-card" style="--card-color: ${color}">
+                <div class="account-card" data-type="${c.tipo}" style="--card-color: ${color}">
                     <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                         <div class="digital-core-node" style="--node-color: ${color}">
                             <div class="node-border-scanner"></div>
@@ -120,7 +130,7 @@ window.renderContas = function() {
                         <button class="btn-icon-premium" onclick="handleEditAccount('${c.id}')">
                             <i class="fas fa-cog"></i>
                         </button>
-                        <span style="font-size: 0.7rem; color: var(--color-text-muted);">Patrimônio: 100%</span>
+                        <span style="font-size: 0.7rem; color: var(--color-text-muted);">Patrimônio: ${assetPercent}%</span>
                     </div>
                 </div>`;
         }
@@ -129,4 +139,286 @@ window.renderContas = function() {
     if (grid) grid.innerHTML = cardsHTML;
     if (dashList) dashList.innerHTML = cardsHTML;
     if (typeof checkInvoiceDueDates === 'function') window.checkInvoiceDueDates();
+
+    // Dynamically render asset allocation radar
+    if (typeof window.renderRadarPatrimonio === 'function') {
+        window.renderRadarPatrimonio();
+    }
+};
+
+/* ==========================================================================
+   RADAR DE ALOCAÇÃO DE PATRIMÔNIO (Fase 13 - Análise Pro)
+   ========================================================================== */
+
+window.renderRadarPatrimonio = function() {
+    const radarPanel = document.getElementById("radar-allocation-panel");
+    const radarSvg = document.getElementById("radar-svg");
+    const legendList = document.getElementById("radar-legend-list");
+    const readoutVal = document.getElementById("radar-readout-value");
+    const readoutPct = document.getElementById("radar-readout-percent");
+
+    if (!radarPanel || !radarSvg || !legendList) return;
+
+    if (typeof _contas === 'undefined' || !_contas || _contas.length === 0) {
+        radarPanel.style.display = "none";
+        return;
+    }
+
+    // Filter accounts with positive balances that are not credit cards
+    const assetAccounts = _contas.filter(c => c.tipo !== 'credito' && (c.saldo_atual || 0) > 0);
+    
+    if (assetAccounts.length === 0) {
+        radarPanel.style.display = "none";
+        return;
+    }
+
+    radarPanel.style.display = "block";
+
+    // Consolidate balances by type
+    const totals = {
+        corrente: 0,
+        poupanca: 0,
+        investimento: 0,
+        dinheiro: 0
+    };
+
+    assetAccounts.forEach(c => {
+        if (totals[c.tipo] !== undefined) {
+            totals[c.tipo] += (c.saldo_atual || 0);
+        }
+    });
+
+    const totalAssets = Object.values(totals).reduce((a, b) => a + b, 0);
+    
+    if (totalAssets <= 0) {
+        radarPanel.style.display = "none";
+        return;
+    }
+
+    // Default readout displays total assets
+    const defaultTextVal = window.formatar(totalAssets);
+    readoutVal.textContent = defaultTextVal;
+    readoutPct.textContent = "100%";
+
+    const typeConfig = {
+        corrente: { label: "Conta Corrente", color: "#00E5FF", icon: "fa-university" },
+        poupanca: { label: "Poupança / Reserva", color: "#00D2FF", icon: "fa-piggy-bank" },
+        investimento: { label: "Investimentos", color: "#FF9100", icon: "fa-chart-line" },
+        dinheiro: { label: "Dinheiro Físico", color: "#00E676", icon: "fa-wallet" }
+    };
+
+    // Calculate angles and percentage
+    const segments = [];
+    Object.keys(totals).forEach(type => {
+        const val = totals[type];
+        if (val > 0) {
+            segments.push({
+                type: type,
+                value: val,
+                percent: (val / totalAssets) * 100,
+                color: typeConfig[type].color,
+                label: typeConfig[type].label,
+                icon: typeConfig[type].icon
+            });
+        }
+    });
+
+    // Draw SVG Donut
+    // Circumference = 2 * PI * 70 = ~439.823
+    const R = 70;
+    const C = 2 * Math.PI * R;
+    let accumulatedPercent = 0;
+    let svgContent = "";
+
+    // Add a background glowing track circle
+    svgContent += `<circle cx="110" cy="110" r="${R}" fill="transparent" stroke="rgba(255,255,255,0.03)" stroke-width="14" />`;
+
+    segments.forEach((seg, index) => {
+        const strokeDashArray = `${C}`;
+        const strokeDashOffset = C - (seg.percent / 100) * C;
+        // The rotation angle starts from -90deg (12 o'clock)
+        const rotationAngle = (accumulatedPercent / 100) * 360 - 90;
+        
+        svgContent += `
+            <circle class="radar-slice" 
+                    cx="110" 
+                    cy="110" 
+                    r="${R}" 
+                    fill="transparent" 
+                    stroke="${seg.color}" 
+                    stroke-width="14" 
+                    stroke-dasharray="${strokeDashArray}" 
+                    stroke-dashoffset="${strokeDashOffset}" 
+                    transform="rotate(${rotationAngle} 110 110)"
+                    stroke-linecap="round"
+                    data-type="${seg.type}"
+                    data-value="${window.formatar(seg.value)}"
+                    data-percent="${seg.percent.toFixed(1)}%"
+                    data-label="${seg.label}"
+                    style="transition: stroke-width 0.3s ease, filter 0.3s ease; cursor: pointer;"
+            />
+        `;
+        
+        accumulatedPercent += seg.percent;
+    });
+
+    radarSvg.innerHTML = svgContent;
+
+    // Render legend items
+    legendList.innerHTML = segments.map(seg => {
+        return `
+            <div class="radar-legend-item" data-type="${seg.type}" style="--item-color: ${seg.color}">
+                <div class="legend-color-indicator">
+                    <i class="fas ${seg.icon}"></i>
+                </div>
+                <div class="legend-text-details">
+                    <span class="legend-item-label">${seg.label}</span>
+                    <span class="legend-item-value privacy-blur">${window.formatar(seg.value)}</span>
+                </div>
+                <div class="legend-item-badge">${seg.percent.toFixed(1)}%</div>
+            </div>
+        `;
+    }).join("");
+
+    // Attach Event Listeners for Slice Hover & Click
+    const slices = radarSvg.querySelectorAll(".radar-slice");
+    const legendItems = legendList.querySelectorAll(".radar-legend-item");
+
+    const setReadout = (label, val, pct) => {
+        const rLabel = radarPanel.querySelector(".readout-label");
+        if (rLabel) rLabel.textContent = label;
+        readoutVal.textContent = val;
+        readoutPct.textContent = pct;
+    };
+
+    const resetReadout = () => {
+        const rLabel = radarPanel.querySelector(".readout-label");
+        if (rLabel) rLabel.textContent = "Patrimônio";
+        readoutVal.textContent = defaultTextVal;
+        readoutPct.textContent = "100%";
+    };
+
+    // Slices Hover & Click handlers
+    slices.forEach(slice => {
+        slice.addEventListener("mouseenter", () => {
+            const label = slice.getAttribute("data-label");
+            const val = slice.getAttribute("data-value");
+            const pct = slice.getAttribute("data-percent");
+            setReadout(label, val, pct);
+            
+            // Subtle highlight on this slice
+            slice.style.strokeWidth = "18px";
+            slice.style.filter = "drop-shadow(0 0 8px " + slice.getAttribute("stroke") + ")";
+            
+            // Highlight legend item
+            const matchingLegend = legendList.querySelector(`.radar-legend-item[data-type="${slice.getAttribute("data-type")}"]`);
+            if (matchingLegend) matchingLegend.classList.add("active-hover");
+        });
+
+        slice.addEventListener("mouseleave", () => {
+            resetReadout();
+            slice.style.strokeWidth = "14px";
+            slice.style.filter = "none";
+            
+            const matchingLegend = legendList.querySelector(`.radar-legend-item[data-type="${slice.getAttribute("data-type")}"]`);
+            if (matchingLegend) matchingLegend.classList.remove("active-hover");
+        });
+
+        slice.addEventListener("click", () => {
+            const type = slice.getAttribute("data-type");
+            window.handleRadarFilter(type);
+        });
+    });
+
+    // Legend items Hover & Click handlers
+    legendItems.forEach(item => {
+        const type = item.getAttribute("data-type");
+        const matchingSlice = radarSvg.querySelector(`.radar-slice[data-type="${type}"]`);
+
+        item.addEventListener("mouseenter", () => {
+            if (matchingSlice) {
+                const label = matchingSlice.getAttribute("data-label");
+                const val = matchingSlice.getAttribute("data-value");
+                const pct = matchingSlice.getAttribute("data-percent");
+                setReadout(label, val, pct);
+                
+                matchingSlice.style.strokeWidth = "18px";
+                matchingSlice.style.filter = "drop-shadow(0 0 8px " + matchingSlice.getAttribute("stroke") + ")";
+            }
+            item.classList.add("active-hover");
+        });
+
+        item.addEventListener("mouseleave", () => {
+            resetReadout();
+            if (matchingSlice) {
+                matchingSlice.style.strokeWidth = "14px";
+                matchingSlice.style.filter = "none";
+            }
+            item.classList.remove("active-hover");
+        });
+
+        item.addEventListener("click", () => {
+            window.handleRadarFilter(type);
+        });
+    });
+};
+
+window.handleRadarFilter = function(type) {
+    const grid = document.getElementById("wallets-grid");
+    if (!grid) return;
+
+    const cards = grid.querySelectorAll(".account-card");
+    const clearBtn = document.getElementById("btn-clear-radar-filter");
+    
+    // Toggle active state in legend list
+    const legendList = document.getElementById("radar-legend-list");
+    if (legendList) {
+        const items = legendList.querySelectorAll(".radar-legend-item");
+        items.forEach(item => {
+            if (item.getAttribute("data-type") === type) {
+                item.classList.add("filter-active");
+            } else {
+                item.classList.remove("filter-active");
+            }
+        });
+    }
+
+    cards.forEach(card => {
+        if (card.getAttribute("data-type") === type) {
+            card.style.opacity = "1";
+            card.style.transform = "scale(1)";
+            card.style.pointerEvents = "auto";
+        } else {
+            card.style.opacity = "0.15";
+            card.style.transform = "scale(0.96)";
+            card.style.pointerEvents = "none";
+        }
+    });
+
+    if (clearBtn) clearBtn.style.display = "inline-flex";
+};
+
+window.clearRadarFilter = function() {
+    const grid = document.getElementById("wallets-grid");
+    if (!grid) return;
+
+    const cards = grid.querySelectorAll(".account-card");
+    const clearBtn = document.getElementById("btn-clear-radar-filter");
+
+    // Reset legend active states
+    const legendList = document.getElementById("radar-legend-list");
+    if (legendList) {
+        const items = legendList.querySelectorAll(".radar-legend-item");
+        items.forEach(item => {
+            item.classList.remove("filter-active");
+        });
+    }
+
+    cards.forEach(card => {
+        card.style.opacity = "1";
+        card.style.transform = "scale(1)";
+        card.style.pointerEvents = "auto";
+    });
+
+    if (clearBtn) clearBtn.style.display = "none";
 };

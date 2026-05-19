@@ -994,6 +994,40 @@
                         <button id="btn-open-modal-account" class="btn-primary-action"
                             style="padding: 0.5rem 1rem; font-size: 0.8rem; width: auto;">+ Nova Conta</button>
                     </div>
+                    
+                    <!-- Radar de Alocação de Patrimônio -->
+                    <div id="radar-allocation-panel" class="radar-allocation-panel" style="margin-top: 1.5rem; display: none;">
+                        <div class="card-glass radar-container-card">
+                            <div class="radar-grid-layout">
+                                <!-- Coluna 1: SVG Donut Chart + Central Readout -->
+                                <div class="radar-visual-col">
+                                    <div class="radar-chart-wrapper">
+                                        <svg id="radar-svg" width="220" height="220" viewBox="0 0 220 220">
+                                            <!-- Fatias SVG dinâmicas geradas via JS -->
+                                        </svg>
+                                        <div class="radar-readout-center">
+                                            <span class="readout-label">Patrimônio</span>
+                                            <span id="radar-readout-value" class="readout-value">R$ 0,00</span>
+                                            <span id="radar-readout-percent" class="readout-percent">100%</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- Coluna 2: Legenda Cyber e Detalhes da Alocação -->
+                                <div class="radar-info-col">
+                                    <div class="radar-header-inline">
+                                        <div class="radar-title-badge">Radar de Alocação</div>
+                                        <button id="btn-clear-radar-filter" class="btn-clear-filter" style="display: none;" onclick="window.clearRadarFilter()">
+                                            <i class="fas fa-times-circle"></i> Limpar Filtro
+                                        </button>
+                                    </div>
+                                    <div id="radar-legend-list" class="radar-legend-list">
+                                        <!-- Preenchido via JS -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <div id="wallets-grid" class="wallets-grid"
                         style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem; margin-top: 1.5rem;">
                         <!-- Preenchido via JS -->
