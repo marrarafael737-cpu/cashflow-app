@@ -737,6 +737,7 @@ input:checked + .slider:before { transform: translateX(20px); }
     font-size: 1rem;
     pointer-events: none;
     transition: all 0.3s ease;
+    z-index: 2;
 }
 
 .input-with-icon input {
