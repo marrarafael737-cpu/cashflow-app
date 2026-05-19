@@ -75,6 +75,12 @@
     transform: translate(var(--eye-x, 0px), var(--eye-y, 0px));
 }
 
+/* Hide PWA background when mascot is floating in the dashboard UI */
+.cashy-v4-svg-wrapper .mascot-pwa-bg,
+#mascot-svg-container .mascot-pwa-bg {
+    display: none !important;
+}
+
 @media (max-width: 1024px) {
     .cashy-v4-container {
         bottom: 85px; /* Acima da barra de navegação mobile */
