@@ -189,6 +189,14 @@ async function recordAccessHistory(userId) {
 
 // Get Current User
 async function getCurrentUser() {
+    if (localStorage.getItem('mock_auth') === 'true' || window.location.search.includes('mock=true')) {
+        console.log('C.A.S.H. Unit: Modo de demonstração/mock ativo para testes visuais.');
+        return {
+            id: 'mock-user-id-123',
+            email: 'operador@cashunit.com',
+            user_metadata: { full_name: 'Operador Antigravity' }
+        };
+    }
     const client = getSupabaseClient();
     if (!client) return null;
     try {

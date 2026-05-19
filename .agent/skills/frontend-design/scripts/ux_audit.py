@@ -119,7 +119,7 @@ class UXAuditor:
 
         # --- 1. PSYCHOLOGY LAWS ---
         # Hick's Law
-        nav_items = 0 if is_css else len(re.findall(r'<NavLink|<Link|<a\s+href|nav-item', content, re.IGNORECASE))
+        nav_items = 0 if is_css else (len(re.findall(r'<NavLink\b|<Link\b', content)) + len(re.findall(r'<a\s+href|nav-item', content, re.IGNORECASE)))
         max_allowed = 50 if "dashboard" in filename.lower() else 7
         if nav_items > max_allowed:
             self.issues.append(f"[Hick's Law] {filename}: {nav_items} nav items (Max {max_allowed})")

@@ -137,6 +137,30 @@
     transition: all 0.2s ease;
 }
 .btn-ghost-icon:hover { background: rgba(255, 255, 255, 0.05); color: var(--color-primary); }
+.btn-ghost-icon svg {
+    width: 20px;
+    height: 20px;
+    stroke: currentColor;
+    transition: transform 0.2s ease, stroke 0.2s ease;
+}
+.btn-ghost-icon:hover svg {
+    color: var(--color-primary);
+    stroke: var(--color-primary);
+}
+
+/* Privacy Toggle SVG States */
+svg.eye-open { display: block !important; }
+svg.eye-closed { display: none !important; }
+
+body.privacy-active svg.eye-open { display: none !important; }
+body.privacy-active svg.eye-closed { display: block !important; }
+
+/* Theme Toggle SVG States */
+svg.theme-moon { display: block !important; }
+svg.theme-sun { display: none !important; }
+
+[data-theme="dark"] svg.theme-moon { display: none !important; }
+[data-theme="dark"] svg.theme-sun { display: block !important; }
 
 .btn-primary-action {
     background: linear-gradient(135deg, var(--color-primary) 0%, #FF9533 100%);
