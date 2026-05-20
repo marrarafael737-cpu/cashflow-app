@@ -508,12 +508,7 @@ function setupParserEvents(userId) {
 
     if (!btnOpen || !modal || !textarea) return;
 
-    btnOpen.addEventListener('click', () => {
-        modal.style.display = 'flex';
-        setTimeout(() => modal.classList.add('active'), 10);
-    });
-
-    textarea.addEventListener('input', () => {
+      textarea.addEventListener('input', () => {
         const text = textarea.value.trim();
         if (text.length > 5) {
             const parsed = SmartParser.parse(text);
@@ -531,10 +526,32 @@ function setupParserEvents(userId) {
                     valorEl.style.color = 'var(--color-danger)';
                 }
 
-                document.getElementById('parser-preview-cat').textContent = 'Categoria: ' + (parsed.categoria_nome || 'Geral');
+                // UI Preview Telemetry Overlay
+                const catEl = document.getElementById('parser-preview-cat');
+                const accSelect = document.getElementById('parser-account-select');
+                const accRow = accSelect ? accSelect.closest('div') : null;
+
+                if (accRow) {
+                    if (parsed.tipo_comando === 'transferencia') {
+                        accRow.style.display = 'none';
+                    } else {
+                        accRow.style.display = 'flex';
+                    }
+                }
+
+                if (parsed.tipo_comando === 'transferencia') {
+                    catEl.innerHTML = `<strong>Comando:</strong> 🔄 Transferência | De ${parsed.conta_origem_nome || 'Origem'} para ${parsed.conta_destino_nome || 'Destino'}`;
+                } else if (parsed.tipo_comando === 'parcelamento') {
+                    catEl.innerHTML = `<strong>Comando:</strong> 💳 Parcelamento | ${parsed.parcelas_total}x de ${formatCurrency(parsed.valor)}<br><span style="font-size:0.7rem;color:var(--color-text-muted);">Categoria: ${parsed.categoria_nome || 'Geral'}</span>`;
+                } else if (parsed.tipo_comando === 'recorrencia') {
+                    catEl.innerHTML = `<strong>Comando:</strong> 📅 Recorrência | Todo mês dia ${parsed.dia_vencimento}<br><span style="font-size:0.7rem;color:var(--color-text-muted);">Categoria: ${parsed.categoria_nome || 'Geral'}</span>`;
+                } else if (parsed.tipo_comando === 'meta') {
+                    catEl.innerHTML = `<strong>Comando:</strong> 🎯 Meta | Aporte para ${parsed.meta_nome}<br><span style="font-size:0.7rem;color:var(--color-text-muted);">Categoria: ${parsed.categoria_nome || 'Geral'}</span>`;
+                } else {
+                    catEl.innerHTML = `Categoria: ${parsed.categoria_nome || 'Geral'}`;
+                }
 
                 // Atualizar o seletor de contas no preview
-                const accSelect = document.getElementById('parser-account-select');
                 if (accSelect && typeof _contas !== 'undefined') {
                     accSelect.innerHTML = _contas.map(c => `<option value="${c.id}" ${c.id === parsed.conta_id ? 'selected' : ''}>${c.nome}</option>`).join('');
                 }
@@ -545,15 +562,15 @@ function setupParserEvents(userId) {
                 if (confTag && confVal) {
                     const score = parsed.confidence || 0;
                     if (score >= 25) {
-                        confVal.textContent = 'ConfianÃ§a Alta';
+                        confVal.textContent = 'Confiança Alta';
                         confTag.style.background = 'rgba(16, 185, 129, 0.1)';
                         confTag.style.color = '#10B981';
                     } else if (score >= 10) {
-                        confVal.textContent = 'ConfianÃ§a MÃ©dia';
+                        confVal.textContent = 'Confiança Média';
                         confTag.style.background = 'rgba(245, 158, 11, 0.1)';
                         confTag.style.color = '#F59E0B';
                     } else {
-                        confVal.textContent = 'ConfianÃ§a Baixa (RevisÃ£o Sugerida)';
+                        confVal.textContent = 'Confiança Baixa (Revisão Sugerida)';
                         confTag.style.background = 'rgba(239, 68, 68, 0.1)';
                         confTag.style.color = '#EF4444';
                     }
@@ -577,15 +594,15 @@ function setupParserEvents(userId) {
         const text = textarea.value.trim();
         const parsed = SmartParser.parse(text);
         if (!parsed || !parsed.valor) {
-            showToast('NÃ£o foi possÃ­vel identificar dados nesta mensagem.', 'alert');
+            showToast('Não foi possível identificar dados nesta mensagem.', 'alert');
             return;
         }
 
-        btnConfirm.innerHTML = '<i class="fas fa-spinner fa-spin"></i> LanÃ§ando...';
+        btnConfirm.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Lançando...';
         btnConfirm.disabled = true;
         btnConfirm.classList.add('loading');
 
-        // Usar a conta selecionada pelo usuÃ¡rio no dropdown (ou a detectada)
+        // Usar a conta selecionada pelo usuário no dropdown (ou a detectada)
         const accSelect = document.getElementById('parser-account-select');
         let final_conta_id = accSelect ? accSelect.value : parsed.conta_id;
         let isCredit = false;
@@ -594,50 +611,205 @@ function setupParserEvents(userId) {
             final_conta_id = _contas[0].id;
         }
 
-        // Detectar se Ã© crÃ©dito para setar forma_pagamento
+        // Detectar se é crédito para setar forma_pagamento
         const selectedAcc = (typeof _contas !== 'undefined') ? _contas.find(c => c.id === final_conta_id) : null;
         if (selectedAcc && selectedAcc.tipo === 'credito') isCredit = true;
 
-        // --- PHASE 4: OFFLINE SYNC ENGINE ---
-        if (typeof OfflineSync !== 'undefined' && !OfflineSync.isOnline()) {
-            const transactionData = {
-                descricao: parsed.descricao,
-                valor: parsed.valor,
-                tipo: parsed.tipo,
-                categoria_id: parsed.categoria_id,
-                conta_id: final_conta_id,
-                data: parsed.data,
-                forma_pagamento: isCredit ? 'credito' : 'dinheiro',
-                user_id: userId
-            };
+        try {
+            // ROUTE 1: TRANSFERENCIA
+            if (parsed.tipo_comando === 'transferencia') {
+                if (!parsed.conta_origem_id || !parsed.conta_destino_id) {
+                    showToast('Erro: Contas de origem e destino da transferência são obrigatórias.', 'alert');
+                    throw new Error('Contas de transferência não definidas');
+                }
 
-            OfflineSync.addToQueue(transactionData);
+                // Check offline
+                if (typeof OfflineSync !== 'undefined' && !OfflineSync.isOnline()) {
+                    const transactionDebit = {
+                        descricao: `${parsed.descricao} (Saída)`,
+                        valor: parsed.valor,
+                        tipo: 'saida',
+                        categoria_id: parsed.categoria_id,
+                        conta_id: parsed.conta_origem_id,
+                        data: parsed.data,
+                        forma_pagamento: 'dinheiro',
+                        user_id: userId
+                    };
+                    const transactionCredit = {
+                        descricao: `${parsed.descricao} (Entrada)`,
+                        valor: parsed.valor,
+                        tipo: 'entrada',
+                        categoria_id: parsed.categoria_id,
+                        conta_id: parsed.conta_destino_id,
+                        data: parsed.data,
+                        forma_pagamento: 'dinheiro',
+                        user_id: userId
+                    };
 
-            showToast('LanÃ§amento via OrÃ¡culo em fila offline! ð§ ', 'info');
-            textarea.value = '';
-            preview.style.display = 'none';
-            modal.classList.remove('active');
-            setTimeout(() => modal.style.display = 'none', 300);
+                    OfflineSync.addToQueue(transactionDebit);
+                    OfflineSync.addToQueue(transactionCredit);
 
-            btnConfirm.innerHTML = 'Confirmar LanÃ§amento';
-            btnConfirm.disabled = false;
-            btnConfirm.classList.remove('loading');
-            return;
-        }
+                    showToast('Lançamento de transferência em fila offline! 🔄', 'info');
+                } else {
+                    const { error } = await supabase.from('transacoes').insert([
+                        {
+                            user_id: userId,
+                            descricao: `${parsed.descricao} (Saída)`,
+                            valor: parsed.valor,
+                            tipo: 'saida',
+                            categoria_id: parsed.categoria_id,
+                            conta_id: parsed.conta_origem_id,
+                            data: parsed.data,
+                            forma_pagamento: 'dinheiro'
+                        },
+                        {
+                            user_id: userId,
+                            descricao: `${parsed.descricao} (Entrada)`,
+                            valor: parsed.valor,
+                            tipo: 'entrada',
+                            categoria_id: parsed.categoria_id,
+                            conta_id: parsed.conta_destino_id,
+                            data: parsed.data,
+                            forma_pagamento: 'dinheiro'
+                        }
+                    ]);
 
-        const { error } = await supabase.from('transacoes').insert([{
-            user_id: userId,
-            descricao: parsed.descricao,
-            valor: parsed.valor,
-            tipo: parsed.tipo,
-            categoria_id: parsed.categoria_id,
-            conta_id: final_conta_id,
-            data: parsed.data,
-            forma_pagamento: isCredit ? 'credito' : 'dinheiro'
-        }]);
+                    if (error) throw error;
+                    showToast('Transferência registrada com sucesso! 🔄', 'success');
+                }
 
-        if (!error) {
-            showToast('LanÃ§amento via OrÃ¡culo realizado com sucesso! ð§ ', 'success');
+            // ROUTE 2: PARCELAMENTO
+            } else if (parsed.tipo_comando === 'parcelamento') {
+                const transactionsToInsert = [];
+                for (let i = 1; i <= parsed.parcelas_total; i++) {
+                    const dateObj = new Date(parsed.data + 'T00:00:00');
+                    dateObj.setMonth(dateObj.getMonth() + (i - 1));
+                    const shiftedDate = dateObj.toLocaleDateString('en-CA');
+
+                    transactionsToInsert.push({
+                        user_id: userId,
+                        descricao: `${parsed.descricao} (${i}/${parsed.parcelas_total})`,
+                        valor: parsed.valor,
+                        tipo: parsed.tipo,
+                        categoria_id: parsed.categoria_id,
+                        conta_id: final_conta_id,
+                        data: shiftedDate,
+                        forma_pagamento: isCredit ? 'credito' : 'dinheiro',
+                        parcelas_total: parsed.parcelas_total,
+                        parcela_atual: i
+                    });
+                }
+
+                if (typeof OfflineSync !== 'undefined' && !OfflineSync.isOnline()) {
+                    for (const tx of transactionsToInsert) {
+                        OfflineSync.addToQueue(tx);
+                    }
+                    showToast('Lançamento parcelado em fila offline! 💳', 'info');
+                } else {
+                    const { error } = await supabase.from('transacoes').insert(transactionsToInsert);
+                    if (error) throw error;
+                    showToast(`Lançamento parcelado registrado com sucesso (${parsed.parcelas_total}x)! 💳`, 'success');
+                }
+
+            // ROUTE 3: RECORRENCIA
+            } else if (parsed.tipo_comando === 'recorrencia') {
+                if (typeof OfflineSync !== 'undefined' && !OfflineSync.isOnline()) {
+                    showToast('Erro: Comando de recorrência exige conexão ativa com a internet.', 'alert');
+                    throw new Error('Sem internet para recorrência');
+                }
+
+                const { error } = await supabase.from('recorrencias').insert([{
+                    descricao: parsed.descricao,
+                    valor: parsed.valor,
+                    tipo: parsed.tipo,
+                    dia_vencimento: parsed.dia_vencimento,
+                    categoria_id: parsed.categoria_id,
+                    conta_id: final_conta_id,
+                    user_id: userId,
+                    status: 'ativo'
+                }]);
+
+                if (error) throw error;
+                showToast('Regra de recorrência salva com sucesso! 📅', 'success');
+                if (typeof loadRecorrencias === 'function') await loadRecorrencias(userId);
+
+            // ROUTE 4: META
+            } else if (parsed.tipo_comando === 'meta') {
+                if (typeof OfflineSync !== 'undefined' && !OfflineSync.isOnline()) {
+                    showToast('Erro: Comando de aporte para meta exige conexão ativa com a internet.', 'alert');
+                    throw new Error('Sem internet para meta');
+                }
+
+                if (!parsed.meta_id) {
+                    showToast('Erro: Meta não encontrada para o aporte.', 'alert');
+                    throw new Error('Meta ID indefinida');
+                }
+
+                // Increment meta
+                const targetMeta = typeof _metas !== 'undefined' ? _metas.find(m => m.id === parsed.meta_id) : null;
+                if (!targetMeta) {
+                    showToast('Erro: Meta de destino não encontrada.', 'alert');
+                    throw new Error('Meta não localizada na memória');
+                }
+
+                const novoValor = (parseFloat(targetMeta.valor_atual) || 0) + parsed.valor;
+                const { error: metaErr } = await supabase.from('metas').update({
+                    valor_atual: novoValor
+                }).eq('id', parsed.meta_id);
+
+                if (metaErr) throw metaErr;
+
+                // Log outgoing transaction
+                const { error: txErr } = await supabase.from('transacoes').insert([{
+                    user_id: userId,
+                    descricao: parsed.descricao,
+                    valor: parsed.valor,
+                    tipo: 'saida',
+                    categoria_id: parsed.categoria_id,
+                    conta_id: final_conta_id,
+                    data: parsed.data,
+                    forma_pagamento: isCredit ? 'credito' : 'dinheiro',
+                    is_piggy: true
+                }]);
+
+                if (txErr) throw txErr;
+
+                showToast(`Aporte na meta "${parsed.meta_nome}" registrado! 🎯`, 'success');
+                if (typeof loadMetas === 'function') await loadMetas(userId);
+
+            // DEFAULT: TRANSACAO PADRAO
+            } else {
+                if (typeof OfflineSync !== 'undefined' && !OfflineSync.isOnline()) {
+                    const transactionData = {
+                        descricao: parsed.descricao,
+                        valor: parsed.valor,
+                        tipo: parsed.tipo,
+                        categoria_id: parsed.categoria_id,
+                        conta_id: final_conta_id,
+                        data: parsed.data,
+                        forma_pagamento: isCredit ? 'credito' : 'dinheiro',
+                        user_id: userId
+                    };
+                    OfflineSync.addToQueue(transactionData);
+                    showToast('Lançamento via Oráculo em fila offline! 🧠', 'info');
+                } else {
+                    const { error } = await supabase.from('transacoes').insert([{
+                        user_id: userId,
+                        descricao: parsed.descricao,
+                        valor: parsed.valor,
+                        tipo: parsed.tipo,
+                        categoria_id: parsed.categoria_id,
+                        conta_id: final_conta_id,
+                        data: parsed.data,
+                        forma_pagamento: isCredit ? 'credito' : 'dinheiro'
+                    }]);
+
+                    if (error) throw error;
+                    showToast('Lançamento via Oráculo realizado com sucesso! 🧠', 'success');
+                }
+            }
+
+            // Clean & Close modal
             textarea.value = '';
             preview.style.display = 'none';
             modal.classList.remove('active');
@@ -645,13 +817,15 @@ function setupParserEvents(userId) {
 
             if (typeof loadTransactions === 'function') await loadTransactions(userId);
             if (typeof filterAndRenderData === 'function') filterAndRenderData();
-        } else {
-            showToast('Erro ao lanÃ§ar: ' + error.message, 'error');
-        }
 
-        btnConfirm.innerHTML = 'Confirmar LanÃ§amento';
-        btnConfirm.disabled = false;
-        btnConfirm.classList.remove('loading');
+        } catch (error) {
+            console.error('Erro na execução do comando:', error);
+            showToast('Erro ao processar: ' + error.message, 'error');
+        } finally {
+            btnConfirm.innerHTML = 'Confirmar Lançamento';
+            btnConfirm.disabled = false;
+            btnConfirm.classList.remove('loading');
+        }
     });
 }
 

@@ -119,6 +119,12 @@ const SmartParser = {
      * @param {string} text 
      * @returns {Object|null}
      */
+    /**
+     * Parses the notification text and returns a transaction object
+     * Uses contextual scoring and fuzzy matching to simulate "AI" logic.
+     * @param {string} text 
+     * @returns {Object|null}
+     */
     parse(text) {
         if (!text || text.trim().length < 2) return null;
         if (text.includes('?')) return null;
@@ -126,87 +132,274 @@ const SmartParser = {
         let workingText = text.trim();
         const cleanText = workingText.toLowerCase();
 
-        // 1. Extract Value (Enhanced currency & format support)
+        // 1. PRE-PARSING FOR BANK PUSHES (Itaú & Inter)
+        let isBankPush = false;
+        let bankAccount = null;
+
+        if (cleanText.includes('itau')) {
+            isBankPush = true;
+            if (typeof _contas !== 'undefined' && Array.isArray(_contas)) {
+                bankAccount = _contas.find(c => c.nome.toLowerCase().includes('itau'));
+            }
+        } else if (cleanText.includes('inter')) {
+            isBankPush = true;
+            if (typeof _contas !== 'undefined' && Array.isArray(_contas)) {
+                bankAccount = _contas.find(c => c.nome.toLowerCase().includes('inter') || c.nome.toLowerCase().includes('banco inter'));
+            }
+        }
+
+        // Clean merchant and description for bank pushes
+        let extractedDesc = null;
+        let extractedTipo = null;
+        let extractedValor = null;
+
+        if (isBankPush) {
+            // 1.1 Extract amount from push
+            const pushAmountMatch = workingText.match(/(?:R\$|r\$|\$)?\s?(\d{1,3}(?:\.\d{3})*(?:,\d{2})|\d+(?:\.\d{2})?)/i);
+            if (pushAmountMatch) {
+                let rawValue = pushAmountMatch[1];
+                if (rawValue.includes(',') && rawValue.includes('.')) {
+                    rawValue = rawValue.replace(/\./g, '').replace(',', '.');
+                } else if (rawValue.includes(',')) {
+                    rawValue = rawValue.replace(',', '.');
+                }
+                extractedValor = parseFloat(rawValue);
+            }
+
+            // 1.2 Identify Type (Entry vs Exit)
+            if (cleanText.includes('recebido') || cleanText.includes('recebeu') || cleanText.includes('recebi') || cleanText.includes('deposito') || cleanText.includes('credito') || cleanText.includes('estorno') || cleanText.includes('reembolso')) {
+                extractedTipo = 'entrada';
+            } else {
+                extractedTipo = 'saida';
+            }
+
+            // 1.3 Extract merchant/person name
+            if (cleanText.includes('itau')) {
+                // Itaú purchase: "Itaú: Compra aprovada no seu cartao final 1234 - McDonald's R$ 45,90 em 20/05..."
+                const merchantMatch = workingText.match(/-\s*([^R$]+?)\s+(?:R\$|\d)/i);
+                if (merchantMatch && merchantMatch[1]) {
+                    extractedDesc = merchantMatch[1].trim();
+                } else {
+                    // Pix enviado: "Itaú: Pix enviado: R$ 150,00 para Joao da Silva em 20/05."
+                    const pixDestMatch = workingText.match(/(?:para|para\s+o)\s+([a-zA-Záàâãéèêíïóôõöúçñ\s]+?)(?:\s+em|\s+no|\s+-\s*R\$|\.|$)/i);
+                    if (pixDestMatch && pixDestMatch[1]) {
+                        extractedDesc = "Pix: " + pixDestMatch[1].trim();
+                    } else {
+                        // Pix recebido de: "Itaú: Pix recebido de Maria de Souza: R$ 300,00"
+                        const pixSrcMatch = workingText.match(/(?:de|de\s+a|do)\s+([a-zA-Záàâãéèêíïóôõöúçñ\s]+?)(?:\s+em|\s+no|:|\s+-\s*R\$|\.|$)/i);
+                        if (pixSrcMatch && pixSrcMatch[1]) {
+                            extractedDesc = "Pix de: " + pixSrcMatch[1].trim();
+                        }
+                    }
+                }
+            } else if (cleanText.includes('inter')) {
+                // Inter purchase: "Inter: Compra de R$ 99,90 no cartao final 5678 aprovada em Uber."
+                const interMerchantMatch = workingText.match(/aprovada\s+em\s+([a-zA-Z0-9\s]+?)(?:\.|$)/i);
+                if (interMerchantMatch && interMerchantMatch[1]) {
+                    extractedDesc = interMerchantMatch[1].trim();
+                } else {
+                    // Pix enviado para: "Inter: Pix enviado para Joao da Silva - R$ 50,00."
+                    const pixDestMatch = workingText.match(/(?:para|para\s+o)\s+([a-zA-Záàâãéèêíïóôõöúçñ\s]+?)(?:\s+em|\s+no|\s+-\s*R\$|\.|$)/i);
+                    if (pixDestMatch && pixDestMatch[1]) {
+                        extractedDesc = "Pix: " + pixDestMatch[1].trim();
+                    } else {
+                        // Pix recebido de: "Inter: Pix recebido de Jose dos Santos - R$ 1.000,00."
+                        const pixSrcMatch = workingText.match(/(?:de|de\s+a|do)\s+([a-zA-Záàâãéèêíïóôõöúçñ\s]+?)(?:\s+em|\s+no|:|\s+-\s*R\$|\.|$)/i);
+                        if (pixSrcMatch && pixSrcMatch[1]) {
+                            extractedDesc = "Pix de: " + pixSrcMatch[1].trim();
+                        }
+                    }
+                }
+            }
+        }
+
+        let tipoComando = 'transacao';
+        let valor = extractedValor || 0;
+        let tipo = extractedTipo || 'saida';
+        let amountText = "";
+
+        // 2. EXTRACT VALUE (If not extracted by push pre-parser)
         const amountRegex = /(?:R\$|r\$|\$|reais|conto|pila)?\s?(\d{1,3}(?:\.\d{3})*(?:,\d{2})|\d+(?:\.\d{2})?)(?!\/)(?:\s?(?:reais|conto|pila))?/i;
         const amountMatch = workingText.match(amountRegex);
-        let valor = 0;
-        let amountText = "";
         if (amountMatch) {
             amountText = amountMatch[0];
-            let rawValue = amountMatch[1];
+            if (valor === 0) {
+                let rawValue = amountMatch[1];
+                if (rawValue.includes(',') && rawValue.includes('.')) {
+                    rawValue = rawValue.replace(/\./g, '').replace(',', '.');
+                } else if (rawValue.includes(',')) {
+                    rawValue = rawValue.replace(',', '.');
+                }
+                valor = parseFloat(rawValue);
+            }
+        }
+
+        // 3. DETECT TRANSFER COMMAND (de [origem] para [destino])
+        let sourceAcc = null;
+        let destAcc = null;
+        let isTransferCommand = false;
+
+        const transferRegex = /(?:transferir|transferi|transferencia|pix|ted|doc)\s+(?:de\s+)?(?:R\$\s*)?(\d{1,3}(?:\.\d{3})*(?:,\d{2})|\d+(?:\.\d{2})?)\s+(?:do|de|da)\s+([a-zA-Záàâãéèêíïóôõöúçñ\s]+?)\s+(?:para\s+o|para\s+a|para|pro|pra|a|ao)\s+([a-zA-Záàâãéèêíïóôõöúçñ\s]+?)(?:\s+hoje|\s+ontem|\.|$)/i;
+        const transferRegex2 = /(?:transferir|transferi|transferencia|pix|ted|doc)\s+(?:do|de|da)\s+([a-zA-Záàâãéèêíïóôõöúçñ\s]+?)\s+(?:para\s+o|para\s+a|para|pro|pra|a|ao)\s+([a-zA-Záàâãéèêíïóôõöúçñ\s]+?)\s+(?:no\s+valor\s+de|valor|r\$\s*|de\s+)?(\d{1,3}(?:\.\d{3})*(?:,\d{2})|\d+(?:\.\d{2})?)(?:\s|$)/i;
+        
+        let transMatch = cleanText.match(transferRegex);
+        let originWord = "";
+        let destWord = "";
+
+        if (transMatch) {
+            let rawValue = transMatch[1];
             if (rawValue.includes(',') && rawValue.includes('.')) {
                 rawValue = rawValue.replace(/\./g, '').replace(',', '.');
             } else if (rawValue.includes(',')) {
                 rawValue = rawValue.replace(',', '.');
             }
             valor = parseFloat(rawValue);
-        }
-
-        // 2. Identify Type (Entry vs Exit vs Transfer)
-        let tipo = 'saida';
-        const normalizedText = this.normalize(workingText);
-
-        const isTransfer = this.keywords.transfer.some(k => {
-            const cleanK = this.normalize(k);
-            const regex = new RegExp('\\b' + cleanK + '\\b', 'i');
-            return regex.test(normalizedText) || (window.NLP && window.NLP.isSimilar(normalizedText, cleanK, 1));
-        });
-        
-        const isIncome = this.keywords.income.some(k => {
-            const cleanK = this.normalize(k);
-            const regex = new RegExp('\\b' + cleanK + '\\b', 'i');
-            return regex.test(normalizedText) || (window.NLP && window.NLP.isSimilar(normalizedText, cleanK, 1));
-        }) || 
-        (/\b(recebi|receber|recebido|recebimento|recebimentos|recebida|ganhei|ganhar|ganho|ganhos|faturei|faturar|faturamento|entrou|caiu|salario|pagamento|vendi|venda|comissao|deposito|reembolso|estorno|lucro|dividendo|rendimento|proventos|provento|cashback|ted recebida|doc recebido|pix recebido|recebidos|ganhos|ganhou|recebeu)\b/i.test(normalizedText) && !/\b(nao recebi)\b/i.test(normalizedText)) ||
-        (/\bpix\b/i.test(normalizedText) && /\b(recebi|receber|recebido|recebimento|ganhei|ganhar|ganho|faturei|faturar|entrou|caiu|deposito|credito|estorno|reembolso|ganhou|recebeu)\b/i.test(normalizedText));
-
-        if (isTransfer) {
-            tipo = 'transferencia';
-        } else if (isIncome) {
-            tipo = 'entrada';
-        }
-
-        // 3. Extract Description (High-Intelligence Noun Phrase Heuristic)
-        const stopWords = [
-            'no valor de', 'no valor', 'valor', 'em', 'da', 'do', 'de', 'na', 'no', 'para', 'com', 'realizada', 
-            'realizado', 'aprovada', 'recebido', 'paguei', 'gastei', 'recebi', 'um', 'uma', 'compra', 'venda', 
-            'pagamento', 'estabelecimento', 'sucesso', 'comprovante', 'autorizado', 'mensagem', 'alerta', 
-            'banco', 'agencia', 'conta', 'cartão', 'cartao', 'final', 'vencimento', 'transação', 'transacao', 
-            'efetuada', 'via', 'pix', 'reais', 'conto', 'pila', 'comprei', 'comprar', 'compras', 'gastos', 
-            'despesa', 'recebimento', 'ganhei', 'ganhar', 'por', 'deu', 'foi', 'para', 'pro', 'pra',
-            'faturei', 'faturar', 'faturamento', 'entrou', 'caiu', 'salário', 'salario', 'vendi', 'venda',
-            'comissão', 'comissao', 'depósito', 'deposito', 'depositou', 'reembolso', 'estorno', 'lucro',
-            'dividendos', 'rendimento', 'proventos', 'cashback', 'ganhou', 'recebeu', 'ganhos'
-        ];
-
-        let descText = workingText;
-        if (amountText) {
-            descText = descText.replace(amountText, '');
-        }
-
-        descText = descText
-            .replace(/\b(hoje|ontem|amanhã|amanha|cedo|tarde|noite|agora|dia)\b/gi, '')
-            .replace(/\bd{1,2}\/d{1,2}(\/d{2,4})?\b/g, '');
-
-        const splitRegex = /(?:metade|divide|dividir|meio|parte)\s+(?:é|com|pro|pra|do|da|de)?\s+([A-Z][a-zà-ÿ]+)/i;
-        descText = descText.replace(splitRegex, '');
-
-        let descWords = descText.split(/\s+/)
-            .map(w => w.replace(/[,.:;()]/g, '').trim())
-            .filter(w => w.length > 2 && !stopWords.includes(w.toLowerCase()));
-
-        let descricao = descWords.slice(0, 4).join(' ');
-
-        if (descricao) {
-            descricao = this.capitalize(descricao);
+            originWord = transMatch[2].trim().toLowerCase();
+            destWord = transMatch[3].trim().toLowerCase();
+            isTransferCommand = true;
         } else {
-            descricao = tipo === 'entrada' ? 'Receita Recebida' : 'Despesa Lançada';
+            transMatch = cleanText.match(transferRegex2);
+            if (transMatch) {
+                originWord = transMatch[1].trim().toLowerCase();
+                destWord = transMatch[2].trim().toLowerCase();
+                let rawValue = transMatch[3];
+                if (rawValue.includes(',') && rawValue.includes('.')) {
+                    rawValue = rawValue.replace(/\./g, '').replace(',', '.');
+                } else if (rawValue.includes(',')) {
+                    rawValue = rawValue.replace(',', '.');
+                }
+                valor = parseFloat(rawValue);
+                isTransferCommand = true;
+            }
         }
 
-        // 4. Zero-Click Account Detection
+        if (isTransferCommand && typeof _contas !== 'undefined' && Array.isArray(_contas)) {
+            sourceAcc = _contas.find(c => {
+                const name = c.nome.toLowerCase();
+                return name.includes(originWord) || originWord.includes(name);
+            });
+            destAcc = _contas.find(c => {
+                const name = c.nome.toLowerCase();
+                return name.includes(destWord) || destWord.includes(name);
+            });
+
+            if (sourceAcc && destAcc) {
+                tipoComando = 'transferencia';
+                tipo = 'transferencia';
+            }
+        }
+
+        // 4. DETECT INSTALLMENTS COMMAND (parcelado em 10x)
+        let isInstallmentCommand = false;
+        let parcelasTotal = 1;
+        let valorParcela = valor;
+        let valorTotal = valor;
+
+        const matchInstAmount = cleanText.match(/(\d{1,2})\s*(?:x|vezes|parcelas)\s+(?:de\s+)?(?:r\$\s*)?(\d{1,3}(?:\.\d{3})*(?:,\d{2})|\d+(?:\.\d{2})?)/i);
+        const matchTotalInst = cleanText.match(/(?:r\$\s*)?(\d{1,3}(?:\.\d{3})*(?:,\d{2})|\d+(?:\.\d{2})?)\s+(?:parcelado\s+em|em)\s+(\d{1,2})\s*(?:x|vezes|parcelas)/i);
+        const matchPlainInst = cleanText.match(/(?:parcelado\s+em|em|parcelado)\s+(\d{1,2})\s*(?:x|vezes|parcelas)/i);
+
+        if (matchInstAmount) {
+            parcelasTotal = parseInt(matchInstAmount[1]);
+            let rawValue = matchInstAmount[2];
+            if (rawValue.includes(',') && rawValue.includes('.')) {
+                rawValue = rawValue.replace(/\./g, '').replace(',', '.');
+            } else if (rawValue.includes(',')) {
+                rawValue = rawValue.replace(',', '.');
+            }
+            valorParcela = parseFloat(rawValue);
+            valorTotal = valorParcela * parcelasTotal;
+            isInstallmentCommand = true;
+        } else if (matchTotalInst) {
+            let rawValue = matchTotalInst[1];
+            if (rawValue.includes(',') && rawValue.includes('.')) {
+                rawValue = rawValue.replace(/\./g, '').replace(',', '.');
+            } else if (rawValue.includes(',')) {
+                rawValue = rawValue.replace(',', '.');
+            }
+            valorTotal = parseFloat(rawValue);
+            parcelasTotal = parseInt(matchTotalInst[2]);
+            valorParcela = valorTotal / parcelasTotal;
+            isInstallmentCommand = true;
+        } else if (matchPlainInst) {
+            parcelasTotal = parseInt(matchPlainInst[1]);
+            valorTotal = valor;
+            valorParcela = valorTotal / parcelasTotal;
+            isInstallmentCommand = true;
+        }
+
+        if (isInstallmentCommand && parcelasTotal > 1) {
+            tipoComando = 'parcelamento';
+            valor = valorParcela; // return installment value
+        }
+
+        // 5. DETECT RECURRENCE COMMAND (todo mês)
+        let isRecurrenceCommand = false;
+        let diaVencimento = new Date().getDate();
+
+        if (/\b(todo\s+mês|todo\s+mes|mensalmente|mensal|recorrente)\b/i.test(cleanText)) {
+            isRecurrenceCommand = true;
+            tipoComando = 'recorrencia';
+            
+            const dayMatch = cleanText.match(/\bdia\s+(\d{1,2})\b/i);
+            if (dayMatch) {
+                const day = parseInt(dayMatch[1]);
+                if (day >= 1 && day <= 31) {
+                    diaVencimento = day;
+                }
+            }
+        }
+
+        // 6. DETECT GOALS COMMAND (guardei 150 na Meta Viagem)
+        let isGoalCommand = false;
+        let detectedMetaId = null;
+        let detectedMetaName = null;
+
+        if (/\b(guardar|guardei|salvei|aporte|meta|poupar|cofre|reserva)\b/i.test(cleanText) && typeof _metas !== 'undefined' && Array.isArray(_metas)) {
+            const matchedMeta = _metas.find(m => {
+                const mName = m.nome.toLowerCase();
+                return cleanText.includes(mName);
+            });
+
+            if (matchedMeta) {
+                detectedMetaId = matchedMeta.id;
+                detectedMetaName = matchedMeta.nome;
+                isGoalCommand = true;
+                tipoComando = 'meta';
+                tipo = 'saida'; // savings is out of pocket
+            }
+        }
+
+        // 7. Identify Type (Entry vs Exit) if not set by push/transfers/goals
+        if (tipoComando !== 'transferencia' && tipoComando !== 'meta' && !extractedTipo) {
+            const normalizedText = this.normalize(workingText);
+
+            const isIncome = this.keywords.income.some(k => {
+                const cleanK = this.normalize(k);
+                const regex = new RegExp('\\b' + cleanK + '\\b', 'i');
+                return regex.test(normalizedText) || (window.NLP && window.NLP.isSimilar(normalizedText, cleanK, 1));
+            }) || 
+            (/\b(recebi|receber|recebido|recebimento|recebimentos|recebida|ganhei|ganhar|ganho|ganhos|faturei|faturar|faturamento|entrou|caiu|salario|pagamento|vendi|venda|comissao|deposito|reembolso|estorno|lucro|dividendo|rendimento|proventos|provento|cashback|ted recebida|doc recebido|pix recebido|recebidos|ganhos|ganhou|recebeu)\b/i.test(normalizedText) && !/\b(nao recebi)\b/i.test(normalizedText)) ||
+            (/\bpix\b/i.test(normalizedText) && /\b(recebi|receber|recebido|recebimento|ganhei|ganhar|ganho|faturei|faturar|entrou|caiu|deposito|credito|estorno|reembolso|ganhou|recebeu)\b/i.test(normalizedText));
+
+            if (isIncome) {
+                tipo = 'entrada';
+            } else {
+                tipo = 'saida';
+            }
+        }
+
+        // 8. ZERO-CLICK ACCOUNT DETECTION
         let detectedAccountId = null;
         let detectedAccountName = null;
-        if (typeof _contas !== 'undefined' && Array.isArray(_contas)) {
+
+        if (tipoComando === 'transferencia' && sourceAcc) {
+            detectedAccountId = sourceAcc.id;
+            detectedAccountName = sourceAcc.nome;
+        } else if (isBankPush && bankAccount) {
+            detectedAccountId = bankAccount.id;
+            detectedAccountName = bankAccount.nome;
+        } else if (typeof _contas !== 'undefined' && Array.isArray(_contas)) {
             const accMatch = _contas.find(c => {
                 const accName = c.nome.toLowerCase();
                 return cleanText.includes(accName) || accName.includes(cleanText.replace('cartão', '').replace('conta', '').trim());
@@ -218,7 +411,58 @@ const SmartParser = {
             }
         }
 
-        // 5. Zero-Click Date Detection (Enhanced Temporal Intelligence)
+        // 9. EXTRACT DESCRIPTION (If not pre-parsed by bank push)
+        let finalDesc = extractedDesc;
+
+        if (!finalDesc) {
+            const stopWords = [
+                'no valor de', 'no valor', 'valor', 'em', 'da', 'do', 'de', 'na', 'no', 'para', 'com', 'realizada', 
+                'realizado', 'aprovada', 'recebido', 'paguei', 'gastei', 'recebi', 'um', 'uma', 'compra', 'venda', 
+                'pagamento', 'estabelecimento', 'sucesso', 'comprovante', 'autorizado', 'mensagem', 'alerta', 
+                'banco', 'agencia', 'conta', 'cartão', 'cartao', 'final', 'vencimento', 'transação', 'transacao', 
+                'efetuada', 'via', 'pix', 'reais', 'conto', 'pila', 'comprei', 'comprar', 'compras', 'gastos', 
+                'despesa', 'recebimento', 'ganhei', 'ganhar', 'por', 'deu', 'foi', 'para', 'pro', 'pra',
+                'faturei', 'faturar', 'faturamento', 'entrou', 'caiu', 'salário', 'salario', 'vendi', 'venda',
+                'comissão', 'comissao', 'depósito', 'deposito', 'depositou', 'reembolso', 'estorno', 'lucro',
+                'dividendos', 'rendimento', 'proventos', 'cashback', 'ganhou', 'recebeu', 'ganhos', 'transferi',
+                'transferir', 'transferencia', 'ted', 'doc', 'parcelado', 'parcelas', 'vezes', 'dia', 'meta', 'guardar',
+                'guardei', 'salvei', 'aporte', 'poupar', 'todo mês', 'todo mes', 'mensalmente', 'mensal', 'recorrente'
+            ];
+
+            let descText = workingText;
+            if (amountText) {
+                descText = descText.replace(amountText, '');
+            }
+
+            descText = descText
+                .replace(/\b(hoje|ontem|amanhã|amanha|cedo|tarde|noite|agora|dia)\b/gi, '')
+                .replace(/\bd{1,2}\/d{1,2}(\/d{2,4})?\b/g, '');
+
+            const splitRegex = /(?:metade|divide|dividir|meio|parte)\s+(?:é|com|pro|pra|do|da|de)?\s+([A-Z][a-zà-ÿ]+)/i;
+            descText = descText.replace(splitRegex, '');
+
+            let descWords = descText.split(/\s+/)
+                .map(w => w.replace(/[,.:;()\-]/g, '').trim())
+                .filter(w => w.length > 2 && !stopWords.includes(w.toLowerCase()));
+
+            extractedDesc = descWords.slice(0, 4).join(' ');
+
+            if (extractedDesc) {
+                finalDesc = this.capitalize(extractedDesc);
+            } else {
+                if (tipoComando === 'transferencia') {
+                    finalDesc = `Transferência de ${sourceAcc?.nome || 'Origem'} para ${destAcc?.nome || 'Destino'}`;
+                } else if (tipoComando === 'meta') {
+                    finalDesc = `Aporte: Meta ${detectedMetaName}`;
+                } else if (tipoComando === 'recorrencia') {
+                    finalDesc = `Recorrência: ${tipo === 'entrada' ? 'Receita' : 'Despesa'}`;
+                } else {
+                    finalDesc = tipo === 'entrada' ? 'Receita Recebida' : 'Despesa Lançada';
+                }
+            }
+        }
+
+        // 10. ZERO-CLICK DATE DETECTION (Same as before)
         const d = new Date();
         let transDate = d.toLocaleDateString('en-CA');
         const weekdays = { 'domingo': 0, 'segunda': 1, 'terça': 2, 'quarta': 3, 'quinta': 4, 'sexta': 5, 'sábado': 6, 'sabado': 6 };
@@ -270,7 +514,7 @@ const SmartParser = {
             }
         }
 
-        // 6. Zero-Click Split Detection
+        // 11. ZERO-CLICK SPLIT DETECTION
         let splitWith = null;
         let splitValue = null;
         const splitPatterns = [
@@ -290,7 +534,7 @@ const SmartParser = {
             }
         }
 
-        // 7. Contextual Category Scoring (Dynamic Conceptual Scoring vs Fallbacks)
+        // 12. CONTEXTUAL CATEGORY SCORING
         let bestCategoryObj = null;
         let highestScore = -1;
         let bestCategoryName = 'Geral';
@@ -298,11 +542,11 @@ const SmartParser = {
 
         // Dynamic Learning Cache Check
         for (const [vendor, category] of Object.entries(this.vendorCache)) {
-            if (descricao.toLowerCase().includes(vendor.toLowerCase()) || (window.NLP && window.NLP.isSimilar(descricao, vendor, 1))) {
+            if (finalDesc.toLowerCase().includes(vendor.toLowerCase()) || (window.NLP && window.NLP.isSimilar(finalDesc, vendor, 1))) {
                 const catMatch = activeCategories.find(c => c.nome.toLowerCase() === category.toLowerCase());
                 if (catMatch) {
                     bestCategoryObj = catMatch;
-                    highestScore = 1000; // Perfect match override
+                    highestScore = 1000;
                     break;
                 }
             }
@@ -314,13 +558,11 @@ const SmartParser = {
                 const normCleanText = this.normalize(cleanText);
                 let score = 0;
 
-                // Word boundary check for direct category name reference
                 const catNameRegex = new RegExp('\\b' + normCatName + '\\b', 'i');
                 if (catNameRegex.test(normCleanText)) {
                     score += 50;
                 }
 
-                // Score against concept families
                 for (const [conceptKey, conceptData] of Object.entries(this.categoryConcepts)) {
                     const isConceptMatch = conceptData.names.some(n => {
                         const normN = this.normalize(n);
@@ -338,14 +580,13 @@ const SmartParser = {
                         conceptData.keywords.forEach(k => {
                             const normK = this.normalize(k);
                             const wordRegex = new RegExp('\\b' + normK + '\\b', 'i');
-                            if (wordRegex.test(this.normalize(descricao))) {
+                            if (wordRegex.test(this.normalize(finalDesc))) {
                                 score += 25;
                             }
                         });
                     }
                 }
 
-                // Check direct word matches in category name
                 const words = normCatName.split(/\s+/).filter(w => w.length > 2);
                 words.forEach(w => {
                     const wRegex = new RegExp('\\b' + w + '\\b', 'i');
@@ -359,7 +600,6 @@ const SmartParser = {
             });
         }
 
-        // Static mapping fallback if no dynamic match could score above 0
         if (highestScore <= 0) {
             for (const [catName, data] of Object.entries(this.categoryMappings)) {
                 let score = 0;
@@ -370,7 +610,7 @@ const SmartParser = {
                 
                 data.keywords.forEach(k => {
                     const wordRegex = new RegExp('\\b' + k + '\\b', 'i');
-                    if (wordRegex.test(descricao.toLowerCase())) score += 15;
+                    if (wordRegex.test(finalDesc.toLowerCase())) score += 15;
                 });
 
                 if (score > highestScore && score > 0) {
@@ -380,7 +620,6 @@ const SmartParser = {
             }
         }
 
-        // Final Category Resolution (Guarantees categoria_id is NEVER null to avoid toast crashes!)
         let categoryId = null;
         let categoria_nome = 'Geral';
 
@@ -388,7 +627,6 @@ const SmartParser = {
             categoryId = bestCategoryObj.id;
             categoria_nome = bestCategoryObj.nome;
         } else if (activeCategories.length > 0) {
-            // Locate static mapping match inside user's active categories using robust normalization
             const normBestName = this.normalize(bestCategoryName);
             const matchedCat = activeCategories.find(c => {
                 const normCat = this.normalize(c.nome);
@@ -398,7 +636,6 @@ const SmartParser = {
                 categoryId = matchedCat.id;
                 categoria_nome = matchedCat.nome;
             } else {
-                // Perfect, robust ultimate fallback to prevent any toast blocks!
                 const fallbackCat = activeCategories.find(c => {
                     const normCat = this.normalize(c.nome);
                     return normCat.includes('outro') || normCat.includes('geral') || normCat.includes('lazer');
@@ -409,30 +646,31 @@ const SmartParser = {
             }
         }
 
-        // 8. Final Description Cleanup (Remove auxiliary words, temporal shifts, splits)
-        let finalDesc = descricao;
+        // 13. FINAL DESCRIPTION CLEANUP & PRE-PROCESS
+        let descCleanup = finalDesc;
         if (detectedAccountName) {
             const accRegex = new RegExp('\\b' + detectedAccountName + '\\b', 'gi');
-            finalDesc = finalDesc.replace(accRegex, '');
+            descCleanup = descCleanup.replace(accRegex, '');
         }
-        ['ontem', 'hoje', 'amanhã', 'amanha', 'no valor de', 'metade', 'dividi', 'rachei'].forEach(word => {
+        ['ontem', 'hoje', 'amanhã', 'amanha', 'no valor de', 'metade', 'dividi', 'rachei', 'itau', 'inter'].forEach(word => {
             const wordRegex = new RegExp('\\b' + word + '\\b', 'gi');
-            finalDesc = finalDesc.replace(wordRegex, '');
+            descCleanup = descCleanup.replace(wordRegex, '');
         });
         if (splitWith) {
             const nameRegex = new RegExp('\\b' + splitWith + '\\b', 'gi');
-            finalDesc = finalDesc.replace(nameRegex, '');
+            descCleanup = descCleanup.replace(nameRegex, '');
         }
-        finalDesc = finalDesc.replace(/\s+/g, ' ').trim();
+        descCleanup = descCleanup.replace(/\s+/g, ' ').trim();
 
-        // If cleanup left description empty, restore clean initial candidate
-        if (!finalDesc || finalDesc.length < 2) {
-            finalDesc = descricao;
+        if (!descCleanup || descCleanup.length < 2) {
+            descCleanup = finalDesc;
         }
 
         return {
+            tipo_comando: tipoComando,
             valor: splitValue ? splitValue : valor,
-            descricao: this.capitalize(finalDesc),
+            valor_total: valorTotal,
+            descricao: this.capitalize(descCleanup),
             tipo,
             categoria_id: categoryId,
             categoria_nome,
@@ -440,7 +678,17 @@ const SmartParser = {
             conta_nome: detectedAccountName,
             data: transDate,
             confidence: highestScore > 15 ? 95 : (highestScore > 0 ? highestScore : 10),
-            split: splitWith ? { with: splitWith, value: splitValue, original_total: valor } : null
+            split: splitWith ? { with: splitWith, value: splitValue, original_total: valor } : null,
+            
+            // Command specifics
+            parcelas_total: parcelasTotal,
+            dia_vencimento: diaVencimento,
+            meta_id: detectedMetaId,
+            meta_nome: detectedMetaName,
+            conta_origem_id: sourceAcc?.id || null,
+            conta_origem_nome: sourceAcc?.nome || null,
+            conta_destino_id: destAcc?.id || null,
+            conta_destino_nome: destAcc?.nome || null
         };
     },
 
