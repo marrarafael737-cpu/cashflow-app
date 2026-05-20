@@ -892,24 +892,53 @@ async function handlePayRecurrenceEarly(id) {
 
 window.handlePayRecurrenceEarly = handlePayRecurrenceEarly;
 
+let _injectingDefaults = false; // Guard flag to prevent double-click duplicates
+
 window.injectDefaultCategories = async function() {
-    const user = await getCurrentUser();
-    if (!user) return;
-    const defaultCats = [
-        { nome: 'Alimentação', tipo: 'saida', user_id: user.id },
-        { nome: 'Moradia', tipo: 'saida', user_id: user.id },
-        { nome: 'Lazer', tipo: 'saida', user_id: user.id },
-        { nome: 'Saúde', tipo: 'saida', user_id: user.id },
-        { nome: 'Transporte', tipo: 'saida', user_id: user.id },
-        { nome: 'Salário', tipo: 'entrada', user_id: user.id }
-    ];
-    const { data, error } = await supabase.from('categorias').insert(defaultCats);
-    if (!error) {
-        showToast('Categorias padrão adicionadas!', 'success');
-        if (typeof initializeCategories === 'function') await initializeCategories(user.id);
-        if (typeof renderCategories === 'function') renderCategories();
-    } else {
-        showToast('Erro ao inserir padrões.', 'error');
+    // Prevent concurrent calls (double-tap on mobile or fast double-click)
+    if (_injectingDefaults) return;
+    _injectingDefaults = true;
+
+    try {
+        const user = await getCurrentUser();
+        if (!user) return;
+
+        // Pre-check: fetch existing categories to avoid duplicating names
+        const { data: existing } = await supabase
+            .from('categorias')
+            .select('nome')
+            .eq('user_id', user.id);
+
+        const existingNames = new Set((existing || []).map(c => c.nome.toLowerCase()));
+
+        const allDefaults = [
+            { nome: 'Alimentação', tipo: 'saida', user_id: user.id },
+            { nome: 'Moradia', tipo: 'saida', user_id: user.id },
+            { nome: 'Lazer', tipo: 'saida', user_id: user.id },
+            { nome: 'Saúde', tipo: 'saida', user_id: user.id },
+            { nome: 'Transporte', tipo: 'saida', user_id: user.id },
+            { nome: 'Salário', tipo: 'entrada', user_id: user.id }
+        ];
+
+        // Only insert categories that don't already exist
+        const toInsert = allDefaults.filter(c => !existingNames.has(c.nome.toLowerCase()));
+
+        if (toInsert.length === 0) {
+            showToast('As categorias padrão já existem!', 'info');
+            return;
+        }
+
+        const { error } = await supabase.from('categorias').insert(toInsert);
+        if (!error) {
+            showToast(`${toInsert.length} categoria(s) padrão adicionada(s)!`, 'success');
+            if (typeof initializeCategories === 'function') await initializeCategories(user.id);
+            if (typeof renderCategories === 'function') renderCategories();
+        } else {
+            showToast('Erro ao inserir padrões.', 'error');
+        }
+    } finally {
+        // Always release the guard, even if an error occurs
+        _injectingDefaults = false;
     }
 };
 
