@@ -16,6 +16,30 @@ const SmartParser = {
             .trim();
     },
 
+    safeEval(expr) {
+        if (!expr) return null;
+        // Replace commas with dots for standard decimal representation
+        let sanitized = expr.replace(/,/g, '.');
+        // Validate strict character whitelist: digits, spaces, basic operators (+, -, *, /), and parentheses
+        if (!/^[0-9\+\-\*\/\.\s()]+$/.test(sanitized)) {
+            return null;
+        }
+        // Avoid dates like 20/05 or 20/05/2026 being treated as division
+        if (/^\s*\d{1,2}\s*[\/]\s*\d{1,2}(?:\s*[\/]\s*\d{2,4})?\s*$/.test(sanitized)) {
+            return null;
+        }
+        try {
+            const fn = new Function(`return (${sanitized});`);
+            const val = fn();
+            if (typeof val === 'number' && isFinite(val)) {
+                return val;
+            }
+        } catch (e) {
+            console.error('Erro na avaliação da expressão matemática:', e);
+        }
+        return null;
+    },
+
     // Keywords for detection
     keywords: {
         expense: [
@@ -132,6 +156,18 @@ const SmartParser = {
         let workingText = text.trim();
         const cleanText = workingText.toLowerCase();
 
+        // Extract hashtags (supporting Portuguese unicode letters)
+        const hashtagRegex = /#([a-zA-Z0-9áàâãéèêíïóôõöúçñÁÀÂÃÉÈÊÍÏÓÔÕÖÚÇÑ]+)/g;
+        const hashtags = [];
+        let hashMatch;
+        while ((hashMatch = hashtagRegex.exec(workingText)) !== null) {
+            hashtags.push({
+                full: hashMatch[0],
+                tag: hashMatch[1],
+                lower: hashMatch[1].toLowerCase()
+            });
+        }
+
         // 1. PRE-PARSING FOR BANK PUSHES (Itaú & Inter)
         let isBankPush = false;
         let bankAccount = null;
@@ -219,18 +255,36 @@ const SmartParser = {
         let amountText = "";
 
         // 2. EXTRACT VALUE (If not extracted by push pre-parser)
-        const amountRegex = /(?:R\$|r\$|\$|reais|conto|pila)?\s?(\d{1,3}(?:\.\d{3})*(?:,\d{2})|\d+(?:\.\d{2})?)(?!\/)(?:\s?(?:reais|conto|pila))?/i;
-        const amountMatch = workingText.match(amountRegex);
-        if (amountMatch) {
-            amountText = amountMatch[0];
-            if (valor === 0) {
-                let rawValue = amountMatch[1];
-                if (rawValue.includes(',') && rawValue.includes('.')) {
-                    rawValue = rawValue.replace(/\./g, '').replace(',', '.');
-                } else if (rawValue.includes(',')) {
-                    rawValue = rawValue.replace(',', '.');
+        let mathEvaluated = false;
+        if (valor === 0) {
+            // Match arithmetic expressions like R$ 45 + 12 + 7.50, ensuring there's at least one math operator (+, -, *, /)
+            const mathRegex = /(?:R\$|r\$|\$)?\s*(\d+(?:[.,]\d+)?(?:\s*[\+\-\*\/]\s*\d+(?:[.,]\d+)?)+)/i;
+            const mathMatch = workingText.match(mathRegex);
+            if (mathMatch) {
+                const expr = mathMatch[1];
+                const evaluated = this.safeEval(expr);
+                if (evaluated !== null) {
+                    valor = evaluated;
+                    amountText = mathMatch[0];
+                    mathEvaluated = true;
                 }
-                valor = parseFloat(rawValue);
+            }
+        }
+
+        if (!mathEvaluated) {
+            const amountRegex = /(?:R\$|r\$|\$|reais|conto|pila)?\s?(\d{1,3}(?:\.\d{3})*(?:,\d{2})|\d+(?:\.\d{2})?)(?!\/)(?:\s?(?:reais|conto|pila))?/i;
+            const amountMatch = workingText.match(amountRegex);
+            if (amountMatch) {
+                amountText = amountMatch[0];
+                if (valor === 0) {
+                    let rawValue = amountMatch[1];
+                    if (rawValue.includes(',') && rawValue.includes('.')) {
+                        rawValue = rawValue.replace(/\./g, '').replace(',', '.');
+                    } else if (rawValue.includes(',')) {
+                        rawValue = rawValue.replace(',', '.');
+                    }
+                    valor = parseFloat(rawValue);
+                }
             }
         }
 
@@ -337,7 +391,7 @@ const SmartParser = {
         let isRecurrenceCommand = false;
         let diaVencimento = new Date().getDate();
 
-        if (/\b(todo\s+mês|todo\s+mes|mensalmente|mensal|recorrente)\b/i.test(cleanText)) {
+        if (/\b(todo\s+mês|todo\s+mes|mensalmente|mensal|recorrente)\b/i.test(cleanText) || hashtags.some(h => ['recorrente', 'mensal'].includes(h.lower))) {
             isRecurrenceCommand = true;
             tipoComando = 'recorrencia';
             
@@ -372,20 +426,30 @@ const SmartParser = {
 
         // 7. Identify Type (Entry vs Exit) if not set by push/transfers/goals
         if (tipoComando !== 'transferencia' && tipoComando !== 'meta' && !extractedTipo) {
-            const normalizedText = this.normalize(workingText);
+            // Check hashtag overrides first
+            const hasEntradaHash = hashtags.some(h => ['entrada', 'receita', 'ganho', 'credito'].includes(h.lower));
+            const hasSaidaHash = hashtags.some(h => ['saida', 'despesa', 'gasto', 'debito'].includes(h.lower));
 
-            const isIncome = this.keywords.income.some(k => {
-                const cleanK = this.normalize(k);
-                const regex = new RegExp('\\b' + cleanK + '\\b', 'i');
-                return regex.test(normalizedText) || (window.NLP && window.NLP.isSimilar(normalizedText, cleanK, 1));
-            }) || 
-            (/\b(recebi|receber|recebido|recebimento|recebimentos|recebida|ganhei|ganhar|ganho|ganhos|faturei|faturar|faturamento|entrou|caiu|salario|pagamento|vendi|venda|comissao|deposito|reembolso|estorno|lucro|dividendo|rendimento|proventos|provento|cashback|ted recebida|doc recebido|pix recebido|recebidos|ganhos|ganhou|recebeu)\b/i.test(normalizedText) && !/\b(nao recebi)\b/i.test(normalizedText)) ||
-            (/\bpix\b/i.test(normalizedText) && /\b(recebi|receber|recebido|recebimento|ganhei|ganhar|ganho|faturei|faturar|entrou|caiu|deposito|credito|estorno|reembolso|ganhou|recebeu)\b/i.test(normalizedText));
-
-            if (isIncome) {
+            if (hasEntradaHash) {
                 tipo = 'entrada';
-            } else {
+            } else if (hasSaidaHash) {
                 tipo = 'saida';
+            } else {
+                const normalizedText = this.normalize(workingText);
+
+                const isIncome = this.keywords.income.some(k => {
+                    const cleanK = this.normalize(k);
+                    const regex = new RegExp('\\b' + cleanK + '\\b', 'i');
+                    return regex.test(normalizedText) || (window.NLP && window.NLP.isSimilar(normalizedText, cleanK, 1));
+                }) || 
+                (/\b(recebi|receber|recebido|recebimento|recebimentos|recebida|ganhei|ganhar|ganho|ganhos|faturei|faturar|faturamento|entrou|caiu|salario|pagamento|vendi|venda|comissao|deposito|reembolso|estorno|lucro|dividendo|rendimento|proventos|provento|cashback|ted recebida|doc recebido|pix recebido|recebidos|ganhos|ganhou|recebeu)\b/i.test(normalizedText) && !/\b(nao recebi)\b/i.test(normalizedText)) ||
+                (/\bpix\b/i.test(normalizedText) && /\b(recebi|receber|recebido|recebimento|ganhei|ganhar|ganho|faturei|faturar|entrou|caiu|deposito|credito|estorno|reembolso|ganhou|recebeu)\b/i.test(normalizedText));
+
+                if (isIncome) {
+                    tipo = 'entrada';
+                } else {
+                    tipo = 'saida';
+                }
             }
         }
 
@@ -422,9 +486,9 @@ const SmartParser = {
                 'banco', 'agencia', 'conta', 'cartão', 'cartao', 'final', 'vencimento', 'transação', 'transacao', 
                 'efetuada', 'via', 'pix', 'reais', 'conto', 'pila', 'comprei', 'comprar', 'compras', 'gastos', 
                 'despesa', 'recebimento', 'ganhei', 'ganhar', 'por', 'deu', 'foi', 'para', 'pro', 'pra',
-                'faturei', 'faturar', 'faturamento', 'entrou', 'caiu', 'salário', 'salario', 'vendi', 'venda',
-                'comissão', 'comissao', 'depósito', 'deposito', 'depositou', 'reembolso', 'estorno', 'lucro',
-                'dividendos', 'rendimento', 'proventos', 'cashback', 'ganhou', 'recebeu', 'ganhos', 'transferi',
+                'faturei', 'faturar', 'faturamento', 'entrou', 'caiu', 'vendi', 'venda',
+                'comissão', 'comissao', 'depósito', 'deposito', 'depositou',
+                'ganhou', 'recebeu', 'ganhos', 'transferi',
                 'transferir', 'transferencia', 'ted', 'doc', 'parcelado', 'parcelas', 'vezes', 'dia', 'meta', 'guardar',
                 'guardei', 'salvei', 'aporte', 'poupar', 'todo mês', 'todo mes', 'mensalmente', 'mensal', 'recorrente'
             ];
@@ -434,9 +498,16 @@ const SmartParser = {
                 descText = descText.replace(amountText, '');
             }
 
+            // Remove technical/command hashtags from description text
+            const techHashtags = ['#entrada', '#receita', '#ganho', '#credito', '#saida', '#despesa', '#gasto', '#debito', '#recorrente', '#mensal'];
+            techHashtags.forEach(tag => {
+                const tagRegex = new RegExp(tag + '\\b', 'gi');
+                descText = descText.replace(tagRegex, '');
+            });
+
             descText = descText
                 .replace(/\b(hoje|ontem|amanhã|amanha|cedo|tarde|noite|agora|dia)\b/gi, '')
-                .replace(/\bd{1,2}\/d{1,2}(\/d{2,4})?\b/g, '');
+                .replace(/\b\d{1,2}\/\d{1,2}(?:\/\d{2,4})?\b/g, '');
 
             const splitRegex = /(?:metade|divide|dividir|meio|parte)\s+(?:é|com|pro|pra|do|da|de)?\s+([A-Z][a-zà-ÿ]+)/i;
             descText = descText.replace(splitRegex, '');
@@ -486,29 +557,95 @@ const SmartParser = {
             for (const [name, dayNum] of Object.entries(weekdays)) {
                 if (cleanText.includes(name)) {
                     const currentDay = d.getDay();
-                    let diff = currentDay - dayNum;
-                    if (cleanText.includes('passado') || cleanText.includes('passada') || diff <= 0) {
+                    if (cleanText.includes('proxima') || cleanText.includes('próxima') || cleanText.includes('que vem')) {
+                        let diff = dayNum - currentDay;
                         if (diff <= 0) diff += 7;
+                        const targetDate = new Date();
+                        targetDate.setDate(d.getDate() + diff);
+                        transDate = targetDate.toLocaleDateString('en-CA');
+                    } else {
+                        let diff = currentDay - dayNum;
+                        if (cleanText.includes('passado') || cleanText.includes('passada') || diff <= 0) {
+                            if (diff <= 0) diff += 7;
+                        }
+                        const targetDate = new Date();
+                        targetDate.setDate(d.getDate() - diff);
+                        transDate = targetDate.toLocaleDateString('en-CA');
                     }
-                    const targetDate = new Date();
-                    targetDate.setDate(d.getDate() - diff);
-                    transDate = targetDate.toLocaleDateString('en-CA');
                     weekdayFound = true;
                     break;
                 }
             }
 
             if (!weekdayFound) {
-                const dayMatch = cleanText.match(/\bdia\s+(\d{1,2})\b/i);
-                if (dayMatch) {
-                    const targetDay = parseInt(dayMatch[1]);
-                    if (targetDay >= 1 && targetDay <= 31) {
-                        const targetDate = new Date();
-                        targetDate.setDate(targetDay);
-                        if (targetDay > d.getDate()) {
-                            targetDate.setMonth(targetDate.getMonth() - 1);
-                        }
+                // Try parsing Portuguese Month Names (ex: "dia 10 de maio" or "10 de maio")
+                const ptMonths = {
+                    'janeiro': 0, 'jan': 0,
+                    'fevereiro': 1, 'fev': 1,
+                    'março': 2, 'marco': 2, 'mar': 2,
+                    'abril': 3, 'abr': 3,
+                    'maio': 4, 'mai': 4,
+                    'junho': 5, 'jun': 5,
+                    'julho': 6, 'jul': 6,
+                    'agosto': 7, 'ago': 7,
+                    'setembro': 8, 'set': 8,
+                    'outubro': 9, 'out': 9,
+                    'novembro': 10, 'nov': 10,
+                    'dezembro': 11, 'dez': 11
+                };
+                
+                const ptMonthRegex = /\b(?:dia\s+)?(\d{1,2})\s+(?:de\s+)?(janeiro|fevereiro|março|marco|abril|maio|junho|julho|agosto|setembro|outubro|novembro|dezembro|jan|fev|mar|abr|mai|jun|jul|ago|set|out|nov|dez)\b/i;
+                const ptMonthMatch = cleanText.match(ptMonthRegex);
+                
+                if (ptMonthMatch) {
+                    const day = parseInt(ptMonthMatch[1]);
+                    const monthName = ptMonthMatch[2].toLowerCase();
+                    const month = ptMonths[monthName];
+                    let year = d.getFullYear();
+                    
+                    if (day >= 1 && day <= 31 && month !== undefined) {
+                        const targetDate = new Date(year, month, day);
                         transDate = targetDate.toLocaleDateString('en-CA');
+                        weekdayFound = true;
+                    }
+                }
+                
+                if (!weekdayFound) {
+                    // Try parsing DD/MM/YYYY or DD/MM formats (ex: 20/05/2026 or 20/05)
+                    const exactDateRegex = /\b(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?\b/;
+                    const exactDateMatch = cleanText.match(exactDateRegex);
+                    if (exactDateMatch) {
+                        const day = parseInt(exactDateMatch[1]);
+                        const month = parseInt(exactDateMatch[2]) - 1; // 0-indexed
+                        let year = d.getFullYear();
+                        if (exactDateMatch[3]) {
+                            const yrStr = exactDateMatch[3];
+                            if (yrStr.length === 2) {
+                                year = parseInt("20" + yrStr);
+                            } else {
+                                year = parseInt(yrStr);
+                            }
+                        }
+                        if (day >= 1 && day <= 31 && month >= 0 && month <= 11) {
+                            const targetDate = new Date(year, month, day);
+                            transDate = targetDate.toLocaleDateString('en-CA');
+                            weekdayFound = true;
+                        }
+                    }
+                }
+
+                if (!weekdayFound) {
+                    const dayMatch = cleanText.match(/\bdia\s+(\d{1,2})\b/i);
+                    if (dayMatch) {
+                        const targetDay = parseInt(dayMatch[1]);
+                        if (targetDay >= 1 && targetDay <= 31) {
+                            const targetDate = new Date();
+                            targetDate.setDate(targetDay);
+                            if (targetDay > d.getDate()) {
+                                targetDate.setMonth(targetDate.getMonth() - 1);
+                            }
+                            transDate = targetDate.toLocaleDateString('en-CA');
+                        }
                     }
                 }
             }
@@ -539,6 +676,24 @@ const SmartParser = {
         let highestScore = -1;
         let bestCategoryName = 'Geral';
         const activeCategories = (typeof _categories !== 'undefined' && Array.isArray(_categories)) ? _categories : [];
+
+        // Dynamic Hashtag Category Override
+        let hashtagCatOverride = null;
+        if (activeCategories.length > 0 && hashtags.length > 0) {
+            for (const h of hashtags) {
+                const normTag = this.normalize(h.tag);
+                const matchedCat = activeCategories.find(c => this.normalize(c.nome) === normTag);
+                if (matchedCat) {
+                    hashtagCatOverride = matchedCat;
+                    break;
+                }
+            }
+        }
+
+        if (hashtagCatOverride) {
+            bestCategoryObj = hashtagCatOverride;
+            highestScore = 5000; // Super high score to override all other checks
+        }
 
         // Dynamic Learning Cache Check
         for (const [vendor, category] of Object.entries(this.vendorCache)) {
@@ -652,6 +807,14 @@ const SmartParser = {
             const accRegex = new RegExp('\\b' + detectedAccountName + '\\b', 'gi');
             descCleanup = descCleanup.replace(accRegex, '');
         }
+
+        // Clean up technical hashtags
+        const techHashtags = ['#entrada', '#receita', '#ganho', '#credito', '#saida', '#despesa', '#gasto', '#debito', '#recorrente', '#mensal'];
+        techHashtags.forEach(tag => {
+            const tagRegex = new RegExp(tag + '\\b', 'gi');
+            descCleanup = descCleanup.replace(tagRegex, '');
+        });
+
         ['ontem', 'hoje', 'amanhã', 'amanha', 'no valor de', 'metade', 'dividi', 'rachei', 'itau', 'inter'].forEach(word => {
             const wordRegex = new RegExp('\\b' + word + '\\b', 'gi');
             descCleanup = descCleanup.replace(wordRegex, '');
@@ -745,6 +908,9 @@ const SmartParser = {
         const lowerPrepositions = ['de', 'da', 'do', 'das', 'dos', 'em', 'para', 'com'];
         return str.toLowerCase().split(/\s+/).map((word, index) => {
             if (index > 0 && lowerPrepositions.includes(word)) return word;
+            if (word.startsWith('#') && word.length > 1) {
+                return '#' + word.charAt(1).toUpperCase() + word.slice(2);
+            }
             return word.charAt(0).toUpperCase() + word.slice(1);
         }).join(' ');
     }
