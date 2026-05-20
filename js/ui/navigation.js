@@ -96,6 +96,8 @@ window.switchView = function(target) {
         const direction = targetIndex >= currentIndex ? 1 : -1;
 
         // Configuração dos estilos para animar lado a lado absolute
+        // Definir opacity: 0 ANTES de display:block para evitar o flash visual de ~0.5s
+        targetView.style.opacity = '0';
         targetView.style.position = 'absolute';
         targetView.style.top = '0';
         targetView.style.left = '0';
