@@ -24,7 +24,7 @@ async function initGamification(userId) {
             .from('user_profiles')
             .select('xp, level, import_count, predict_count')
             .eq('id', userId)
-            .single();
+            .maybeSingle();
 
         // 2. Tentar carregar conquistas (user_badges)
         const { data: badgeRows, error: bError } = await supabase
@@ -220,7 +220,7 @@ async function checkBadges(userId) {
         .from('user_profiles')
         .select('import_count, predict_count')
         .eq('id', userId)
-        .single();
+        .maybeSingle();
 
     if (profile) {
         importCount = profile.import_count;
@@ -341,7 +341,7 @@ function setupPredictor(userId) {
         supabase.rpc('increment_predict_count', { user_id: userId })
             .catch(() => {
                 // Fallback if RPC doesn't exist
-                supabase.from('user_profiles').select('predict_count').eq('id', userId).single()
+                supabase.from('user_profiles').select('predict_count').eq('id', userId).maybeSingle()
                     .then(({ data }) => {
                         const newCount = (data?.predict_count || 0) + 1;
                         supabase.from('user_profiles').update({ predict_count: newCount }).eq('id', userId);
