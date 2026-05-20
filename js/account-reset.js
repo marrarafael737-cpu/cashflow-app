@@ -219,13 +219,15 @@ const AccountReset = {
         }
         await sleep(250);
 
-        // Safe order deletion (children first)
-        const tables = [
-            'ativos', 
+        // Safe order deletion (children first) for manual fallback
+        const fallbackTables = [
             'transacoes', 
+            'transacoes_recorrentes',
             'recorrencias', 
             'orcamentos', 
+            'faturas',
             'subcategorias', 
+            'ativos',
             'contas', 
             'categorias', 
             'metas', 
@@ -233,69 +235,104 @@ const AccountReset = {
             'user_badges'
         ];
 
-        const totalSteps = tables.length + 5; // Tables + user_profiles + IndexedDB + localStorage + browserCache + signOut
+        const totalSteps = 6; // RPC/Manual + Profiles fallback + IndexedDB + localStorage + browserCache + signOut
         let currentStep = 0;
 
         const client = typeof getSupabaseClient === 'function' ? getSupabaseClient() : window.supabase;
 
-        // 1. Wipe Supabase Tables sequentially
-        for (const table of tables) {
+        // 1. Wipe Supabase via atomic stored procedure (RPC)
+        currentStep++;
+        updateProgress((currentStep / totalSteps) * 100);
+        addLog('EXECUTANDO EXPURGO INTEGRAL NO SERVIDOR (RPC)...', 'info');
+        await sleep(350);
+
+        let rpcSuccess = false;
+        try {
+            const { data, error } = await client.rpc('wipe_user_data');
+            if (error) {
+                addLog(`RPC REJEITADO PELO SERVIDOR: ${error.message || JSON.stringify(error)}`, 'error');
+                addLog('INICIANDO OPERAÇÃO DE EXPURGO MANUAL (FALLBACK)...', 'warning');
+            } else {
+                addLog('NUVEM ZERADA COM SUCESSO VIA CHAMADA ATÔMICA RPC!', 'success');
+                rpcSuccess = true;
+                currentStep++; // Skip user_profiles delete step as it was wiped in RPC
+            }
+        } catch (e) {
+            addLog(`ERRO DE CONEXÃO AO EXECUTAR RPC: ${e.message || e}`, 'error');
+            addLog('INICIANDO OPERAÇÃO DE EXPURGO MANUAL (FALLBACK)...', 'warning');
+        }
+        await sleep(250);
+
+        // 2. Fallback manual deletion if RPC failed
+        if (!rpcSuccess) {
+            addLog('INICIANDO EXPURGO MANUAL TABELA POR TABELA...', 'info');
+            await sleep(200);
+
+            const manualTotalSteps = fallbackTables.length + 1;
+            let manualStep = 0;
+
+            for (const table of fallbackTables) {
+                manualStep++;
+                // Scale manual steps inside currentStep / totalSteps block
+                updateProgress(((currentStep + (manualStep / manualTotalSteps)) / totalSteps) * 100);
+                addLog(`DESVINCULANDO REGISTROS DA TABELA '${table.toUpperCase()}'...`, 'info');
+                await sleep(200);
+
+                try {
+                    const { data, error } = await client
+                        .from(table)
+                        .delete()
+                        .eq('user_id', actualUserId)
+                        .select();
+                    
+                    if (error) {
+                        addLog(`FALHA NA TABELA '${table.toUpperCase()}': ${error.message || JSON.stringify(error)}`, 'error');
+                    } else {
+                        const count = data ? data.length : 0;
+                        if (count > 0) {
+                            addLog(`TABELA '${table.toUpperCase()}' EXPURGADA COM SUCESSO! (${count} regs)`, 'success');
+                        } else {
+                            addLog(`TABELA '${table.toUpperCase()}': 0 registros deletados.`, 'warning');
+                        }
+                    }
+                } catch (e) {
+                    addLog(`ERRO INESPERADO NA TABELA '${table.toUpperCase()}': ${e.message || e}`, 'error');
+                }
+                await sleep(150);
+            }
+
+            // Wipe user_profiles
             currentStep++;
             updateProgress((currentStep / totalSteps) * 100);
-            addLog(`DESVINCULANDO REGISTROS DA TABELA '${table.toUpperCase()}'...`, 'info');
+            addLog("DELETANDO REGISTRO DE PERFIL ('USER_PROFILES')...", 'info');
             await sleep(200);
 
             try {
                 const { data, error } = await client
-                    .from(table)
+                    .from('user_profiles')
                     .delete()
-                    .eq('user_id', actualUserId)
+                    .eq('id', actualUserId)
                     .select();
                 
                 if (error) {
-                    addLog(`FALHA NA TABELA '${table.toUpperCase()}': ${error.message || JSON.stringify(error)}`, 'error');
+                    addLog(`FALHA AO APAGAR USER_PROFILES: ${error.message || JSON.stringify(error)}`, 'error');
                 } else {
                     const count = data ? data.length : 0;
                     if (count > 0) {
-                        addLog(`TABELA '${table.toUpperCase()}' EXPURGADA COM SUCESSO! (${count} regs)`, 'success');
+                        addLog(`PERFIL DO NÚCLEO APAGADO COM SUCESSO! (${count} regs)`, 'success');
                     } else {
-                        addLog(`TABELA '${table.toUpperCase()}': 0 registros deletados.`, 'warning');
-                        addLog(`  -> Verifique se há dados ou se a política RLS DELETE está ativa.`, 'warning');
+                        addLog(`USER_PROFILES: 0 registros deletados.`, 'warning');
                     }
                 }
             } catch (e) {
-                addLog(`ERRO INESPERADO NA TABELA '${table.toUpperCase()}': ${e.message || e}`, 'error');
+                addLog(`ERRO INESPERADO EM USER_PROFILES: ${e.message || e}`, 'error');
             }
-            await sleep(150);
+            await sleep(200);
+        } else {
+            // If RPC succeeded, make sure currentStep represents completed server tasks
+            currentStep = 2;
+            updateProgress((currentStep / totalSteps) * 100);
         }
-
-        // 2. Wipe user_profiles
-        currentStep++;
-        updateProgress((currentStep / totalSteps) * 100);
-        addLog("DELETANDO REGISTRO DE PERFIL ('USER_PROFILES')...", 'info');
-        await sleep(200);
-
-        try {
-            const { data, error } = await client
-                .from('user_profiles')
-                .delete()
-                .eq('id', actualUserId)
-                .select();
-            
-            if (error) {
-                addLog(`FALHA AO APAGAR USER_PROFILES: ${error.message || JSON.stringify(error)}`, 'error');
-            } else {
-                const count = data ? data.length : 0;
-                if (count > 0) {
-                    addLog(`PERFIL DO NÚCLEO APAGADO COM SUCESSO! (${count} regs)`, 'success');
-                } else {
-                    addLog(`USER_PROFILES: 0 registros deletados.`, 'warning');
-                }
-            }
-        } catch (e) {
-            addLog(`ERRO INESPERADO EM USER_PROFILES: ${e.message || e}`, 'error');
-        }
-        await sleep(200);
 
         // 3. Clear IndexedDB
         currentStep++;
