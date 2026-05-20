@@ -1,6 +1,6 @@
 /* sw.js - Service Worker for CashFlow */
 
-const CACHE_NAME = 'cashflow-v23';
+const CACHE_NAME = 'cashflow-v24';
 const ASSETS_TO_CACHE = [
   './',
   './dashboard.html',
@@ -70,16 +70,31 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// Fetch Event
+// Fetch Event - Network First strategy: always try network, fallback to cache
 self.addEventListener('fetch', (event) => {
-  // Ignorar requisições para o Supabase (API externa)
-  if (event.request.url.includes('supabase.co')) {
+  // Ignorar requisições para o Supabase e APIs externas
+  if (event.request.url.includes('supabase.co') || event.request.url.includes('cdnjs.cloudflare.com')) {
     return;
   }
 
+  // Only handle GET requests
+  if (event.request.method !== 'GET') return;
+
   event.respondWith(
-    caches.match(event.request, { ignoreSearch: true }).then((response) => {
-      return response || fetch(event.request);
-    })
+    fetch(event.request)
+      .then((networkResponse) => {
+        // Update the cache with the fresh response
+        if (networkResponse && networkResponse.status === 200) {
+          const responseClone = networkResponse.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, responseClone);
+          });
+        }
+        return networkResponse;
+      })
+      .catch(() => {
+        // Network failed, try cache (offline fallback)
+        return caches.match(event.request, { ignoreSearch: true });
+      })
   );
 });
