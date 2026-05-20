@@ -205,6 +205,20 @@ const AccountReset = {
         addLog(`AUTENTICADO COM SUCESSO. UUID: ${actualUserId}`, 'success');
         await sleep(200);
 
+        // Verificar e exibir status real da sessão do Supabase
+        try {
+            const { data: { session } } = await client.auth.getSession();
+            if (session && session.user) {
+                addLog(`SESSÃO ATIVA RECONHECIDA: ${session.user.email}`, 'success');
+            } else {
+                addLog(`AVISO: NENHUMA SESSÃO ATIVA DETECTADA NO NÚCLEO.`, 'warning');
+                addLog(`  -> RLS DELETE pode falhar se o usuário estiver offline.`, 'warning');
+            }
+        } catch (e) {
+            console.error("Erro ao checar getSession em performFullWipe:", e);
+        }
+        await sleep(250);
+
         // Safe order deletion (children first)
         const tables = [
             'ativos', 
@@ -419,8 +433,24 @@ function initResetUI(userId) {
             try {
                 const user = await getCurrentUser();
                 const client = typeof getSupabaseClient === 'function' ? getSupabaseClient() : window.supabase;
-                // Tenta logar novamente para validar a senha
-                const { error } = await client.auth.signInWithPassword({
+                
+                // Criar um cliente temporário para não corromper a sessão principal
+                let tempClient = client;
+                const clientCreator = window.supabase?.createClient || window.createClient;
+                const SUPABASE_URL = window.CONFIG?.SUPABASE_URL || '';
+                const SUPABASE_ANON_KEY = window.CONFIG?.SUPABASE_ANON_KEY || '';
+                
+                if (clientCreator && SUPABASE_URL && SUPABASE_ANON_KEY) {
+                    tempClient = clientCreator(SUPABASE_URL, SUPABASE_ANON_KEY, {
+                        auth: {
+                            persistSession: false,
+                            autoRefreshToken: false
+                        }
+                    });
+                }
+                
+                // Tenta logar no cliente temporário para validar a senha
+                const { error } = await tempClient.auth.signInWithPassword({
                     email: user.email,
                     password: password
                 });
