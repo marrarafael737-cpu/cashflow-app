@@ -524,7 +524,7 @@ function calculateProjection(transactions) {
 
     // 1. Saldo Líquido Atual (Dinheiro na Mão)
     const liquidBalance = window._liquidBalance || 0;
-    const creditDebtTotal = window._creditDebt || 0;
+    const currentBalance = liquidBalance !== 0 ? liquidBalance : (typeof calculateGlobalBalance === 'function' ? calculateGlobalBalance() : 0);
 
     // 2. Projetar Faturas de Cartão que vencem este mês
     let currentInvoiceToPay = 0;
@@ -545,8 +545,9 @@ function calculateProjection(transactions) {
         });
     }
 
-    // 3. Considerar Recorrências Pendentes (Contas Fixas)
+    // 3. Considerar Recorrências Pendentes (Receitas e Despesas Fixas)
     let billsToPay = 0;
+    let pendingIncomes = 0;
     if (typeof _recorrencias !== 'undefined') {
         _recorrencias.forEach(r => {
             const dia = parseInt(r.dia_vencimento);
@@ -554,12 +555,16 @@ function calculateProjection(transactions) {
             const isPaidThisMonth = lastPaid && lastPaid.getMonth() === curMonth && lastPaid.getFullYear() === curYear;
 
             if (dia > today && !isPaidThisMonth) {
-                if (r.tipo === 'saida') billsToPay += parseFloat(r.valor);
+                if (r.tipo === 'saida') {
+                    billsToPay += parseFloat(r.valor);
+                } else if (r.tipo === 'entrada') {
+                    pendingIncomes += parseFloat(r.valor);
+                }
             }
         });
     }
 
-    // 4. Considerar Média de Gastos Variáveis (Ritmo Diário)
+    // 4. Considerar Média de Gastos Variáveis (Ritmo Diário dos últimos 30 dias)
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(now.getDate() - 30);
     const variableExpenses = transactions.filter(t => {
@@ -571,8 +576,9 @@ function calculateProjection(transactions) {
     const dailyPace = variableExpenses / 30;
     const estimatedFutureSpending = dailyPace * daysRemaining;
 
-    // 5. SALDO PROJETADO FINAL (Liquidez ao fim do mês)
-    const projected = liquidBalance - currentInvoiceToPay - billsToPay - estimatedFutureSpending;
+    // 5. SALDO PROJETADO FINAL (Liquidez ao fim do mês conforme a fórmula matemática)
+    // Saldo Final Estimado = Saldo Atual + Receitas Pendentes - Despesas Pendentes (Cartões + Fixas) - (Média Diária * Dias Restantes)
+    const projected = currentBalance + pendingIncomes - currentInvoiceToPay - billsToPay - estimatedFutureSpending;
     window._projectedBalance = projected;
 
     // --- Atualizar UI Dashboard Hero ---
@@ -587,34 +593,89 @@ function calculateProjection(transactions) {
     if (heroBillsEl) heroBillsEl.textContent = formatCurrency(billsToPay);
     if (heroPaceEl) heroPaceEl.textContent = formatCurrency(dailyPace) + '/dia';
 
-    // Gerar Insight Inteligente do Oráculo
+    // 6. IDENTIFICAR CATEGORIAS MAIS COMPROMETIDAS (Para sugestões inteligentes de corte)
+    let suggestionsText = "";
+    if (typeof _budgets !== 'undefined' && _budgets.length > 0) {
+        const budgetSpentRates = _budgets.map(b => {
+            const spent = transactions
+                .filter(t => t.categoria_id === b.categoria_id && t.tipo === 'saida')
+                .filter(t => {
+                    const d = parseDate(t.data);
+                    const now = new Date();
+                    return (d.getMonth() + 1) === (now.getMonth() + 1) && d.getFullYear() === now.getFullYear();
+                })
+                .reduce((acc, t) => acc + parseFloat(t.valor), 0);
+            
+            const rate = b.valor_limite > 0 ? (spent / b.valor_limite) : 0;
+            const categoryName = b.categorias?.nome || 'Geral';
+            return { budget: b, spent, rate, categoryName };
+        });
+
+        // Ordenar do maior estouro/uso para o menor
+        budgetSpentRates.sort((a, b) => b.rate - a.rate);
+
+        const criticalList = budgetSpentRates.filter(item => item.rate >= 0.7);
+        if (criticalList.length > 0) {
+            const topCrits = criticalList.slice(0, 2);
+            suggestionsText = "Sugiro cortar despesas urgentemente em: " + topCrits.map(c => `*${c.categoryName}* (${(c.rate * 100).toFixed(0)}% consumido)`).join(" e ");
+        } else if (budgetSpentRates.length > 0 && budgetSpentRates[0].rate > 0) {
+            suggestionsText = `Sua categoria com maior gasto é *${budgetSpentRates[0].categoryName}* (${(budgetSpentRates[0].rate * 100).toFixed(0)}% consumido). Reduza aí primeiro.`;
+        }
+    }
+
+    // 7. GERAR INSIGHT INTELIGENTE E ATUALIZAR MASCOTE
     let oracleMessage = "";
-    let mascotType = "info";
+    let mascotType = "eyes";
     let mascotMood = "happy";
+    let mascotAlertMsg = "";
 
     if (projected < 0) {
-        oracleMessage = `⚠️ Risco de saldo negativo! Você terminará o mês com ${formatCurrency(projected)}.`;
-        mascotType = "alert";
+        oracleMessage = `⚠️ <span style="color:#EF4444;font-weight:700;">Risco de saldo negativo!</span> Você terminará o mês com <span style="color:#EF4444;font-weight:700;">${formatCurrency(projected)}</span>.`;
+        mascotType = "alert"; // Mudar visor do mascote para alerta vermelho!
         mascotMood = "angry";
-    } else if (projected < liquidBalance * 0.2) {
-        oracleMessage = `💡 Alerta de liquidez. Suas reservas estão baixas (R$ ${projected.toFixed(2)}) em relação às despesas previstas.`;
-        mascotType = "warning";
-        mascotMood = "worried";
+
+        mascotAlertMsg = `Atenção humana: Minhas projeções indicam que você terminará o mês no vermelho com ${formatCurrency(projected)}! `;
+        if (suggestionsText) {
+            mascotAlertMsg += suggestionsText.replace(/\*/g, '');
+        } else {
+            mascotAlertMsg += "Revise suas assinaturas e gastos variáveis o quanto antes.";
+        }
+    } else if (projected < (currentBalance * 0.2)) {
+        oracleMessage = `💡 <span style="color:#F59E0B;font-weight:700;">Alerta de liquidez!</span> Sobra estimada baixa de <span style="color:#F59E0B;font-weight:700;">${formatCurrency(projected)}</span>.`;
+        mascotType = "eyes";
+        mascotMood = "sad";
+
+        mascotAlertMsg = `Cuidado: sua projeção de sobra está perigosamente baixa (${formatCurrency(projected)}). `;
+        if (suggestionsText) {
+            mascotAlertMsg += suggestionsText.replace(/\*/g, '').replace("Sugiro cortar despesas urgentemente", "Tente economizar");
+        } else {
+            mascotAlertMsg += "Evite novas compras de lazer e gastos supérfluos hoje.";
+        }
     } else {
-        oracleMessage = `✨ Saúde financeira excelente. Projeção de sobra de ${formatCurrency(projected)} até o fim do mês.`;
+        oracleMessage = `✨ <span style="color:#10B981;font-weight:700;">Saúde excelente!</span> Sobra projetada de <span style="color:#10B981;font-weight:700;">${formatCurrency(projected)}</span> até o fim do mês.`;
+        mascotType = "eyes";
+        mascotMood = "happy";
+        
+        mascotAlertMsg = `Tudo azul no horizonte! Se mantiver o ritmo de gastos diários, você fecha o mês com ${formatCurrency(projected)} de lucro!`;
     }
 
     if (heroInsightEl) {
         heroInsightEl.innerHTML = oracleMessage;
     }
 
-    // Gatilho do Mascote (Evitar spam, disparar apenas se houver mudança significativa ou no load)
-    if (typeof showMascotMessage === 'function' && (projected < 0 || Math.random() > 0.7)) {
-        const msg = projected < 0 
-            ? `Ei! O Oráculo previu que você pode ficar no vermelho este mês (${formatCurrency(projected)}). Que tal revisar suas assinaturas?` 
-            : `Tudo sob controle! Se mantiver o ritmo, você terá ${formatCurrency(projected)} sobrando.`;
-        
-        setTimeout(() => showMascotMessage(msg, mascotType, '', mascotMood), 3000);
+    // Acionar aviso proativo do mascote caso no vermelho ou aleatoriamente para motivar
+    if (typeof showMascotMessage === 'function') {
+        if (projected < 0 || projected < (currentBalance * 0.2)) {
+            // Disparar aviso de risco/alerta
+            setTimeout(() => {
+                showMascotMessage(mascotAlertMsg, mascotType, '', mascotMood, true); // Persiste em caso de saldo negativo
+            }, 3000);
+        } else if (Math.random() > 0.8) {
+            // Mensagem motivacional de lucro
+            setTimeout(() => {
+                showMascotMessage(mascotAlertMsg, 'eyes', '', 'happy', false);
+            }, 3000);
+        }
     }
 
     // Fallback UI (Para o modal/outras áreas)
