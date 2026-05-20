@@ -1,6 +1,6 @@
 /* sw.js - Service Worker for CashFlow */
 
-const CACHE_NAME = 'cashflow-v22';
+const CACHE_NAME = 'cashflow-v23';
 const ASSETS_TO_CACHE = [
   './',
   './dashboard.html',

@@ -122,7 +122,7 @@ const Investments = {
                 renda_variavel: 'fa-chart-line',
                 fii: 'fa-building',
                 cripto: 'fa-coins',
-                bens: 'fa-cow', // Ícone sugestivo para gado/bens
+                bens: 'fa-tractor', // Ícone sugestivo para gado/bens (Trator é Free, Boi é Pro)
                 outros: 'fa-box'
             }[asset.tipo] || 'fa-gem';
 

@@ -375,7 +375,11 @@ function setupAuthUI() {
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
         navigator.serviceWorker.register('./sw.js')
-            .then(reg => console.log('C.A.S.H. Unit: Service Worker registered from auth', reg.scope))
+            .then(reg => {
+                console.log('C.A.S.H. Unit: Service Worker registered from auth', reg.scope);
+                // Força a checagem de atualizações no carregamento da página de login/cadastro
+                reg.update().catch(err => console.warn('C.A.S.H. Unit: Falha ao atualizar SW no boot de auth:', err));
+            })
             .catch(err => console.warn('C.A.S.H. Unit: Service Worker registration failed from auth', err));
     });
 

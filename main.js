@@ -793,7 +793,11 @@ function setupSecurity(userId) {
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
             navigator.serviceWorker.register('./sw.js')
-                .then(reg => console.log('C.A.S.H. Unit: Service Worker Ativo (Offline Mode Ready)', reg))
+                .then(reg => {
+                    console.log('C.A.S.H. Unit: Service Worker Ativo (Offline Mode Ready)', reg);
+                    // Força a checagem de atualizações no carregamento da página para acelerar a entrega da correção
+                    reg.update().catch(err => console.warn('C.A.S.H. Unit: Falha ao atualizar SW no boot:', err));
+                })
                 .catch(err => console.log('C.A.S.H. Unit: Erro ao carregar Service Worker', err));
         });
 
