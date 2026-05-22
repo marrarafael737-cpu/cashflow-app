@@ -52,6 +52,15 @@
     }
 }
 
+/* Suppress child CSS animations while GSAP is performing a view slide transition.
+   Applied by navigation.js via freezeAnimations() / thawAnimations() to prevent ghost flashes. */
+.gsap-transitioning,
+.gsap-transitioning * {
+    animation-play-state: paused !important;
+    animation-duration: 0s !important;
+}
+
+
 @keyframes micPulse {
     0% {
         box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.6);

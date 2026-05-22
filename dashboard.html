@@ -105,7 +105,12 @@
     <style>
         /* Sankey Flow Styles */
         .sankey-section {
-            animation: slideInUp 0.6s ease-out;
+        }
+        
+        /* OVERRIDE CACHED CSS TO PREVENT FLASH */
+        .view-section {
+            animation: none !important;
+            transition: none !important;
         }
 
         #sankey-flow-container svg {
@@ -168,6 +173,227 @@
             100% {
                 box-shadow: 0 0 0 0 rgba(255, 122, 0, 0);
             }
+        }
+
+
+
+        /* Quick Magic Modal Overlay */
+        #quick-magic-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            z-index: 10000;
+            display: none;
+            align-items: flex-end;
+            justify-content: center;
+            padding: 0 0 100px 0;
+            animation: fadeIn 0.2s ease;
+        }
+        #quick-magic-overlay.open {
+            display: flex;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* Quick Magic Panel */
+        #quick-magic-panel {
+            width: 100%;
+            max-width: 680px;
+            background: #18181B;
+            border: 1px solid rgba(255, 122, 0, 0.25);
+            border-radius: 24px;
+            padding: 1.5rem;
+            box-shadow: 0 24px 80px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.04);
+            animation: slideUpPanel 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+            position: relative;
+        }
+        @keyframes slideUpPanel {
+            from { opacity: 0; transform: translateY(40px) scale(0.96); }
+            to   { opacity: 1; transform: translateY(0)   scale(1); }
+        }
+
+        /* Panel header */
+        .qm-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1.1rem;
+        }
+        .qm-title {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1rem;
+            font-weight: 700;
+            color: #fff;
+        }
+        .qm-title-icon {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, rgba(255,122,0,0.2), rgba(255,122,0,0.08));
+            border: 1px solid rgba(255,122,0,0.3);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #FF7A00;
+            font-size: 0.85rem;
+        }
+        #btn-close-qm {
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 10px;
+            color: rgba(255,255,255,0.5);
+            cursor: pointer;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            font-size: 0.85rem;
+        }
+        #btn-close-qm:hover {
+            background: rgba(255,255,255,0.12);
+            color: #fff;
+        }
+
+        /* QM Input Row */
+        .qm-input-row {
+            display: flex;
+            gap: 0.6rem;
+            align-items: center;
+        }
+        .qm-input-wrap {
+            position: relative;
+            flex: 1;
+            display: flex;
+            align-items: center;
+        }
+        #qm-text-input {
+            width: 100%;
+            padding: 0.9rem 90px 0.9rem 1.1rem;
+            border-radius: 14px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: #fff;
+            font-size: 0.95rem;
+            outline: none;
+            transition: border-color 0.25s ease, box-shadow 0.25s ease;
+            box-shadow: inset 0 2px 6px rgba(0,0,0,0.25);
+        }
+        #qm-text-input:focus {
+            border-color: rgba(255,122,0,0.55);
+            box-shadow: 0 0 0 3px rgba(255,122,0,0.12), inset 0 2px 6px rgba(0,0,0,0.25);
+        }
+        #qm-text-input::placeholder { color: rgba(255,255,255,0.3); }
+
+        .qm-inner-btn {
+            position: absolute;
+            background: rgba(255,122,0,0.15);
+            border: 1px solid rgba(255,122,0,0.3);
+            border-radius: 8px;
+            color: #FF7A00;
+            cursor: pointer;
+            width: 34px;
+            height: 34px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            z-index: 2;
+            padding: 0;
+        }
+        .qm-inner-btn:hover { background: rgba(255,122,0,0.28); }
+        #qm-btn-scan  { right: 46px; }
+        #qm-btn-voice { right: 6px; }
+
+        #qm-btn-submit {
+            background: linear-gradient(135deg, #FF7A00, #FF9A3C);
+            border: none;
+            border-radius: 14px;
+            color: #fff;
+            font-weight: 700;
+            font-size: 0.88rem;
+            padding: 0 1.4rem;
+            height: 48px;
+            cursor: pointer;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            box-shadow: 0 4px 16px rgba(255,122,0,0.35);
+        }
+        #qm-btn-submit:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 8px 24px rgba(255,122,0,0.45);
+        }
+        #qm-btn-submit:active { transform: scale(0.97); }
+        #qm-btn-submit:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Suggestions chips */
+        .qm-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-top: 0.9rem;
+        }
+        .qm-chip-label {
+            font-size: 0.6rem;
+            color: rgba(255,255,255,0.35);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 700;
+            width: 100%;
+            margin-bottom: 0.1rem;
+        }
+        .qm-chip {
+            font-size: 0.75rem;
+            padding: 0.3rem 0.75rem;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 20px;
+            color: rgba(255,255,255,0.6);
+            cursor: pointer;
+            transition: all 0.18s ease;
+            user-select: none;
+        }
+        .qm-chip:hover {
+            background: rgba(255,122,0,0.12);
+            border-color: rgba(255,122,0,0.35);
+            color: #FF7A00;
+        }
+
+        /* QM Status feedback bar */
+        #qm-status {
+            margin-top: 0.75rem;
+            font-size: 0.78rem;
+            color: rgba(255,255,255,0.45);
+            min-height: 1.1em;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            transition: color 0.3s ease;
+        }
+        #qm-status.success { color: #4ade80; }
+        #qm-status.error   { color: #f87171; }
+        #qm-status.loading { color: #FF9A3C; }
+
+        /* Hide FAB on desktop when sidebar is expanded — optional tweak */
+        @media (min-width: 1024px) {
+        }
+        @media (max-width: 600px) {
+            #quick-magic-panel { border-radius: 20px 20px 0 0; max-width: 100%; }
+            #quick-magic-overlay { padding-bottom: 0; align-items: flex-end; }
         }
     </style>
 </head>
@@ -2156,14 +2382,10 @@
             <span>Contas</span>
         </a>
         <div class="mobile-nav-center">
-            <button id="btn-quick-add-mobile" class="btn-primary-action"
-                onclick="document.getElementById('btn-new-transaction').click()"
-                style="border-radius: 50%; width: 56px; height: 56px; margin-top: -28px; box-shadow: 0 10px 25px var(--color-primary-glow); display: flex; align-items: center; justify-content: center;">
-                <i class="fas fa-plus" style="display: none !important; margin: 0; font-size: 1.25rem;"></i>
-                <svg viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width: 24px; height: 24px;">
-                    <line x1="12" y1="5" x2="12" y2="19"></line>
-                    <line x1="5" y1="12" x2="19" y2="12"></line>
-                </svg>
+            <button id="btn-quick-add-mobile" class="btn-primary-action magic-input-btn"
+                onclick="if(window.openQuickMagic) window.openQuickMagic();"
+                style="border-radius: 50%; width: 44px; height: 44px; margin-top: -10px; box-shadow: 0 6px 15px var(--color-primary-glow); display: flex; align-items: center; justify-content: center;">
+                <i class="fas fa-plus" style="font-size: 1.1rem; color: #fff;"></i>
             </button>
         </div>
         <a href="#" class="mobile-nav-item" data-target="investments">
@@ -2384,6 +2606,226 @@
             </div>
         </div>
     </div>
+
+    <!-- ===== QUICK MAGIC MODAL ===== -->
+
+    <!-- Quick Magic Overlay -->
+    <div id="quick-magic-overlay" role="dialog" aria-modal="true" aria-label="Registro Rápido">
+        <div id="quick-magic-panel">
+
+            <!-- Header -->
+            <div class="qm-header">
+                <div class="qm-title">
+                    <div class="qm-title-icon">
+                        <i class="fas fa-wand-magic-sparkles"></i>
+                    </div>
+                    <span>Magic Input</span>
+                    <span style="font-size:0.7rem; font-weight:500; color: rgba(255,255,255,0.4); margin-left:0.25rem;">— Registro Rápido</span>
+                </div>
+                <button id="btn-close-qm" aria-label="Fechar" title="Fechar (Esc)">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <!-- Input Row -->
+            <div class="qm-input-row">
+                <div class="qm-input-wrap">
+                    <input
+                        type="text"
+                        id="qm-text-input"
+                        placeholder="Ex: Gastei 50 no almoço hoje..."
+                        autocomplete="off"
+                        spellcheck="false"
+                    >
+                    <!-- Scan button -->
+                    <button id="qm-btn-scan" class="qm-inner-btn" type="button" title="Escanear Comprovante">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px">
+                            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                            <circle cx="12" cy="13" r="4"></circle>
+                        </svg>
+                    </button>
+                    <!-- Voice button -->
+                    <button id="qm-btn-voice" class="qm-inner-btn" type="button" title="Falar comando">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px">
+                            <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                            <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                            <line x1="12" y1="19" x2="12" y2="23"></line>
+                            <line x1="8" y1="23" x2="16" y2="23"></line>
+                        </svg>
+                    </button>
+                    <!-- Hidden file input for scan -->
+                    <input type="file" id="qm-scan-file" accept="image/*" capture="environment" style="display:none">
+                </div>
+                <button id="qm-btn-submit" type="button">
+                    <i class="fas fa-wand-magic-sparkles"></i>
+                    <span>Processar</span>
+                </button>
+            </div>
+
+            <!-- Status feedback -->
+            <div id="qm-status"></div>
+
+            <!-- Suggestion chips -->
+            <div class="qm-chips">
+                <span class="qm-chip-label">Tente dizer:</span>
+                <span class="qm-chip" data-qm="Gastei 45 no iFood">"Gastei 45 no iFood"</span>
+                <span class="qm-chip" data-qm="Recebi 1500 de salário">"Recebi 1500 de salário"</span>
+                <span class="qm-chip" data-qm="Posso comprar um monitor por 1200?">"Posso comprar monitor por 1200?"</span>
+                <span class="qm-chip" data-qm="Paguei 180 de conta de luz">"Paguei 180 de conta de luz"</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    /* === Quick Magic Input - Modal Controller === */
+    (function () {
+        const overlay  = document.getElementById('quick-magic-overlay');
+        const panel    = document.getElementById('quick-magic-panel');
+        const closeBtn = document.getElementById('btn-close-qm');
+        const qmInput  = document.getElementById('qm-text-input');
+        const submitBtn= document.getElementById('qm-btn-submit');
+        const statusEl = document.getElementById('qm-status');
+        const chips    = document.querySelectorAll('.qm-chip');
+        const scanBtn  = document.getElementById('qm-btn-scan');
+        const voiceBtn = document.getElementById('qm-btn-voice');
+        const scanFile = document.getElementById('qm-scan-file');
+
+        function openQM() {
+            overlay.classList.add('open');
+            document.body.style.overflow = 'hidden';
+            setTimeout(() => qmInput.focus(), 120);
+        }
+        window.openQuickMagic = openQM; // Expose globally
+
+        function closeQM() {
+            overlay.classList.remove('open');
+            document.body.style.overflow = '';
+            setStatus('');
+        }
+
+        function setStatus(msg, type = '') {
+            statusEl.textContent = msg;
+            statusEl.className = type ? `${type}` : '';
+            // Add icon prefix
+            if (type === 'loading') statusEl.innerHTML = '<i class="fas fa-spinner fa-spin" style="font-size:0.75rem"></i> ' + msg;
+            if (type === 'success') statusEl.innerHTML = '<i class="fas fa-check-circle" style="font-size:0.75rem"></i> ' + msg;
+            if (type === 'error')   statusEl.innerHTML = '<i class="fas fa-times-circle" style="font-size:0.75rem"></i> ' + msg;
+        }
+
+        async function processQM() {
+            const text = qmInput.value.trim();
+            if (!text) {
+                setStatus('Digite algo para registrar.', 'error');
+                qmInput.focus();
+                return;
+            }
+
+            // Mirror the input value to the original magic-input so handleMagicInput works
+            const mainInput = document.getElementById('magic-input');
+            if (mainInput) mainInput.value = text;
+
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> <span>Processando...</span>';
+            setStatus('Analisando seu lançamento...', 'loading');
+
+            try {
+                // Get userId from App.State (global state set by main.js after auth)
+                const userId = (window.App?.State?.user?.id) ||
+                               window._cashflowUserId ||
+                               (window.supabase && (await window.supabase.auth.getUser())?.data?.user?.id);
+
+                if (typeof window.handleMagicInput === 'function') {
+                    await window.handleMagicInput(userId);
+                    setStatus('Lançamento registrado com sucesso!', 'success');
+                    qmInput.value = '';
+                    setTimeout(closeQM, 1400);
+                } else {
+                    setStatus('Motor de IA indisponível. Tente novamente.', 'error');
+                }
+            } catch (err) {
+                console.error('[QuickMagic] Erro:', err);
+                setStatus('Erro ao processar. Tente novamente.', 'error');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fas fa-wand-magic-sparkles"></i> <span>Processar</span>';
+            }
+        }
+
+        // Events
+        closeBtn.addEventListener('click', closeQM);
+
+        // Close when clicking backdrop (outside panel)
+        overlay.addEventListener('click', function(e) {
+            if (e.target === overlay) closeQM();
+        });
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && overlay.classList.contains('open')) closeQM();
+            // Ctrl+K / Cmd+K global shortcut
+            if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+                e.preventDefault();
+                overlay.classList.contains('open') ? closeQM() : openQM();
+            }
+        });
+
+        // Enter submits
+        qmInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') processQM();
+        });
+
+        submitBtn.addEventListener('click', processQM);
+
+        // Suggestion chips
+        chips.forEach(chip => {
+            chip.addEventListener('click', function() {
+                qmInput.value = this.dataset.qm;
+                qmInput.focus();
+                qmInput.dispatchEvent(new Event('input'));
+            });
+        });
+
+        // Scan button — reuse main scan logic or trigger file input
+        scanBtn.addEventListener('click', function() {
+            const mainScan = document.getElementById('btn-magic-scan');
+            if (mainScan) {
+                // Mirror and trigger the existing scan flow
+                mainScan.click();
+                closeQM();
+            } else {
+                scanFile.click();
+            }
+        });
+
+        // Voice button — reuse main voice logic
+        voiceBtn.addEventListener('click', function() {
+            const mainVoice = document.getElementById('btn-magic-voice');
+            if (mainVoice) {
+                closeQM();
+                setTimeout(() => mainVoice.click(), 150);
+            }
+        });
+
+        // After voice fills the main input, sync it back into qmInput display
+        // (optional, nice-to-have)
+        const mainMagicInput = document.getElementById('magic-input');
+        if (mainMagicInput) {
+            const obs = new MutationObserver(() => {
+                if (overlay.classList.contains('open')) {
+                    qmInput.value = mainMagicInput.value;
+                }
+            });
+            obs.observe(mainMagicInput, { attributes: false, childList: false, characterData: true, subtree: true });
+        }
+
+        // Store userId helper (listen for auth state)
+        document.addEventListener('cashflow:userReady', function(e) {
+            window._cashflowUserId = e.detail?.userId;
+        });
+
+        console.log('✨ Quick Magic FAB — Ctrl+K para abrir em qualquer lugar.');
+    })();
+    </script>
 
 </body>
 
