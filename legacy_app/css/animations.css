@@ -53,10 +53,10 @@
 }
 
 /* Suppress child CSS animations while GSAP is performing a view slide transition.
-   Applied by navigation.js via freezeAnimations() / thawAnimations() to prevent ghost flashes. */
-.gsap-transitioning,
-.gsap-transitioning * {
-    animation-play-state: paused !important;
+   Applied by navigation.js to prevent ghost flashes of elements sliding up/fading in. */
+.gsap-transitioning .view-section:not(.active) .animate-up,
+.gsap-transitioning .view-section:not(.active) .animate-left,
+.gsap-transitioning .view-section:not(.active) .animate-fade {
     animation-duration: 0s !important;
 }
 

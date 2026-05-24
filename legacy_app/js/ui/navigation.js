@@ -38,8 +38,7 @@ window.switchView = function(target) {
         window.closeSidebar();
     }
 
-    // Scroll para o topo imediatamente
-    window.scrollTo({ top: 0, behavior: 'auto' });
+    // Comentado para evitar flashes de scroll: window.scrollTo({ top: 0, behavior: 'smooth' });
 
     // Trigger Renders específicos da tela destino
     if (target === 'wallets' && typeof renderContas === 'function') renderContas();
@@ -95,23 +94,30 @@ window.switchView = function(target) {
         // Se targetIndex >= currentIndex, vamos para a direita (slide da direita para esquerda). Caso contrário, esquerda para direita.
         const direction = targetIndex >= currentIndex ? 1 : -1;
 
-        // Configuração dos estilos para animar lado a lado absolute
-        // Definir opacity: 0 ANTES de display:block para evitar o flash visual de ~0.5s
+        // Medir a posição exata da view atual para sobrepor a nova no lugar exato,
+        // evitando que ela cubra os headers fixos (como hero-balance)
+        const offsetTop = currentActiveView.offsetTop;
+        const offsetLeft = currentActiveView.offsetLeft;
+        const offsetWidth = currentActiveView.offsetWidth;
+
         targetView.style.opacity = '0';
         targetView.style.position = 'absolute';
-        targetView.style.top = '0';
-        targetView.style.left = '0';
-        targetView.style.width = '100%';
+        targetView.style.top = offsetTop + 'px';
+        targetView.style.left = offsetLeft + 'px';
+        targetView.style.width = offsetWidth + 'px';
         targetView.style.display = 'block';
 
         const origOverflow = mainContent.style.overflowX;
         mainContent.style.overflowX = 'hidden';
+        mainContent.classList.add('gsap-transitioning');
 
         const tl = gsap.timeline({
             onComplete: () => {
                 clearTimeout(animationTimeout);
                 performSync();
                 mainContent.style.overflowX = origOverflow;
+                mainContent.classList.remove('gsap-transitioning');
+                window.scrollTo(0, 0); // Reposiciona no topo apenas no final da animação
             }
         });
 
