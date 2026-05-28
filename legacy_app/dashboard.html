@@ -53,8 +53,10 @@
     </script>
 
     <!-- Fontes Premium & Estilos Base -->
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;500;600;700;800&display=swap">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;500;600;700;800&display=swap">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+        crossorigin="anonymous" referrerpolicy="no-referrer">
     <link rel="stylesheet" href="css/base.css">
     <link rel="stylesheet" href="css/animations.css">
     <link rel="stylesheet" href="css/components.css">
@@ -104,9 +106,8 @@
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <style>
         /* Sankey Flow Styles */
-        .sankey-section {
-        }
-        
+        .sankey-section {}
+
         /* OVERRIDE CACHED CSS TO PREVENT FLASH */
         .view-section {
             animation: none !important;
@@ -191,12 +192,19 @@
             padding: 0 0 100px 0;
             animation: fadeIn 0.2s ease;
         }
+
         #quick-magic-overlay.open {
             display: flex;
         }
+
         @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
         }
 
         /* Quick Magic Panel */
@@ -207,13 +215,21 @@
             border: 1px solid rgba(255, 122, 0, 0.25);
             border-radius: 24px;
             padding: 1.5rem;
-            box-shadow: 0 24px 80px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.04);
+            box-shadow: 0 24px 80px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.04);
             animation: slideUpPanel 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
             position: relative;
         }
+
         @keyframes slideUpPanel {
-            from { opacity: 0; transform: translateY(40px) scale(0.96); }
-            to   { opacity: 1; transform: translateY(0)   scale(1); }
+            from {
+                opacity: 0;
+                transform: translateY(40px) scale(0.96);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
         }
 
         /* Panel header */
@@ -223,6 +239,7 @@
             justify-content: space-between;
             margin-bottom: 1.1rem;
         }
+
         .qm-title {
             display: flex;
             align-items: center;
@@ -231,11 +248,12 @@
             font-weight: 700;
             color: #fff;
         }
+
         .qm-title-icon {
             width: 32px;
             height: 32px;
-            background: linear-gradient(135deg, rgba(255,122,0,0.2), rgba(255,122,0,0.08));
-            border: 1px solid rgba(255,122,0,0.3);
+            background: linear-gradient(135deg, rgba(255, 122, 0, 0.2), rgba(255, 122, 0, 0.08));
+            border: 1px solid rgba(255, 122, 0, 0.3);
             border-radius: 10px;
             display: flex;
             align-items: center;
@@ -243,11 +261,12 @@
             color: #FF7A00;
             font-size: 0.85rem;
         }
+
         #btn-close-qm {
-            background: rgba(255,255,255,0.06);
-            border: 1px solid rgba(255,255,255,0.1);
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 10px;
-            color: rgba(255,255,255,0.5);
+            color: rgba(255, 255, 255, 0.5);
             cursor: pointer;
             width: 32px;
             height: 32px;
@@ -257,8 +276,9 @@
             transition: all 0.2s ease;
             font-size: 0.85rem;
         }
+
         #btn-close-qm:hover {
-            background: rgba(255,255,255,0.12);
+            background: rgba(255, 255, 255, 0.12);
             color: #fff;
         }
 
@@ -268,34 +288,40 @@
             gap: 0.6rem;
             align-items: center;
         }
+
         .qm-input-wrap {
             position: relative;
             flex: 1;
             display: flex;
             align-items: center;
         }
+
         #qm-text-input {
             width: 100%;
             padding: 0.9rem 90px 0.9rem 1.1rem;
             border-radius: 14px;
-            background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(255,255,255,0.1);
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             color: #fff;
             font-size: 0.95rem;
             outline: none;
             transition: border-color 0.25s ease, box-shadow 0.25s ease;
-            box-shadow: inset 0 2px 6px rgba(0,0,0,0.25);
+            box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.25);
         }
+
         #qm-text-input:focus {
-            border-color: rgba(255,122,0,0.55);
-            box-shadow: 0 0 0 3px rgba(255,122,0,0.12), inset 0 2px 6px rgba(0,0,0,0.25);
+            border-color: rgba(255, 122, 0, 0.55);
+            box-shadow: 0 0 0 3px rgba(255, 122, 0, 0.12), inset 0 2px 6px rgba(0, 0, 0, 0.25);
         }
-        #qm-text-input::placeholder { color: rgba(255,255,255,0.3); }
+
+        #qm-text-input::placeholder {
+            color: rgba(255, 255, 255, 0.3);
+        }
 
         .qm-inner-btn {
             position: absolute;
-            background: rgba(255,122,0,0.15);
-            border: 1px solid rgba(255,122,0,0.3);
+            background: rgba(255, 122, 0, 0.15);
+            border: 1px solid rgba(255, 122, 0, 0.3);
             border-radius: 8px;
             color: #FF7A00;
             cursor: pointer;
@@ -308,9 +334,18 @@
             z-index: 2;
             padding: 0;
         }
-        .qm-inner-btn:hover { background: rgba(255,122,0,0.28); }
-        #qm-btn-scan  { right: 46px; }
-        #qm-btn-voice { right: 6px; }
+
+        .qm-inner-btn:hover {
+            background: rgba(255, 122, 0, 0.28);
+        }
+
+        #qm-btn-scan {
+            right: 46px;
+        }
+
+        #qm-btn-voice {
+            right: 6px;
+        }
 
         #qm-btn-submit {
             background: linear-gradient(135deg, #FF7A00, #FF9A3C);
@@ -327,13 +362,18 @@
             align-items: center;
             gap: 0.4rem;
             transition: transform 0.2s ease, box-shadow 0.2s ease;
-            box-shadow: 0 4px 16px rgba(255,122,0,0.35);
+            box-shadow: 0 4px 16px rgba(255, 122, 0, 0.35);
         }
+
         #qm-btn-submit:hover {
             transform: translateY(-1px);
-            box-shadow: 0 8px 24px rgba(255,122,0,0.45);
+            box-shadow: 0 8px 24px rgba(255, 122, 0, 0.45);
         }
-        #qm-btn-submit:active { transform: scale(0.97); }
+
+        #qm-btn-submit:active {
+            transform: scale(0.97);
+        }
+
         #qm-btn-submit:disabled {
             opacity: 0.6;
             cursor: not-allowed;
@@ -347,29 +387,32 @@
             gap: 0.4rem;
             margin-top: 0.9rem;
         }
+
         .qm-chip-label {
             font-size: 0.6rem;
-            color: rgba(255,255,255,0.35);
+            color: rgba(255, 255, 255, 0.35);
             text-transform: uppercase;
             letter-spacing: 1px;
             font-weight: 700;
             width: 100%;
             margin-bottom: 0.1rem;
         }
+
         .qm-chip {
             font-size: 0.75rem;
             padding: 0.3rem 0.75rem;
-            background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(255,255,255,0.1);
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 20px;
-            color: rgba(255,255,255,0.6);
+            color: rgba(255, 255, 255, 0.6);
             cursor: pointer;
             transition: all 0.18s ease;
             user-select: none;
         }
+
         .qm-chip:hover {
-            background: rgba(255,122,0,0.12);
-            border-color: rgba(255,122,0,0.35);
+            background: rgba(255, 122, 0, 0.12);
+            border-color: rgba(255, 122, 0, 0.35);
             color: #FF7A00;
         }
 
@@ -377,23 +420,39 @@
         #qm-status {
             margin-top: 0.75rem;
             font-size: 0.78rem;
-            color: rgba(255,255,255,0.45);
+            color: rgba(255, 255, 255, 0.45);
             min-height: 1.1em;
             display: flex;
             align-items: center;
             gap: 0.4rem;
             transition: color 0.3s ease;
         }
-        #qm-status.success { color: #4ade80; }
-        #qm-status.error   { color: #f87171; }
-        #qm-status.loading { color: #FF9A3C; }
+
+        #qm-status.success {
+            color: #4ade80;
+        }
+
+        #qm-status.error {
+            color: #f87171;
+        }
+
+        #qm-status.loading {
+            color: #FF9A3C;
+        }
 
         /* Hide FAB on desktop when sidebar is expanded — optional tweak */
-        @media (min-width: 1024px) {
-        }
+        @media (min-width: 1024px) {}
+
         @media (max-width: 600px) {
-            #quick-magic-panel { border-radius: 20px 20px 0 0; max-width: 100%; }
-            #quick-magic-overlay { padding-bottom: 0; align-items: flex-end; }
+            #quick-magic-panel {
+                border-radius: 20px 20px 0 0;
+                max-width: 100%;
+            }
+
+            #quick-magic-overlay {
+                padding-bottom: 0;
+                align-items: flex-end;
+            }
         }
     </style>
 </head>
@@ -516,22 +575,30 @@
                     <button id="btn-toggle-privacy" title="Modo Privacidade"
                         style="flex:1; background: var(--color-surface-secondary); border: 1px solid var(--color-border); color: var(--color-text-muted); border-radius: 8px; padding: 0.4rem; cursor: pointer; transition: all 0.2s; font-size:0.8rem; display: flex; align-items: center; justify-content: center;">
                         <i class="fas fa-eye" style="display: none !important;"></i>
-                        <svg class="eye-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 16px; height: 16px;">
+                        <svg class="eye-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round" style="width: 16px; height: 16px;">
                             <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
                             <circle cx="12" cy="12" r="3"></circle>
                         </svg>
-                        <svg class="eye-closed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 16px; height: 16px; display: none;">
-                            <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                        <svg class="eye-closed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round"
+                            style="width: 16px; height: 16px; display: none;">
+                            <path
+                                d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24">
+                            </path>
                             <line x1="1" y1="1" x2="23" y2="23"></line>
                         </svg>
                     </button>
                     <button id="btn-toggle-theme-sidebar" title="Trocar Tema"
                         style="flex:1; background: var(--color-surface-secondary); border: 1px solid var(--color-border); color: var(--color-text-muted); border-radius: 8px; padding: 0.4rem; cursor: pointer; transition: all 0.2s; font-size:0.8rem; display: flex; align-items: center; justify-content: center;">
                         <i class="fas fa-moon" style="display: none !important;"></i>
-                        <svg class="theme-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 16px; height: 16px;">
+                        <svg class="theme-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round" style="width: 16px; height: 16px;">
                             <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
                         </svg>
-                        <svg class="theme-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 16px; height: 16px; display: none;">
+                        <svg class="theme-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round"
+                            style="width: 16px; height: 16px; display: none;">
                             <circle cx="12" cy="12" r="5"></circle>
                             <line x1="12" y1="1" x2="12" y2="3"></line>
                             <line x1="12" y1="21" x2="12" y2="23"></line>
@@ -546,7 +613,8 @@
                     <button id="btn-share-snapshot" title="Compartilhar Progresso"
                         style="flex:1; background: var(--color-surface-secondary); border: 1px solid var(--color-border); color: var(--color-text-muted); border-radius: 8px; padding: 0.4rem; cursor: pointer; transition: all 0.2s; font-size:0.8rem; display: flex; align-items: center; justify-content: center;">
                         <i class="fas fa-share-alt" style="display: none !important;"></i>
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 16px; height: 16px;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round" style="width: 16px; height: 16px;">
                             <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path>
                             <polyline points="16 6 12 2 8 6"></polyline>
                             <line x1="12" y1="2" x2="12" y2="15"></line>
@@ -555,7 +623,8 @@
                     <button id="pwa-install-btn" title="Instalar App"
                         style="flex:1; background: var(--color-surface-secondary); border: 1px solid var(--color-border); color: var(--color-text-muted); border-radius: 8px; padding: 0.4rem; cursor: pointer; transition: all 0.2s; font-size:0.8rem; display: flex; align-items: center; justify-content: center;">
                         <i class="fas fa-download" style="display: none !important;"></i>
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 16px; height: 16px;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round" style="width: 16px; height: 16px;">
                             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                             <polyline points="7 10 12 15 17 10"></polyline>
                             <line x1="12" y1="15" x2="12" y2="3"></line>
@@ -564,7 +633,8 @@
                     <button id="btn-start-tour-sidebar" title="Ajuda"
                         style="flex:1; background: var(--color-surface-secondary); border: 1px solid var(--color-border); color: var(--color-text-muted); border-radius: 8px; padding: 0.4rem; cursor: pointer; transition: all 0.2s; font-size:0.8rem; display: flex; align-items: center; justify-content: center;">
                         <i class="fas fa-question-circle" style="display: none !important;"></i>
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 16px; height: 16px;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round" style="width: 16px; height: 16px;">
                             <circle cx="12" cy="12" r="10"></circle>
                             <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
                             <line x1="12" y1="17" x2="12.01" y2="17"></line>
@@ -579,7 +649,8 @@
             <div class="topbar-mobile mobile-only">
                 <button id="btn-toggle-sidebar-mobile" class="btn-ghost-icon" onclick="openSidebar()">
                     <i class="fas fa-bars" style="display: none !important;"></i>
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                        stroke-linejoin="round">
                         <line x1="3" y1="12" x2="21" y2="12"></line>
                         <line x1="3" y1="6" x2="21" y2="6"></line>
                         <line x1="3" y1="18" x2="21" y2="18"></line>
@@ -590,8 +661,10 @@
                 </div>
                 <div class="mobile-actions">
                     <button id="btn-new-transaction" class="btn-ghost-icon" title="Lançamento Rápido">
-                        <i class="fas fa-plus-circle" style="display: none !important; color: var(--color-primary);"></i>
-                        <svg viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <i class="fas fa-plus-circle"
+                            style="display: none !important; color: var(--color-primary);"></i>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" stroke-width="2.5"
+                            stroke-linecap="round" stroke-linejoin="round">
                             <circle cx="12" cy="12" r="10"></circle>
                             <line x1="12" y1="8" x2="12" y2="16"></line>
                             <line x1="8" y1="12" x2="16" y2="12"></line>
@@ -599,21 +672,27 @@
                     </button>
                     <button id="btn-toggle-privacy-mobile" class="btn-ghost-icon" title="Modo Privacidade">
                         <i class="fas fa-eye" style="display: none !important;"></i>
-                        <svg class="eye-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <svg class="eye-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round">
                             <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
                             <circle cx="12" cy="12" r="3"></circle>
                         </svg>
-                        <svg class="eye-closed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
-                            <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                        <svg class="eye-closed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round" style="display: none;">
+                            <path
+                                d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24">
+                            </path>
                             <line x1="1" y1="1" x2="23" y2="23"></line>
                         </svg>
                     </button>
                     <button id="btn-toggle-theme-mobile" class="btn-ghost-icon">
                         <i class="fas fa-moon" style="display: none !important;"></i>
-                        <svg class="theme-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <svg class="theme-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round">
                             <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
                         </svg>
-                        <svg class="theme-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
+                        <svg class="theme-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round" style="display: none;">
                             <circle cx="12" cy="12" r="5"></circle>
                             <line x1="12" y1="1" x2="12" y2="3"></line>
                             <line x1="12" y1="21" x2="12" y2="23"></line>
@@ -838,8 +917,12 @@
                                         <button id="btn-magic-scan" type="button" class="btn-scan-input"
                                             title="Escanear Comprovante"
                                             style="position: absolute; right: 50px; background: rgba(255, 122, 0, 0.15); border: 1px solid rgba(255, 122, 0, 0.3); border-radius: 8px; color: var(--color-primary); cursor: pointer; display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; transition: all 0.3s ease; z-index: 100; padding: 0;">
-                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width: 18px; height: 18px;">
-                                                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+                                                style="width: 18px; height: 18px;">
+                                                <path
+                                                    d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z">
+                                                </path>
                                                 <circle cx="12" cy="13" r="4"></circle>
                                             </svg>
                                         </button>
@@ -851,7 +934,9 @@
                                         <button id="btn-magic-voice" type="button" class="btn-voice-input"
                                             title="Falar comando"
                                             style="position: absolute; right: 8px; background: rgba(255, 122, 0, 0.15); border: 1px solid rgba(255, 122, 0, 0.3); border-radius: 8px; color: var(--color-primary); cursor: pointer; display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; transition: all 0.3s ease; z-index: 100; padding: 0;">
-                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width: 18px; height: 18px;">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+                                                style="width: 18px; height: 18px;">
                                                 <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
                                                 <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
                                                 <line x1="12" y1="19" x2="12" y2="23"></line>
@@ -1082,8 +1167,7 @@
                                         <div class="form-field">
                                             <label for="dash-valor">Valor</label>
                                             <input type="number" id="dash-valor" step="0.01" required
-                                                inputmode="decimal" pattern="[0-9]*[.,]?[0-9]*"
-                                                placeholder="0,00">
+                                                inputmode="decimal" pattern="[0-9]*[.,]?[0-9]*" placeholder="0,00">
                                         </div>
                                         <div class="form-field">
                                             <label for="dash-tipo">Tipo</label>
@@ -1224,9 +1308,10 @@
                         <button id="btn-open-modal-account" class="btn-primary-action"
                             style="padding: 0.5rem 1rem; font-size: 0.8rem; width: auto;">+ Nova Conta</button>
                     </div>
-                    
+
                     <!-- Radar de Alocação de Patrimônio -->
-                    <div id="radar-allocation-panel" class="radar-allocation-panel" style="margin-top: 1.5rem; display: none;">
+                    <div id="radar-allocation-panel" class="radar-allocation-panel"
+                        style="margin-top: 1.5rem; display: none;">
                         <div class="card-glass radar-container-card">
                             <div class="radar-grid-layout">
                                 <!-- Coluna 1: SVG Donut Chart + Central Readout -->
@@ -1246,7 +1331,8 @@
                                 <div class="radar-info-col">
                                     <div class="radar-header-inline">
                                         <div class="radar-title-badge">Radar de Alocação</div>
-                                        <button id="btn-clear-radar-filter" class="btn-clear-filter" style="display: none;" onclick="window.clearRadarFilter()">
+                                        <button id="btn-clear-radar-filter" class="btn-clear-filter"
+                                            style="display: none;" onclick="window.clearRadarFilter()">
                                             <i class="fas fa-times-circle"></i> Limpar Filtro
                                         </button>
                                     </div>
@@ -1670,8 +1756,11 @@
                         <button type="button" id="btn-change-avatar"
                             onclick="document.getElementById('avatar-file-input').click()"
                             style="background: var(--color-surface-secondary); color: var(--color-text-main); border: 1px solid var(--color-border); border-radius: 8px; padding: 0.4rem 1rem; font-size: 0.8rem; cursor: pointer; display: flex; align-items: center; gap: 0.4rem;">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width: 14px; height: 14px;">
-                                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                                stroke-linecap="round" stroke-linejoin="round" style="width: 14px; height: 14px;">
+                                <path
+                                    d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z">
+                                </path>
                                 <circle cx="12" cy="13" r="4"></circle>
                             </svg> Trocar Foto
                         </button>
@@ -1712,9 +1801,8 @@
                     <div class="form-row">
                         <div class="form-field">
                             <label>Valor (R$)</label>
-                            <input type="number" id="valor" required step="0.01"
-                                inputmode="decimal" pattern="[0-9]*[.,]?[0-9]*"
-                                placeholder="0,00">
+                            <input type="number" id="valor" required step="0.01" inputmode="decimal"
+                                pattern="[0-9]*[.,]?[0-9]*" placeholder="0,00">
                         </div>
                         <div class="form-field">
                             <label>Data</label>
@@ -1765,8 +1853,13 @@
                     </div>
                     <div style="display: flex; gap: 1rem; margin-top: 1rem;">
                         <button type="submit" class="btn-primary-action" style="flex: 2;">Confirmar Lançamento</button>
-                        <button type="button" id="btn-ocr-trigger" class="btn-secondary" style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 0.5rem;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width: 16px; height: 16px;">
-                                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                        <button type="button" id="btn-ocr-trigger" class="btn-secondary"
+                            style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 0.5rem;"><svg
+                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                                stroke-linecap="round" stroke-linejoin="round" style="width: 16px; height: 16px;">
+                                <path
+                                    d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z">
+                                </path>
                                 <circle cx="12" cy="13" r="4"></circle>
                             </svg> Escanear</button>
                         <input type="file" id="input-ocr-file" accept="image/*" style="display: none;">
@@ -1892,9 +1985,8 @@
                     <div class="form-row">
                         <div class="form-field">
                             <label>Valor Objetivo</label>
-                            <input type="number" id="goal-target" required step="0.01"
-                                inputmode="decimal" pattern="[0-9]*[.,]?[0-9]*"
-                                placeholder="0,00">
+                            <input type="number" id="goal-target" required step="0.01" inputmode="decimal"
+                                pattern="[0-9]*[.,]?[0-9]*" placeholder="0,00">
                         </div>
                         <div class="form-field">
                             <label>Prazo (Opcional)</label>
@@ -1903,9 +1995,8 @@
                     </div>
                     <div class="form-field">
                         <label>Quanto você já tem? (Opcional)</label>
-                        <input type="number" id="goal-current" step="0.01"
-                            inputmode="decimal" pattern="[0-9]*[.,]?[0-9]*"
-                            value="0.00">
+                        <input type="number" id="goal-current" step="0.01" inputmode="decimal"
+                            pattern="[0-9]*[.,]?[0-9]*" value="0.00">
                     </div>
                     <button type="submit" class="btn-primary-action">Salvar Meta</button>
                 </form>
@@ -1929,8 +2020,8 @@
                     </div>
                     <div class="form-field">
                         <label>Valor Limite Mensal</label>
-                        <input type="number" id="budget-value" required step="0.01"
-                            inputmode="decimal" pattern="[0-9]*[.,]?[0-9]*">
+                        <input type="number" id="budget-value" required step="0.01" inputmode="decimal"
+                            pattern="[0-9]*[.,]?[0-9]*">
                     </div>
                     <button type="submit" class="btn-primary-action">Definir Limite</button>
                 </form>
@@ -1947,7 +2038,8 @@
             </div>
             <div class="tip-close">
                 <i class="fas fa-times" style="display: none !important;"></i>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width: 12px; height: 12px;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                    stroke-linejoin="round" style="width: 12px; height: 12px;">
                     <line x1="18" y1="6" x2="6" y2="18"></line>
                     <line x1="6" y1="6" x2="18" y2="18"></line>
                 </svg>
@@ -2379,7 +2471,8 @@
     <nav class="bottom-nav-mobile mobile-only">
         <a href="#" class="mobile-nav-item active" data-target="dashboard">
             <i class="fas fa-home" style="display: none !important;"></i>
-            <svg class="nav-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <svg class="nav-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
                 <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
                 <polyline points="9 22 9 12 15 12 15 22"></polyline>
             </svg>
@@ -2387,7 +2480,8 @@
         </a>
         <a href="#" class="mobile-nav-item" data-target="wallets">
             <i class="fas fa-wallet" style="display: none !important;"></i>
-            <svg class="nav-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <svg class="nav-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
                 <rect x="2" y="5" width="20" height="14" rx="2" ry="2"></rect>
                 <line x1="2" y1="10" x2="22" y2="10"></line>
             </svg>
@@ -2402,7 +2496,8 @@
         </div>
         <a href="#" class="mobile-nav-item" data-target="investments">
             <i class="fas fa-chart-line" style="display: none !important;"></i>
-            <svg class="nav-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <svg class="nav-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
                 <path d="M3 3v18h18"></path>
                 <path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"></path>
             </svg>
@@ -2410,7 +2505,8 @@
         </a>
         <a href="#" class="mobile-nav-item" data-target="goals">
             <i class="fas fa-bullseye" style="display: none !important;"></i>
-            <svg class="nav-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <svg class="nav-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
                 <circle cx="12" cy="12" r="10"></circle>
                 <circle cx="12" cy="12" r="6"></circle>
                 <circle cx="12" cy="12" r="2"></circle>
@@ -2478,15 +2574,13 @@
                     <div class="form-row">
                         <div class="form-field">
                             <label id="label-asset-custo">Custo Médio / Aporte</label>
-                            <input type="number" id="asset-custo" step="0.01"
-                                inputmode="decimal" pattern="[0-9]*[.,]?[0-9]*"
-                                placeholder="0,00">
+                            <input type="number" id="asset-custo" step="0.01" inputmode="decimal"
+                                pattern="[0-9]*[.,]?[0-9]*" placeholder="0,00">
                         </div>
                         <div class="form-field">
                             <label id="label-asset-valor-atual">Valor Atual Total</label>
-                            <input type="number" id="asset-valor-atual" step="0.01" required
-                                inputmode="decimal" pattern="[0-9]*[.,]?[0-9]*"
-                                placeholder="0,00">
+                            <input type="number" id="asset-valor-atual" step="0.01" required inputmode="decimal"
+                                pattern="[0-9]*[.,]?[0-9]*" placeholder="0,00">
                         </div>
                     </div>
                     <button type="submit" class="btn-primary-action" style="width: 100%; margin-top: 1rem;">Salvar
@@ -2600,17 +2694,24 @@
 
                 <!-- Step 4: Deletion Progress Terminal -->
                 <div id="reset-step-4" class="reset-step" style="display: none;">
-                    <div style="background: #09090b; border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 16px; padding: 1.25rem; font-family: 'Courier New', Courier, monospace; font-size: 0.8rem; color: #ff5555; min-height: 280px; display: flex; flex-direction: column; gap: 0.5rem; box-shadow: inset 0 0 20px rgba(239, 68, 68, 0.15);">
-                        <div style="font-weight: bold; border-bottom: 1px solid rgba(239, 68, 68, 0.2); padding-bottom: 0.5rem; margin-bottom: 0.5rem; display: flex; justify-content: space-between; font-size: 0.75rem; color: rgba(255,255,255,0.6);">
+                    <div
+                        style="background: #09090b; border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 16px; padding: 1.25rem; font-family: 'Courier New', Courier, monospace; font-size: 0.8rem; color: #ff5555; min-height: 280px; display: flex; flex-direction: column; gap: 0.5rem; box-shadow: inset 0 0 20px rgba(239, 68, 68, 0.15);">
+                        <div
+                            style="font-weight: bold; border-bottom: 1px solid rgba(239, 68, 68, 0.2); padding-bottom: 0.5rem; margin-bottom: 0.5rem; display: flex; justify-content: space-between; font-size: 0.75rem; color: rgba(255,255,255,0.6);">
                             <span><i class="fas fa-terminal"></i> NÚCLEO_DE_EXPURGO.SH</span>
-                            <span class="animate-pulse" style="color: var(--color-danger); font-weight: bold;">[SHREDDING]</span>
+                            <span class="animate-pulse"
+                                style="color: var(--color-danger); font-weight: bold;">[SHREDDING]</span>
                         </div>
-                        <div id="reset-terminal-logs" style="flex: 1; display: flex; flex-direction: column; gap: 0.5rem; overflow-y: auto; max-height: 180px; text-shadow: 0 0 2px rgba(239, 68, 68, 0.5); scrollbar-width: none;">
+                        <div id="reset-terminal-logs"
+                            style="flex: 1; display: flex; flex-direction: column; gap: 0.5rem; overflow-y: auto; max-height: 180px; text-shadow: 0 0 2px rgba(239, 68, 68, 0.5); scrollbar-width: none;">
                             <!-- Dinamicamente preenchido pelo js -->
                         </div>
                         <div style="margin-top: auto; padding-top: 0.5rem;">
-                            <div style="width: 100%; height: 6px; background: rgba(255,255,255,0.03); border-radius: 3px; overflow: hidden; border: 1px solid rgba(239, 68, 68, 0.1);">
-                                <div id="reset-progress-bar" style="width: 0%; height: 100%; background: linear-gradient(90deg, var(--color-danger), #ff7a00); transition: width 0.3s ease; box-shadow: 0 0 8px var(--color-danger);"></div>
+                            <div
+                                style="width: 100%; height: 6px; background: rgba(255,255,255,0.03); border-radius: 3px; overflow: hidden; border: 1px solid rgba(239, 68, 68, 0.1);">
+                                <div id="reset-progress-bar"
+                                    style="width: 0%; height: 100%; background: linear-gradient(90deg, var(--color-danger), #ff7a00); transition: width 0.3s ease; box-shadow: 0 0 8px var(--color-danger);">
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -2632,7 +2733,9 @@
                         <i class="fas fa-wand-magic-sparkles"></i>
                     </div>
                     <span>Magic Input</span>
-                    <span style="font-size:0.7rem; font-weight:500; color: rgba(255,255,255,0.4); margin-left:0.25rem;">— Registro Rápido</span>
+                    <span
+                        style="font-size:0.7rem; font-weight:500; color: rgba(255,255,255,0.4); margin-left:0.25rem;">—
+                        Registro Rápido</span>
                 </div>
                 <button id="btn-close-qm" aria-label="Fechar" title="Fechar (Esc)">
                     <i class="fas fa-times"></i>
@@ -2642,23 +2745,21 @@
             <!-- Input Row -->
             <div class="qm-input-row">
                 <div class="qm-input-wrap">
-                    <input
-                        type="text"
-                        id="qm-text-input"
-                        placeholder="Ex: Gastei 50 no almoço hoje..."
-                        autocomplete="off"
-                        spellcheck="false"
-                    >
+                    <input type="text" id="qm-text-input" placeholder="Ex: Gastei 50 no almoço hoje..."
+                        autocomplete="off" spellcheck="false">
                     <!-- Scan button -->
                     <button id="qm-btn-scan" class="qm-inner-btn" type="button" title="Escanear Comprovante">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px">
-                            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                            stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px">
+                            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z">
+                            </path>
                             <circle cx="12" cy="13" r="4"></circle>
                         </svg>
                     </button>
                     <!-- Voice button -->
                     <button id="qm-btn-voice" class="qm-inner-btn" type="button" title="Falar comando">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                            stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px">
                             <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
                             <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
                             <line x1="12" y1="19" x2="12" y2="23"></line>
@@ -2682,161 +2783,162 @@
                 <span class="qm-chip-label">Tente dizer:</span>
                 <span class="qm-chip" data-qm="Gastei 45 no iFood">"Gastei 45 no iFood"</span>
                 <span class="qm-chip" data-qm="Recebi 1500 de salário">"Recebi 1500 de salário"</span>
-                <span class="qm-chip" data-qm="Posso comprar um monitor por 1200?">"Posso comprar monitor por 1200?"</span>
+                <span class="qm-chip" data-qm="Posso comprar um monitor por 1200?">"Posso comprar monitor por
+                    1200?"</span>
                 <span class="qm-chip" data-qm="Paguei 180 de conta de luz">"Paguei 180 de conta de luz"</span>
             </div>
         </div>
     </div>
 
     <script>
-    /* === Quick Magic Input - Modal Controller === */
-    (function () {
-        const overlay  = document.getElementById('quick-magic-overlay');
-        const panel    = document.getElementById('quick-magic-panel');
-        const closeBtn = document.getElementById('btn-close-qm');
-        const qmInput  = document.getElementById('qm-text-input');
-        const submitBtn= document.getElementById('qm-btn-submit');
-        const statusEl = document.getElementById('qm-status');
-        const chips    = document.querySelectorAll('.qm-chip');
-        const scanBtn  = document.getElementById('qm-btn-scan');
-        const voiceBtn = document.getElementById('qm-btn-voice');
-        const scanFile = document.getElementById('qm-scan-file');
+        /* === Quick Magic Input - Modal Controller === */
+        (function () {
+            const overlay = document.getElementById('quick-magic-overlay');
+            const panel = document.getElementById('quick-magic-panel');
+            const closeBtn = document.getElementById('btn-close-qm');
+            const qmInput = document.getElementById('qm-text-input');
+            const submitBtn = document.getElementById('qm-btn-submit');
+            const statusEl = document.getElementById('qm-status');
+            const chips = document.querySelectorAll('.qm-chip');
+            const scanBtn = document.getElementById('qm-btn-scan');
+            const voiceBtn = document.getElementById('qm-btn-voice');
+            const scanFile = document.getElementById('qm-scan-file');
 
-        function openQM() {
-            overlay.classList.add('open');
-            document.body.style.overflow = 'hidden';
-            setTimeout(() => qmInput.focus(), 120);
-        }
-        window.openQuickMagic = openQM; // Expose globally
+            function openQM() {
+                overlay.classList.add('open');
+                document.body.style.overflow = 'hidden';
+                setTimeout(() => qmInput.focus(), 120);
+            }
+            window.openQuickMagic = openQM; // Expose globally
 
-        function closeQM() {
-            overlay.classList.remove('open');
-            document.body.style.overflow = '';
-            setStatus('');
-        }
-
-        function setStatus(msg, type = '') {
-            statusEl.textContent = msg;
-            statusEl.className = type ? `${type}` : '';
-            // Add icon prefix
-            if (type === 'loading') statusEl.innerHTML = '<i class="fas fa-spinner fa-spin" style="font-size:0.75rem"></i> ' + msg;
-            if (type === 'success') statusEl.innerHTML = '<i class="fas fa-check-circle" style="font-size:0.75rem"></i> ' + msg;
-            if (type === 'error')   statusEl.innerHTML = '<i class="fas fa-times-circle" style="font-size:0.75rem"></i> ' + msg;
-        }
-
-        async function processQM() {
-            const text = qmInput.value.trim();
-            if (!text) {
-                setStatus('Digite algo para registrar.', 'error');
-                qmInput.focus();
-                return;
+            function closeQM() {
+                overlay.classList.remove('open');
+                document.body.style.overflow = '';
+                setStatus('');
             }
 
-            // Mirror the input value to the original magic-input so handleMagicInput works
-            const mainInput = document.getElementById('magic-input');
-            if (mainInput) mainInput.value = text;
+            function setStatus(msg, type = '') {
+                statusEl.textContent = msg;
+                statusEl.className = type ? `${type}` : '';
+                // Add icon prefix
+                if (type === 'loading') statusEl.innerHTML = '<i class="fas fa-spinner fa-spin" style="font-size:0.75rem"></i> ' + msg;
+                if (type === 'success') statusEl.innerHTML = '<i class="fas fa-check-circle" style="font-size:0.75rem"></i> ' + msg;
+                if (type === 'error') statusEl.innerHTML = '<i class="fas fa-times-circle" style="font-size:0.75rem"></i> ' + msg;
+            }
 
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> <span>Processando...</span>';
-            setStatus('Analisando seu lançamento...', 'loading');
+            async function processQM() {
+                const text = qmInput.value.trim();
+                if (!text) {
+                    setStatus('Digite algo para registrar.', 'error');
+                    qmInput.focus();
+                    return;
+                }
 
-            try {
-                // Get userId from App.State (global state set by main.js after auth)
-                const userId = (window.App?.State?.user?.id) ||
-                               window._cashflowUserId ||
-                               (window.supabase && (await window.supabase.auth.getUser())?.data?.user?.id);
+                // Mirror the input value to the original magic-input so handleMagicInput works
+                const mainInput = document.getElementById('magic-input');
+                if (mainInput) mainInput.value = text;
 
-                if (typeof window.handleMagicInput === 'function') {
-                    await window.handleMagicInput(userId);
-                    setStatus('Lançamento registrado com sucesso!', 'success');
-                    qmInput.value = '';
-                    setTimeout(closeQM, 1400);
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> <span>Processando...</span>';
+                setStatus('Analisando seu lançamento...', 'loading');
+
+                try {
+                    // Get userId from App.State (global state set by main.js after auth)
+                    const userId = (window.App?.State?.user?.id) ||
+                        window._cashflowUserId ||
+                        (window.supabase && (await window.supabase.auth.getUser())?.data?.user?.id);
+
+                    if (typeof window.handleMagicInput === 'function') {
+                        await window.handleMagicInput(userId);
+                        setStatus('Lançamento registrado com sucesso!', 'success');
+                        qmInput.value = '';
+                        setTimeout(closeQM, 1400);
+                    } else {
+                        setStatus('Motor de IA indisponível. Tente novamente.', 'error');
+                    }
+                } catch (err) {
+                    console.error('[QuickMagic] Erro:', err);
+                    setStatus('Erro ao processar. Tente novamente.', 'error');
+                } finally {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '<i class="fas fa-wand-magic-sparkles"></i> <span>Processar</span>';
+                }
+            }
+
+            // Events
+            closeBtn.addEventListener('click', closeQM);
+
+            // Close when clicking backdrop (outside panel)
+            overlay.addEventListener('click', function (e) {
+                if (e.target === overlay) closeQM();
+            });
+
+            // Keyboard shortcuts
+            document.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape' && overlay.classList.contains('open')) closeQM();
+                // Ctrl+K / Cmd+K global shortcut
+                if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+                    e.preventDefault();
+                    overlay.classList.contains('open') ? closeQM() : openQM();
+                }
+            });
+
+            // Enter submits
+            qmInput.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter') processQM();
+            });
+
+            submitBtn.addEventListener('click', processQM);
+
+            // Suggestion chips
+            chips.forEach(chip => {
+                chip.addEventListener('click', function () {
+                    qmInput.value = this.dataset.qm;
+                    qmInput.focus();
+                    qmInput.dispatchEvent(new Event('input'));
+                });
+            });
+
+            // Scan button — reuse main scan logic or trigger file input
+            scanBtn.addEventListener('click', function () {
+                const mainScan = document.getElementById('btn-magic-scan');
+                if (mainScan) {
+                    // Mirror and trigger the existing scan flow
+                    mainScan.click();
+                    closeQM();
                 } else {
-                    setStatus('Motor de IA indisponível. Tente novamente.', 'error');
-                }
-            } catch (err) {
-                console.error('[QuickMagic] Erro:', err);
-                setStatus('Erro ao processar. Tente novamente.', 'error');
-            } finally {
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = '<i class="fas fa-wand-magic-sparkles"></i> <span>Processar</span>';
-            }
-        }
-
-        // Events
-        closeBtn.addEventListener('click', closeQM);
-
-        // Close when clicking backdrop (outside panel)
-        overlay.addEventListener('click', function(e) {
-            if (e.target === overlay) closeQM();
-        });
-
-        // Keyboard shortcuts
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape' && overlay.classList.contains('open')) closeQM();
-            // Ctrl+K / Cmd+K global shortcut
-            if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
-                e.preventDefault();
-                overlay.classList.contains('open') ? closeQM() : openQM();
-            }
-        });
-
-        // Enter submits
-        qmInput.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter') processQM();
-        });
-
-        submitBtn.addEventListener('click', processQM);
-
-        // Suggestion chips
-        chips.forEach(chip => {
-            chip.addEventListener('click', function() {
-                qmInput.value = this.dataset.qm;
-                qmInput.focus();
-                qmInput.dispatchEvent(new Event('input'));
-            });
-        });
-
-        // Scan button — reuse main scan logic or trigger file input
-        scanBtn.addEventListener('click', function() {
-            const mainScan = document.getElementById('btn-magic-scan');
-            if (mainScan) {
-                // Mirror and trigger the existing scan flow
-                mainScan.click();
-                closeQM();
-            } else {
-                scanFile.click();
-            }
-        });
-
-        // Voice button — reuse main voice logic
-        voiceBtn.addEventListener('click', function() {
-            const mainVoice = document.getElementById('btn-magic-voice');
-            if (mainVoice) {
-                closeQM();
-                setTimeout(() => mainVoice.click(), 150);
-            }
-        });
-
-        // After voice fills the main input, sync it back into qmInput display
-        // (optional, nice-to-have)
-        const mainMagicInput = document.getElementById('magic-input');
-        if (mainMagicInput) {
-            const obs = new MutationObserver(() => {
-                if (overlay.classList.contains('open')) {
-                    qmInput.value = mainMagicInput.value;
+                    scanFile.click();
                 }
             });
-            obs.observe(mainMagicInput, { attributes: false, childList: false, characterData: true, subtree: true });
-        }
 
-        // Store userId helper (listen for auth state)
-        document.addEventListener('cashflow:userReady', function(e) {
-            window._cashflowUserId = e.detail?.userId;
-        });
+            // Voice button — reuse main voice logic
+            voiceBtn.addEventListener('click', function () {
+                const mainVoice = document.getElementById('btn-magic-voice');
+                if (mainVoice) {
+                    closeQM();
+                    setTimeout(() => mainVoice.click(), 150);
+                }
+            });
 
-        console.log('✨ Quick Magic FAB — Ctrl+K para abrir em qualquer lugar.');
-    })();
+            // After voice fills the main input, sync it back into qmInput display
+            // (optional, nice-to-have)
+            const mainMagicInput = document.getElementById('magic-input');
+            if (mainMagicInput) {
+                const obs = new MutationObserver(() => {
+                    if (overlay.classList.contains('open')) {
+                        qmInput.value = mainMagicInput.value;
+                    }
+                });
+                obs.observe(mainMagicInput, { attributes: false, childList: false, characterData: true, subtree: true });
+            }
+
+            // Store userId helper (listen for auth state)
+            document.addEventListener('cashflow:userReady', function (e) {
+                window._cashflowUserId = e.detail?.userId;
+            });
+
+            console.log('✨ Quick Magic FAB — Ctrl+K para abrir em qualquer lugar.');
+        })();
     </script>
 
 </body>
