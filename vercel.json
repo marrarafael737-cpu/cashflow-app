@@ -1,4 +1,10 @@
 {
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/legacy_app/$1"
+    }
+  ],
   "headers": [
     {
       "source": "/(.*)",
