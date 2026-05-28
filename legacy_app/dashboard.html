@@ -1095,8 +1095,14 @@
                                         </div>
                                     </div>
                                     <div class="form-field">
-                                        <label for="dash-conta">Conta</label>
+                                        <label for="dash-conta" id="lbl-dash-conta">Conta</label>
                                         <select id="dash-conta" required>
+                                            <option value="">Carregando contas...</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-field" id="dash-conta-destino-container" style="display: none;">
+                                        <label for="dash-conta-destino">Conta Destino</label>
+                                        <select id="dash-conta-destino">
                                             <option value="">Carregando contas...</option>
                                         </select>
                                     </div>
@@ -1733,8 +1739,14 @@
                     </div>
                     <div class="form-row">
                         <div class="form-field">
-                            <label>Conta / Carteira</label>
+                            <label id="lbl-conta">Conta / Carteira</label>
                             <select id="conta" required>
+                                <!-- Populado via JS -->
+                            </select>
+                        </div>
+                        <div class="form-field" id="conta-destino-container" style="display: none;">
+                            <label>Conta Destino</label>
+                            <select id="conta-destino">
                                 <!-- Populado via JS -->
                             </select>
                         </div>

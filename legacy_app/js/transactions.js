@@ -305,18 +305,18 @@ async function handleAddTransaction(userId) {
 
     // --- Lógica de Transferência ---
     if (tipo === 'transferencia') {
-        const contaDestinoId = prompt("Selecione a conta de destino (ID ou Nome):"); // Simplificado para o exemplo, ideal seria um select dinâmico
-        if (!contaDestinoId) {
-            showToast('Transferência cancelada: Conta de destino necessária.', 'alert');
+        const contaDestinoId = document.getElementById('conta-destino').value;
+        if (!contaDestinoId || contaDestinoId === contaId) {
+            showToast('Transferência cancelada: Selecione uma conta de destino válida.', 'alert');
             if (btn) { btn.classList.remove('loading'); btn.disabled = false; }
             return;
         }
 
         // Saída da conta A
         transactionsToInsert.push({
-            descricao: `Transferência: ${desc}`,
+            descricao: `Transferência enviada: ${desc}`,
             valor: valor,
-            tipo: 'saida',
+            tipo: 'transferencia_saida',
             categoria_id: catId,
             conta_id: contaId,
             data,
@@ -324,17 +324,13 @@ async function handleAddTransaction(userId) {
             user_id: userId
         });
 
-        // Entrada na conta B (Tentar achar conta por nome se for string)
-        let finalDestId = contaDestinoId;
-        const targetAccount = _contas.find(c => c.nome.toLowerCase() === contaDestinoId.toLowerCase() || c.id === contaDestinoId);
-        if (targetAccount) finalDestId = targetAccount.id;
-
+        // Entrada na conta B
         transactionsToInsert.push({
-            descricao: `Transferência (Recebida): ${desc}`,
+            descricao: `Transferência recebida: ${desc}`,
             valor: valor,
-            tipo: 'entrada',
+            tipo: 'transferencia_entrada',
             categoria_id: catId,
-            conta_id: finalDestId,
+            conta_id: contaDestinoId,
             data,
             forma_pagamento,
             user_id: userId

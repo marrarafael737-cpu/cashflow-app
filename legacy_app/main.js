@@ -595,35 +595,66 @@ async function handleDashboardAddTransaction(userId) {
     const tipo = document.getElementById('dash-tipo').value;
     const catId = document.getElementById('dash-categoria').value;
     const contaId = document.getElementById('dash-conta').value;
+    const contaDestinoId = document.getElementById('dash-conta-destino').value;
     const data = document.getElementById('dash-data').value;
 
     if (!desc || isNaN(valor) || valor <= 0 || !catId || !contaId || !data) {
         showToast('Preencha todos os campos corretamente. O valor deve ser maior que zero.', 'alert');
         return;
     }
+    
+    if (tipo === 'transferencia' && (!contaDestinoId || contaDestinoId === contaId)) {
+        showToast('Transferência cancelada: Selecione uma conta de destino válida diferente da origem.', 'alert');
+        return;
+    }
 
     const btn = document.querySelector('#dashboard-transaction-form button[type="submit"]');
     if (btn) { btn.classList.add('loading'); btn.disabled = true; }
 
-    const transactionData = {
-        user_id: userId,
-        descricao: desc,
-        valor: parseFloat(valorRaw),
-        tipo: tipo,
-        categoria_id: catId,
-        conta_id: contaId,
-        data: data
-    };
+    const transactionsToInsert = [];
+
+    if (tipo === 'transferencia') {
+        transactionsToInsert.push({
+            user_id: userId,
+            descricao: `Transferência enviada: ${desc}`,
+            valor: parseFloat(valorRaw),
+            tipo: 'transferencia_saida',
+            categoria_id: catId,
+            conta_id: contaId,
+            data: data
+        });
+        transactionsToInsert.push({
+            user_id: userId,
+            descricao: `Transferência recebida: ${desc}`,
+            valor: parseFloat(valorRaw),
+            tipo: 'transferencia_entrada',
+            categoria_id: catId,
+            conta_id: contaDestinoId,
+            data: data
+        });
+    } else {
+        transactionsToInsert.push({
+            user_id: userId,
+            descricao: desc,
+            valor: parseFloat(valorRaw),
+            tipo: tipo,
+            categoria_id: catId,
+            conta_id: contaId,
+            data: data
+        });
+    }
 
     // --- OFFLINE CHECK (IndexedDB) ---
     if (!navigator.onLine) {
         try {
-            await saveOfflineTransaction(transactionData);
+            for (const t of transactionsToInsert) {
+                await saveOfflineTransaction(t);
+            }
             if (btn) { btn.classList.remove('loading'); btn.disabled = false; }
             document.getElementById('dashboard-transaction-form').reset();
             
             // Atualizar UI localmente
-            if (typeof _allTransactions !== 'undefined') _allTransactions = [transactionData, ..._allTransactions];
+            if (typeof _allTransactions !== 'undefined') _allTransactions = [...transactionsToInsert, ..._allTransactions];
             if (typeof filterAndRenderData === 'function') filterAndRenderData();
             if (typeof updateSummary === 'function') updateSummary();
             
@@ -634,7 +665,7 @@ async function handleDashboardAddTransaction(userId) {
         }
     }
 
-    const { error } = await supabase.from('transacoes').insert([transactionData]);
+    const { error } = await supabase.from('transacoes').insert(transactionsToInsert);
 
     if (btn) { btn.classList.remove('loading'); btn.disabled = false; }
 

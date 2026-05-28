@@ -439,6 +439,38 @@ function setupEnhancementListeners(userId) {
         });
     }
 
+    // Toggle Conta Destino para Transferências (Dashboard)
+    const dashTipo = document.getElementById('dash-tipo');
+    const dashContaDestinoContainer = document.getElementById('dash-conta-destino-container');
+    const dashLblConta = document.getElementById('lbl-dash-conta');
+    if (dashTipo && dashContaDestinoContainer) {
+        dashTipo.addEventListener('change', (e) => {
+            if (e.target.value === 'transferencia') {
+                dashContaDestinoContainer.style.display = 'block';
+                if (dashLblConta) dashLblConta.textContent = 'Conta Origem';
+            } else {
+                dashContaDestinoContainer.style.display = 'none';
+                if (dashLblConta) dashLblConta.textContent = 'Conta';
+            }
+        });
+    }
+
+    // Toggle Conta Destino para Transferências (Modal Principal)
+    const formTipo = document.getElementById('tipo');
+    const formContaDestinoContainer = document.getElementById('conta-destino-container');
+    const formLblConta = document.getElementById('lbl-conta');
+    if (formTipo && formContaDestinoContainer) {
+        formTipo.addEventListener('change', (e) => {
+            if (e.target.value === 'transferencia') {
+                formContaDestinoContainer.style.display = 'block';
+                if (formLblConta) formLblConta.textContent = 'Conta Origem';
+            } else {
+                formContaDestinoContainer.style.display = 'none';
+                if (formLblConta) formLblConta.textContent = 'Conta / Carteira';
+            }
+        });
+    }
+
     // OCR Trigger
     const btnOcr = document.getElementById('btn-ocr-trigger');
     const inputOcr = document.getElementById('input-ocr-file');
@@ -628,7 +660,7 @@ function setupParserEvents(userId) {
                     const transactionDebit = {
                         descricao: `${parsed.descricao} (Saída)`,
                         valor: parsed.valor,
-                        tipo: 'saida',
+                        tipo: 'transferencia_saida',
                         categoria_id: parsed.categoria_id,
                         conta_id: parsed.conta_origem_id,
                         data: parsed.data,
@@ -638,7 +670,7 @@ function setupParserEvents(userId) {
                     const transactionCredit = {
                         descricao: `${parsed.descricao} (Entrada)`,
                         valor: parsed.valor,
-                        tipo: 'entrada',
+                        tipo: 'transferencia_entrada',
                         categoria_id: parsed.categoria_id,
                         conta_id: parsed.conta_destino_id,
                         data: parsed.data,
@@ -656,7 +688,7 @@ function setupParserEvents(userId) {
                             user_id: userId,
                             descricao: `${parsed.descricao} (Saída)`,
                             valor: parsed.valor,
-                            tipo: 'saida',
+                            tipo: 'transferencia_saida',
                             categoria_id: parsed.categoria_id,
                             conta_id: parsed.conta_origem_id,
                             data: parsed.data,
@@ -666,7 +698,7 @@ function setupParserEvents(userId) {
                             user_id: userId,
                             descricao: `${parsed.descricao} (Entrada)`,
                             valor: parsed.valor,
-                            tipo: 'entrada',
+                            tipo: 'transferencia_entrada',
                             categoria_id: parsed.categoria_id,
                             conta_id: parsed.conta_destino_id,
                             data: parsed.data,

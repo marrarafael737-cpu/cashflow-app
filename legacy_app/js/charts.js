@@ -361,15 +361,8 @@ function renderTrendChart(transactions) {
 
 async function initializeDashboardCharts(userId) {
     try {
-        const { data, error } = await supabase
-            .from('transacoes')
-            .select('*')
-            .eq('user_id', userId)
-            .order('data', { ascending: false })
-            .limit(100);
-
-        if (error) throw error;
-        updateCharts(data || []);
+        const transactions = window._allTransactions || [];
+        updateCharts(transactions);
     } catch (error) {
         console.error('C.A.S.H. Unit: Erro ao inicializar gráficos.', error);
     }

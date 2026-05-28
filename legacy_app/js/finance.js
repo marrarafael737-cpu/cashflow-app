@@ -100,8 +100,8 @@ function calculateSummary(transactions) {
         const val = parseFloat(t.valor || 0);
         const conta = (typeof _contas !== 'undefined' && _contas) ? _contas.find(c => c.id === t.conta_id) : null;
         
-        if (t.tipo === 'entrada') {
-            receitas += val;
+        if (t.tipo === 'entrada' || t.tipo === 'transferencia_entrada') {
+            if (t.tipo === 'entrada') receitas += val;
             if (conta) {
                 if (conta.tipo !== 'credito') {
                     liquidBalance += val;
@@ -111,8 +111,8 @@ function calculateSummary(transactions) {
                     conta.saldo_atual -= val; // Diminui a dívida
                 }
             }
-        } else if (t.tipo === 'saida') {
-            despesas += val;
+        } else if (t.tipo === 'saida' || t.tipo === 'transferencia_saida') {
+            if (t.tipo === 'saida') despesas += val;
             if (conta) {
                 if (conta.tipo !== 'credito') {
                     liquidBalance -= val;
@@ -1279,6 +1279,10 @@ async function initSankeyFlow() {
             };
 
             container.innerHTML = '';
+            if (!document.body.contains(container)) {
+                console.warn('Sankey container detached before draw');
+                return;
+            }
             sankeyChartInstance = new google.visualization.Sankey(container);
             sankeyChartInstance.draw(data, options);
         } catch (err) {
