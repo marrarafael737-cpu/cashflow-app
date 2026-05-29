@@ -440,15 +440,45 @@ svg.theme-sun { display: none !important; }
         flex-direction: column;
         gap: 0;
     }
-    .modal-content {
-        padding: 1.5rem !important;
-        border-radius: 20px !important;
+    
+    /* Native Bottom Sheet Feel for Mobile */
+    .modal-overlay, .modal-premium {
+        align-items: flex-end; /* Push modal to the bottom */
+        padding: 0;
+    }
+    
+    .modal-content, .modal-premium .modal-content {
+        width: 100%;
+        max-width: 100%;
+        padding: 2rem 1.5rem 2.5rem !important; /* Extra bottom padding for safe area */
+        border-radius: 32px 32px 0 0 !important; /* Only top corners rounded */
         max-height: 90vh;
         overflow-y: auto;
+        margin: 0;
+        border-bottom: none;
+        padding-bottom: calc(2rem + env(safe-area-inset-bottom, 0px)) !important;
+        animation: slideUpBottomSheet 0.4s cubic-bezier(0.16, 1, 0.3, 1);
     }
+    
+    /* Add a drag handle indicator */
+    .modal-content::before, .modal-premium .modal-content::before {
+        content: '';
+        display: block;
+        width: 40px;
+        height: 5px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 3px;
+        margin: -1rem auto 1.5rem;
+    }
+
     .confirm-actions {
         flex-direction: column;
     }
+}
+
+@keyframes slideUpBottomSheet {
+    from { transform: translateY(100%); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
 }
 
 .form-row > .form-field {
